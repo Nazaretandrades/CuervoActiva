@@ -1,3 +1,6 @@
+//PANTALLA LOGIN
+
+//1) Importaciones necesarias
 import React, { useState } from "react";
 import {
   View,
@@ -11,28 +14,36 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+
+//Componentes reutilizables
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
+
+//Servicio que gestiona la autenticación (petición al backend)
 import { loginUser } from "../services/auth";
 
+//2) Componente principal Login
 export default function Login() {
-  const navigation = useNavigation();
+  const navigation = useNavigation(); //Hook de navegación entre pantallas
 
-  const [emailOrUsername, setEmailOrUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
+  //Estados del formulario
+  const [emailOrUsername, setEmailOrUsername] = useState(""); //Gmail o nombre de usuario
+  const [password, setPassword] = useState(""); //Contraseña
+  const [showPass, setShowPass] = useState(false); //Mostrar/ocultar contraseña
+  const [loading, setLoading] = useState(false); //Estado de carga al enviar formulario
 
-  // 🔹 Helper para alertas multiplataforma
+  //Helper para mostrar alertas compatibles con web y móvil
   const showAlert = (title, message) => {
     if (Platform.OS === "web") {
-      window.alert(`${title}\n\n${message}`);
+      window.alert(`${title}\n\n${message}`); //En navegador
     } else {
-      Alert.alert(title, message);
+      Alert.alert(title, message); //En móvil
     }
   };
 
+  //Función de envío del formulario (login)
   async function onSubmit() {
+    //Validación: campo usuario/email vacío
     if (!emailOrUsername.trim()) {
       showAlert(
         "Campo obligatorio",
@@ -40,43 +51,54 @@ export default function Login() {
       );
       return;
     }
+
+    //Validación: campo contraseña vacío
     if (!password.trim()) {
       showAlert("Campo obligatorio", "Por favor, introduce tu contraseña.");
       return;
     }
 
     try {
-      setLoading(true);
+      setLoading(true); //Activamos el estado de carga
+
+      //Petición al backend para autenticar usuario
       const data = await loginUser({
         emailOrUsername,
         password,
       });
 
-      // Éxito
+      //Si el login es exitoso:
       if (Platform.OS === "web") {
         window.alert("Inicio de sesión exitoso.");
       } else {
         Alert.alert("Éxito", "Inicio de sesión exitoso.");
       }
 
-      // Aquí puedes guardar el token o redirigir al home
-      console.log("Usuario autenticado:", data);
+      //Aquí se podrá guardar el token en AsyncStorage o navegar al home
+      console.log("✅ Usuario autenticado:", data);
     } catch (e) {
-      showAlert("Error en el inicio de sesión", e.message || "Intenta de nuevo.");
+      //Manejo de errores
+      showAlert(
+        "Error en el inicio de sesión",
+        e.message || "Intenta de nuevo."
+      );
     } finally {
-      setLoading(false);
+      setLoading(false); //Desactivamos el estado de carga
     }
   }
 
+  //Renderizado de la pantalla
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       {/* HEADER */}
       {Platform.OS === "web" ? (
+        //En web: el header se muestra pegado arriba
         <Header
           onLogin={() => navigation.navigate("Login")}
           onRegister={() => navigation.navigate("Register")}
         />
       ) : (
+        //En móvil: se añade espacio superior (SafeAreaView)
         <SafeAreaView style={{ marginTop: 50 }}>
           <Header
             onLogin={() => navigation.navigate("Login")}
@@ -85,16 +107,21 @@ export default function Login() {
         </SafeAreaView>
       )}
 
-      <ScrollView contentContainerStyle={{ flexGrow: 1, backgroundColor: "#fff" }}>
-        {/* Título */}
+      {/*CONTENIDO PRINCIPAL */}
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, backgroundColor: "#fff" }}
+      >
+        {/*Título */}
         <View style={{ alignItems: "center", marginTop: 24, marginBottom: 16 }}>
-          <Text style={{ fontSize: 24, fontWeight: "bold" }}>Iniciar Sesión</Text>
+          <Text style={{ fontSize: 24, fontWeight: "bold" }}>
+            Iniciar Sesión
+          </Text>
         </View>
 
-        {/* Formulario */}
+        {/*Formulario */}
         <View style={{ flex: 1, alignItems: "center" }}>
           <View style={{ width: "90%", maxWidth: 920 }}>
-            {/* Email / Usuario */}
+            {/*Campo: Email o Usuario */}
             <View style={{ marginBottom: 12 }}>
               <TextInput
                 value={emailOrUsername}
@@ -111,7 +138,7 @@ export default function Login() {
               />
             </View>
 
-            {/* Contraseña */}
+            {/*Campo: Contraseña */}
             <View style={{ marginBottom: 16 }}>
               <View
                 style={{
@@ -126,7 +153,7 @@ export default function Login() {
                   value={password}
                   onChangeText={setPassword}
                   placeholder="Contraseña:"
-                  secureTextEntry={!showPass}
+                  secureTextEntry={!showPass} //Alterna entre mostrar/ocultar contraseña
                   style={{
                     flex: 1,
                     padding: 8,
@@ -134,6 +161,8 @@ export default function Login() {
                     backgroundColor: "#fff",
                   }}
                 />
+
+                {/*Icono de "mostrar/ocultar" contraseña */}
                 <Pressable
                   onPress={() => setShowPass((s) => !s)}
                   style={{ paddingHorizontal: 8 }}
@@ -150,11 +179,11 @@ export default function Login() {
               </View>
             </View>
 
-            {/* Botón Iniciar Sesión */}
+            {/*Botón de Iniciar Sesión */}
             <View style={{ alignItems: "center", marginBottom: 24 }}>
               <Pressable
-                onPress={onSubmit}
-                disabled={loading}
+                onPress={onSubmit} //Llama a la función de login
+                disabled={loading} //Desactiva el botón durante la carga
                 style={{
                   paddingVertical: 10,
                   paddingHorizontal: 16,
@@ -168,7 +197,7 @@ export default function Login() {
           </View>
         </View>
 
-        {/* FOOTER solo en web */}
+        {/*FOOTER (solo visible en web) */}
         {Platform.OS === "web" && <Footer />}
       </ScrollView>
     </View>

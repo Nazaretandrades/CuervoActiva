@@ -1,4 +1,5 @@
-const CulturalSection = require('../models/culturalsection'); //Se importa el modelo
+//Se importa el modelo
+const CulturalSection = require('../models/culturalsection'); 
 
 //Listar todas las secciones culturales
 exports.listCulturalSections = async (req, res) => {

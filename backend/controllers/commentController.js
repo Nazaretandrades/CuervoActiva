@@ -1,4 +1,5 @@
-const Comment = require('../models/comment'); //importo el modelo comment 
+//Importo el modelo comment 
+const Comment = require('../models/comment'); 
 
 //Agregar comentario a un evento
 exports.addComment = async (req, res) => {

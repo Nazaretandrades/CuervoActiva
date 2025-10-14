@@ -1,3 +1,5 @@
+//PANTALLA REGISTRO
+//1) Importaciones necesarias
 import React, { useState } from "react";
 import {
   View,
@@ -11,37 +13,47 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Picker } from "@react-native-picker/picker";
+import { Picker } from "@react-native-picker/picker"; //Desplegable de roles
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
-import { registerUser } from "../services/auth";
+import { registerUser } from "../services/auth"; //Función que envía los datos al backend
 
+//2) Componente principal Register
 export default function Register() {
-  const navigation = useNavigation();
+  const navigation = useNavigation(); //Hook para navegar entre pantallas
 
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("user");
-  const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
+  //Estados del formulario
+  const [email, setEmail] = useState(""); //Correo electrónico
+  const [name, setName] = useState(""); //Nombre de usuario
+  const [role, setRole] = useState("user"); //Rol del usuario (user u organizer)
+  const [password, setPassword] = useState(""); //Contraseña
+  const [showPass, setShowPass] = useState(false); //Mostrar/ocultar contraseña
+  const [loading, setLoading] = useState(false); //Controla el estado de carga del botón
 
+  //Función para enviar el formulario de registro
   async function onSubmit() {
+    //Helper para mostrar alertas compatibles con web y móvil
     const showAlert = (title, message) => {
       if (Platform.OS === "web") {
-        window.alert(`${title}\n\n${message}`);
+        window.alert(`${title}\n\n${message}`); //En navegador
       } else {
-        Alert.alert(title, message);
+        Alert.alert(title, message); //En móvil
       }
     };
 
-    // ✅ Validación de campos vacíos
+    //Validación: todos los campos son obligatorios
     if (!email.trim()) {
-      showAlert("Campo obligatorio", "Por favor, introduce tu correo electrónico.");
+      showAlert(
+        "Campo obligatorio",
+        "Por favor, introduce tu correo electrónico."
+      );
       return;
     }
     if (!name.trim()) {
-      showAlert("Campo obligatorio", "Por favor, introduce tu nombre de usuario.");
+      showAlert(
+        "Campo obligatorio",
+        "Por favor, introduce tu nombre de usuario."
+      );
       return;
     }
     if (!password.trim()) {
@@ -50,37 +62,41 @@ export default function Register() {
     }
 
     try {
-      setLoading(true);
-      await registerUser({ name, email, password, role });
+      setLoading(true); //Muestra “Registrando…” mientras se envía
+      await registerUser({ name, email, password, role }); //Llama al backend
 
-      // ✅ Mensaje de éxito + redirección automática al login
+      //Mensaje de éxito + redirección automática al login
       if (Platform.OS === "web") {
         window.alert("✅ Registro completado correctamente.");
-        navigation.navigate("Login");
+        navigation.navigate("Login"); //Redirige al login en web
       } else {
         Alert.alert("Éxito", "Tu registro se ha completado correctamente.", [
           {
             text: "Ir a iniciar sesión",
-            onPress: () => navigation.navigate("Login"),
+            onPress: () => navigation.navigate("Login"), //Redirige al login en móvil
           },
         ]);
       }
     } catch (e) {
+      //Muestra error si el registro falla (por ejemplo, correo ya usado)
       showAlert("Error en el registro", e.message || "Intenta de nuevo.");
     } finally {
-      setLoading(false);
+      setLoading(false); //Restaura el botón
     }
   }
 
+  //Renderizado de la pantalla
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      {/* HEADER */}
+      {/*HEADER — con margen superior en móvil */}
       {Platform.OS === "web" ? (
+        // En web: el header se muestra normalmente
         <Header
           onLogin={() => navigation.navigate("Login")}
           onRegister={() => navigation.navigate("Register")}
         />
       ) : (
+        // En móvil: se baja el header con SafeAreaView
         <SafeAreaView style={{ marginTop: 50 }}>
           <Header
             onLogin={() => navigation.navigate("Login")}
@@ -89,16 +105,19 @@ export default function Register() {
         </SafeAreaView>
       )}
 
-      <ScrollView contentContainerStyle={{ flexGrow: 1, backgroundColor: "#fff" }}>
-        {/* Título */}
+      {/*CONTENIDO PRINCIPAL — Scroll general */}
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, backgroundColor: "#fff" }}
+      >
+        {/* 🔸 Título */}
         <View style={{ alignItems: "center", marginTop: 24, marginBottom: 16 }}>
           <Text style={{ fontSize: 24, fontWeight: "bold" }}>Registrarse</Text>
         </View>
 
-        {/* Contenedor principal */}
+        {/* Contenedor del formulario */}
         <View style={{ flex: 1, alignItems: "center" }}>
           <View style={{ width: "90%", maxWidth: 920 }}>
-            {/* Fila 1: Email | Usuario */}
+            {/* Fila 1: Gmail | Usuario */}
             <View
               style={{
                 flexDirection: Platform.OS === "web" ? "row" : "column",
@@ -106,7 +125,7 @@ export default function Register() {
                 marginBottom: 12,
               }}
             >
-              {/* Gmail */}
+              {/* Campo de Gmail */}
               <View style={{ flex: 1 }}>
                 <TextInput
                   value={email}
@@ -123,7 +142,7 @@ export default function Register() {
                 />
               </View>
 
-              {/* Usuario */}
+              {/* Campo de Usuario */}
               <View style={{ flex: 1 }}>
                 <TextInput
                   value={name}
@@ -148,12 +167,12 @@ export default function Register() {
                 marginBottom: 16,
               }}
             >
-              {/* Rol */}
+              {/* Desplegable de rol */}
               <View style={{ flex: 1 }}>
                 <View
                   style={{
                     borderWidth: 1,
-                    height: Platform.OS === "android" ? 55 : 42,
+                    height: Platform.OS === "android" ? 55 : 42, //Ajuste de altura según SO
                     justifyContent: "center",
                     backgroundColor: "#fff",
                     overflow: "hidden",
@@ -181,7 +200,7 @@ export default function Register() {
                 </View>
               </View>
 
-              {/* Contraseña */}
+              {/* Campo de Contraseña */}
               <View style={{ flex: 1 }}>
                 <View
                   style={{
@@ -196,7 +215,7 @@ export default function Register() {
                     value={password}
                     onChangeText={setPassword}
                     placeholder="Contraseña:"
-                    secureTextEntry={!showPass}
+                    secureTextEntry={!showPass} //Oculta el texto si showPass es false
                     style={{
                       flex: 1,
                       padding: 8,
@@ -204,6 +223,7 @@ export default function Register() {
                       backgroundColor: "#fff",
                     }}
                   />
+                  {/* Icono de mostrar/ocultar contraseña */}
                   <Pressable
                     onPress={() => setShowPass((s) => !s)}
                     style={{ paddingHorizontal: 8 }}
@@ -221,11 +241,11 @@ export default function Register() {
               </View>
             </View>
 
-            {/* Botón Registrar */}
+            {/* Botón de Registro */}
             <View style={{ alignItems: "center", marginBottom: 24 }}>
               <Pressable
-                onPress={onSubmit}
-                disabled={loading}
+                onPress={onSubmit} //Ejecuta el registro
+                disabled={loading} //Desactiva durante carga
                 style={{
                   paddingVertical: 10,
                   paddingHorizontal: 16,
@@ -239,7 +259,7 @@ export default function Register() {
           </View>
         </View>
 
-        {/* FOOTER solo en web */}
+        {/*(solo visible en web) */}
         {Platform.OS === "web" && <Footer />}
       </ScrollView>
     </View>

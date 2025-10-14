@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-const dotenv = require('dotenv'); //Carga las variables de entorno 
+//Carga las variables de entorno 
+const dotenv = require('dotenv');
 dotenv.config();
 
 //Función asíncrona para conectar mi app a mongodb

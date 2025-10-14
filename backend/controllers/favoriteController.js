@@ -1,6 +1,6 @@
-const User = require('../models/user');//Se importa el modelo
-const Notification = require('../models/notification');//Se importa el modelo
-const Event = require('../models/event');//Se importa el modelo
+const User = require('../models/user');
+const Notification = require('../models/notification');
+const Event = require('../models/event');
 
 //Agregar evento a favoritos
 exports.addFavorite = async (req, res) => {

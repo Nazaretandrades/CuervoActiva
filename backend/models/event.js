@@ -1,14 +1,94 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const eventSchema = new mongoose.Schema({
-  title: { type: String, required: true },          // Título del evento
-  description: { type: String },                    // Descripción corta
-  date: { type: Date, required: true },            // Fecha
-  hour: { type: String, required: true },          // Hora
-  location: { type: String, required: true },      // Lugar
-  category: { type: String },                       // Música, teatro, etc.
-  image_url: { type: String },                      // URL de foto o cartel
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } // Admin que creó el evento
-}, { timestamps: true });
+/**
+ * Esquema "Event"
+ * Representa un evento
+ */
+const eventSchema = new mongoose.Schema(
+  {
+    /**
+     * title
+     * Nombre o título principal del evento.
+     */
+    title: {
+      type: String,
+      required: true,
+    },
 
-module.exports = mongoose.model('Event', eventSchema);
+    /**
+     * description
+     * Descripción breve o informativa del evento.
+     */
+    description: {
+      type: String,
+    },
+
+    /**
+     * date
+     * Fecha en la que se celebrará el evento.
+     */
+    date: {
+      type: Date,
+      required: true,
+    },
+
+    /**
+     * hour
+     * Hora del evento.
+     */
+    hour: {
+      type: String,
+      required: true,
+    },
+
+    /**
+     * location
+     * Lugar o dirección donde se realiza el evento.
+     */
+    location: {
+      type: String,
+      required: true,
+    },
+
+    /**
+     * category
+     * Tipo de evento o categoría temática.
+     */
+    category: {
+      type: String,
+    },
+
+    /**
+     * image_url
+     * Enlace o URL de la imagen/cartel del evento.
+     */
+    image_url: {
+      type: String,
+    },
+
+    /**
+     * Hace referencia al usuario (normalmente un organizador)
+     * que creó o publicó el evento.
+     */
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  },
+  {
+    /**
+     * timestamps
+     * Añade automáticamente los campos:
+     * - "createdAt": fecha y hora en que se creó el evento.
+     * - "updatedAt": fecha y hora de la última modificación.
+     */
+    timestamps: true,
+  }
+);
+
+/**
+ * Exportación del modelo
+ * Crea (o reutiliza) la colección "events" en MongoDB.
+ * Permite hacer consultas como:
+ */
+module.exports = mongoose.model("Event", eventSchema);

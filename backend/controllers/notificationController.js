@@ -1,4 +1,4 @@
-const Notification = require('../models/notification');//Se importa el modelo
+const Notification = require('../models/notification');
 
 //Listar notificaciones del usuario
 exports.listNotifications = async (req, res) => {
