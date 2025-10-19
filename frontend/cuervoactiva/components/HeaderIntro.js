@@ -1,75 +1,147 @@
-//HEADER INTRO
-
-//1) Importamos los módulos necesarios
 import React from "react";
-import { View, Text, Pressable, Image } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  Image,
+  SafeAreaView,
+  Platform,
+  useWindowDimensions,
+  StatusBar,
+} from "react-native";
 
-//2) Definición del componente funcional Header
-//Este componente recibe dos props (funciones):
-//- onLogin: qué hacer cuando el usuario pulsa “Iniciar Sesión”
-//- onRegister: qué hacer cuando el usuario pulsa “Registrarse”
 export default function Header({ onLogin, onRegister }) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768; // breakpoint para pantallas pequeñas
+
+  const styles = {
+    container: {
+      backgroundColor: "#02486b",
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: isMobile ? 14 : 24,
+      paddingVertical: isMobile ? 10 : 18,
+      width: "100%",
+    },
+    logoContainer: {
+      width: isMobile ? 38 : 50,
+      height: isMobile ? 38 : 50,
+      marginRight: isMobile ? 6 : 10,
+      borderRadius: 10, // redondeo más suave
+      overflow: "hidden", // 🔹 esto recorta la imagen dentro del borde
+      backgroundColor: "#fff", // por si el logo tiene transparencia
+    },
+    logo: {
+      width: "100%",
+      height: "100%",
+      resizeMode: "cover", // asegura que llene el contenedor sin distorsión
+    },
+    title: {
+      color: "#fff",
+      fontWeight: "700",
+      fontSize: isMobile ? 15 : 17,
+      letterSpacing: 0.6,
+    },
+    button: {
+      backgroundColor: "#F3B23F",
+      paddingVertical: isMobile ? 5 : 8,
+      paddingHorizontal: isMobile ? 10 : 14,
+      borderRadius: 6,
+      marginRight: isMobile ? 8 : 12,
+      shadowColor: "#000",
+      shadowOpacity: 0.15,
+      shadowRadius: 3,
+      elevation: 3,
+    },
+    buttonText: {
+      color: "#fff",
+      fontSize: isMobile ? 12 : 14,
+      fontWeight: "600",
+    },
+    separatorWhite: {
+      height: 6,
+      backgroundColor: "#ffffff",
+      width: "100%",
+    },
+    separatorBlue: {
+      height: 5,
+      backgroundColor: "#02486b",
+      width: "100%",
+    },
+  };
+
+  // ✅ Móvil
+  if (Platform.OS === "android" || Platform.OS === "ios") {
+    return (
+      <SafeAreaView
+        style={{
+          backgroundColor: "#02486b",
+          paddingTop:
+            Platform.OS === "android" ? StatusBar.currentHeight || 15 : 0,
+        }}
+      >
+        <View style={styles.container}>
+          {/* IZQUIERDA */}
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={styles.logoContainer}>
+              <Image
+                source={require("../assets/logo.png")}
+                style={styles.logo}
+              />
+            </View>
+            <Text style={styles.title}>CUERVO ACTIVA</Text>
+          </View>
+
+          {/* DERECHA */}
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Pressable onPress={onLogin} style={styles.button}>
+              <Text style={styles.buttonText}>Iniciar Sesión</Text>
+            </Pressable>
+
+            <Pressable onPress={onRegister} style={styles.button}>
+              <Text style={styles.buttonText}>Registrarse</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Línea blanca + azul */}
+        <View style={styles.separatorWhite} />
+        <View style={styles.separatorBlue} />
+      </SafeAreaView>
+    );
+  }
+
+  // 💻 Web
   return (
-    //Contenedor principal del header
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-      }}
-    >
-      {/*IZQUIERDA: Logo + nombre de la app */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-        }}
-      >
-        {/*Logo de la app */}
-        <Image
-          source={require("../assets/logo.png")}
-          style={{
-            width: 28,
-            height: 28,
-            marginRight: 8,
-          }}
-        />
+    <>
+      <View style={styles.container}>
+        {/* IZQUIERDA */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require("../assets/logo.png")}
+              style={styles.logo}
+            />
+          </View>
+          <Text style={styles.title}>CUERVO ACTIVA</Text>
+        </View>
 
-        {/*Texto con el nombre de la app */}
-        <Text>CUERVO ACTIVA</Text>
+        {/* DERECHA */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable onPress={onLogin} style={styles.button}>
+            <Text style={styles.buttonText}>Iniciar Sesión</Text>
+          </Pressable>
+
+          <Pressable onPress={onRegister} style={styles.button}>
+            <Text style={styles.buttonText}>Registrarse</Text>
+          </Pressable>
+        </View>
       </View>
 
-      {/*DERECHA: Botones de navegación (Login / Register) */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-        }}
-      >
-        {/*Botón de Iniciar Sesión */}
-        <Pressable
-          onPress={onLogin} //Ejecuta la función recibida por prop al pulsar
-          style={{
-            paddingHorizontal: 8,
-            paddingVertical: 6,
-          }}
-        >
-          <Text>Iniciar Sesión</Text>
-        </Pressable>
-
-        {/*Botón de Registrarse */}
-        <Pressable
-          onPress={onRegister} //Ejecuta la función recibida por prop al pulsar
-          style={{
-            paddingHorizontal: 8,
-            paddingVertical: 6,
-          }}
-        >
-          <Text>Registrarse</Text>
-        </Pressable>
-      </View>
-    </View>
+      {/* Línea blanca + azul */}
+      <View style={styles.separatorWhite} />
+      <View style={styles.separatorBlue} />
+    </>
   );
 }

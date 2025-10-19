@@ -1,90 +1,135 @@
-//FOOTER
-
-//1) Importamos los módulos necesarios de React Native
 import React from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, Image, Linking } from "react-native";
 
-//2) Definimos el componente funcional Footer
 export default function Footer() {
+  // 🌐 Abrir enlaces externos
+  const openLink = async (url) => {
+    try {
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error("Error al abrir el enlace:", error);
+    }
+  };
+
   return (
-    //Contenedor principal del footer
     <View
       style={{
-        paddingHorizontal: 20,    
-        paddingVertical: 10,       
-        borderTopWidth: 1,         
-        borderTopColor: "#ddd",    
-        backgroundColor: "#fff",   
+        width: "100%",
+        backgroundColor: "#f5f5f5", // Fondo gris suave
+        borderTopWidth: 1,
+        borderTopColor: "#ddd",
+        paddingVertical: 12,
+        paddingHorizontal: 28,
       }}
     >
-      {/*Estructura principal: fila con dos bloques (izquierda y derecha) */}
+      {/* Contenedor principal horizontal */}
       <View
         style={{
-          flexDirection: "row",            
-          alignItems: "center",            
-          justifyContent: "space-between", 
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "nowrap",
         }}
       >
-        {/*IZQUIERDA: Copyright + enlaces */}
+        {/* IZQUIERDA — textos legales */}
         <View
           style={{
-            flexDirection: "row",     
-            alignItems: "center",     
-            flexWrap: "wrap",         
+            flexDirection: "row",
+            alignItems: "center",
+            flexWrap: "nowrap",
           }}
         >
-          {/*Texto de copyright */}
-          <Text style={{ marginRight: 8 }}>© 2025 CuervoActiva, Inc.</Text>
+          <Text style={{ color: "#555", fontSize: 12, marginRight: 10 }}>
+            © 2025 CuervoActiva, Inc.
+          </Text>
 
-          {/*Enlaces del footer */}
           <Pressable style={{ marginHorizontal: 6 }}>
-            <Text>Privacidad</Text>
+            <Text style={{ color: "#555", fontSize: 12 }}>Privacidad</Text>
           </Pressable>
 
           <Pressable style={{ marginHorizontal: 6 }}>
-            <Text>Condiciones</Text>
+            <Text style={{ color: "#555", fontSize: 12 }}>Condiciones</Text>
           </Pressable>
 
           <Pressable style={{ marginHorizontal: 6 }}>
-            <Text>Sobre Nosotros</Text>
+            <Text style={{ color: "#555", fontSize: 12 }}>Sobre Nosotros</Text>
           </Pressable>
         </View>
 
-        {/*DERECHA: Idioma + iconos de redes */}
+        {/* DERECHA — idioma + redes sociales */}
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
           }}
         >
-          {/*Idioma */}
-          <Pressable style={{ paddingHorizontal: 6 }}>
-            <Text>Español (ES)</Text>
+          {/* Idioma */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginRight: 10,
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/mundo.png")}
+              style={{
+                width: 15,
+                height: 15,
+                marginRight: 5,
+                tintColor: "#666",
+              }}
+            />
+            <Text style={{ color: "#555", fontSize: 12 }}>Español (ES)</Text>
+          </View>
+
+          {/* Redes sociales */}
+          <Pressable
+            style={{ marginHorizontal: 6 }}
+            onPress={() => openLink("https://www.facebook.com/cuervoactiva")}
+          >
+            <Image
+              source={require("../assets/iconos/facebook.png")}
+              style={{
+                width: 18,
+                height: 18,
+                tintColor: "#444",
+                opacity: 0.8,
+              }}
+            />
           </Pressable>
 
-          {/*Redes sociales — FB, IG, X (Twitter) */}
-          <Pressable style={{ paddingHorizontal: 6 }}>
-            <Text>FB</Text>
+          <Pressable
+            style={{ marginHorizontal: 6 }}
+            onPress={() => openLink("https://x.com/cuervoactiva")}
+          >
+            <Image
+              source={require("../assets/iconos/twitter.png")}
+              style={{
+                width: 18,
+                height: 18,
+                tintColor: "#444",
+                opacity: 0.8,
+              }}
+            />
           </Pressable>
-          <Pressable style={{ paddingHorizontal: 6 }}>
-            <Text>IG</Text>
-          </Pressable>
-          <Pressable style={{ paddingHorizontal: 6 }}>
-            <Text>X</Text>
+
+          <Pressable
+            style={{ marginLeft: 6 }}
+            onPress={() => openLink("https://www.instagram.com/cuervoactiva")}
+          >
+            <Image
+              source={require("../assets/iconos/instagram.png")}
+              style={{
+                width: 18,
+                height: 18,
+                tintColor: "#444",
+                opacity: 0.8,
+              }}
+            />
           </Pressable>
         </View>
       </View>
     </View>
   );
 }
-
-// =========================================================
-// 🧠 RESUMEN DEL COMPONENTE
-// =========================================================
-// Este componente crea un pie de página (footer) con:
-// - Una barra superior gris que lo separa del contenido
-// - Información de derechos de autor y enlaces informativos
-// - En la derecha, un selector de idioma y enlaces a redes sociales
-//
-// Se usa en la parte inferior de pantallas como Register, Intro, etc.
-// =========================================================

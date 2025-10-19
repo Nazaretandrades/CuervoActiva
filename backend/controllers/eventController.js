@@ -23,7 +23,7 @@ exports.getEvent = async (req, res) => {
   }
 };
 
-//Crear evento (solo admin y organizador)
+//Crear evento (solo organizador)
 exports.createEvent = async (req, res) => {
   if (!["admin", "organizer"].includes(req.user.role)) {
     return res.status(403).json({ error: "No autorizado" });
