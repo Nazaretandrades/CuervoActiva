@@ -1,3 +1,4 @@
+
 //PANTALLA PRINCIPAL
 //1) Importaciones necesarias
 import React, { useRef, useState, useEffect } from "react";
@@ -135,7 +136,7 @@ export default function HeroBanner({ onNext }) {
             <Pressable onPress={handleNext} style={styles.button}>
               <Image
                 source={require("../assets/iconos/next.png")}
-                style={{ width: 18, height: 18, tintColor: "#fff" }}
+                style={{ width: 18, height: 18, tintColor: "#ffffffff" }}
               />
             </Pressable>
           </View>

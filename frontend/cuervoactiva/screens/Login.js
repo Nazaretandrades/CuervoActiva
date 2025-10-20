@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { loginUser } from "../services/auth";
+import { saveSession } from "../services/sessionManager"; // ✅ nuevo import
 
 export default function Login() {
   const navigation = useNavigation();
@@ -24,7 +25,7 @@ export default function Login() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { height, width } = Dimensions.get("window");
+  const { width } = Dimensions.get("window");
   const isMobile = width < 768;
 
   const showAlert = (title, message) => {
@@ -32,6 +33,7 @@ export default function Login() {
     else Alert.alert(title, message);
   };
 
+  // === LOGIN ===
   async function onSubmit() {
     if (!emailOrUsername.trim() || !password.trim()) {
       showAlert("Campos obligatorios", "Por favor, completa todos los campos.");
@@ -40,8 +42,38 @@ export default function Login() {
 
     try {
       setLoading(true);
-      await loginUser({ emailOrUsername, password });
-      showAlert("✅ Éxito", "Inicio de sesión exitoso.");
+
+      // 🔹 Petición al backend
+      const data = await loginUser({ emailOrUsername, password });
+
+      if (!data?.role) {
+        showAlert("Error", "No se pudo identificar el rol del usuario.");
+        return;
+      }
+
+      // 🔹 Guardar sesión multiplataforma
+      await saveSession(data);
+
+      // 🔹 Redirección según rol
+      if (data.role === "organizer") {
+        showAlert("✅ Éxito", "Inicio de sesión exitoso como Organizador.");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Organizer" }],
+        });
+      } else if (data.role === "admin") {
+        showAlert("✅ Éxito", "Inicio de sesión exitoso como Administrador.");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Admin" }],
+        });
+      } else {
+        showAlert("✅ Éxito", "Inicio de sesión exitoso.");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Intro" }],
+        });
+      }
     } catch (e) {
       showAlert("Error", e.message || "Intenta de nuevo.");
     } finally {

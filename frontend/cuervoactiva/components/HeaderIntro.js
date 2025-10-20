@@ -4,13 +4,17 @@ import {
   Text,
   Pressable,
   Image,
-  SafeAreaView,
   Platform,
   useWindowDimensions,
   StatusBar,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function Header({ onLogin, onRegister }) {
+export default function Header({
+  onLogin,
+  onRegister,
+  hideAuthButtons = false,
+}) {
   const { width } = useWindowDimensions();
   const isMobile = width < 768; // breakpoint para pantallas pequeñas
 
@@ -65,13 +69,19 @@ export default function Header({ onLogin, onRegister }) {
       width: "100%",
     },
     separatorBlue: {
-      height: 5,
+      height: Platform.OS === "android" ? 1 : 5,
       backgroundColor: "#02486b",
       width: "100%",
     },
   };
 
-  // ✅ Móvil
+  console.log(
+    "Tipo de hideAuthButtons:",
+    typeof hideAuthButtons,
+    hideAuthButtons
+  );
+
+  // ✅ Versión móvil
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
       <SafeAreaView
@@ -94,15 +104,17 @@ export default function Header({ onLogin, onRegister }) {
           </View>
 
           {/* DERECHA */}
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Pressable onPress={onLogin} style={styles.button}>
-              <Text style={styles.buttonText}>Iniciar Sesión</Text>
-            </Pressable>
+          {!hideAuthButtons && (
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Pressable onPress={onLogin} style={styles.button}>
+                <Text style={styles.buttonText}>Iniciar Sesión</Text>
+              </Pressable>
 
-            <Pressable onPress={onRegister} style={styles.button}>
-              <Text style={styles.buttonText}>Registrarse</Text>
-            </Pressable>
-          </View>
+              <Pressable onPress={onRegister} style={styles.button}>
+                <Text style={styles.buttonText}>Registrarse</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
 
         {/* Línea blanca + azul */}
@@ -112,31 +124,30 @@ export default function Header({ onLogin, onRegister }) {
     );
   }
 
-  // 💻 Web
+  // 💻 Versión web
   return (
     <>
       <View style={styles.container}>
         {/* IZQUIERDA */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View style={styles.logoContainer}>
-            <Image
-              source={require("../assets/logo.png")}
-              style={styles.logo}
-            />
+            <Image source={require("../assets/logo.png")} style={styles.logo} />
           </View>
           <Text style={styles.title}>CUERVO ACTIVA</Text>
         </View>
 
         {/* DERECHA */}
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Pressable onPress={onLogin} style={styles.button}>
-            <Text style={styles.buttonText}>Iniciar Sesión</Text>
-          </Pressable>
+        {!hideAuthButtons && (
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Pressable onPress={onLogin} style={styles.button}>
+              <Text style={styles.buttonText}>Iniciar Sesión</Text>
+            </Pressable>
 
-          <Pressable onPress={onRegister} style={styles.button}>
-            <Text style={styles.buttonText}>Registrarse</Text>
-          </Pressable>
-        </View>
+            <Pressable onPress={onRegister} style={styles.button}>
+              <Text style={styles.buttonText}>Registrarse</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
 
       {/* Línea blanca + azul */}

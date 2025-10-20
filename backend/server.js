@@ -1,51 +1,45 @@
-//PUNTO DE ENTRADA DEL BACKEND
 
-//1) Importamos las dependencias necesarias
-const express = require("express"); //Framework web para crear el servidor y las rutas
-const cors = require("cors"); //Permite que el frontend se comunique con el backend (CORS)
-const connectDB = require("./config/db"); //Función para conectar con MongoDB
-require("dotenv").config(); //Carga las variables de entorno desde el archivo .env
+// PUNTO DE ENTRADA DEL BACKEND
 
-//2) Inicializamos la aplicación Express
+const express = require("express");
+const cors = require("cors");
+const connectDB = require("./config/db");
+require("dotenv").config();
+const path = require("path");
+const fs = require("fs");
+
+// Inicializamos la app
 const app = express();
 
-//3) Middlewares globales
-//Habilitamos CORS
-//Esto permite que el frontend pueda hacer peticiones HTTP a este servidor sin ser bloqueado.
+// Middlewares globales
 app.use(cors());
-
-//Middleware para interpretar datos JSON
-//Permite que Express lea el cuerpo (body) de las peticiones en formato JSON.
 app.use(express.json());
 
-//4)Conexión a la base de datos
-//Llamamos a la función que conecta a MongoDB usando Mongoose.
-//Esta función está definida en /config/db.js
+// Conexión a MongoDB
 connectDB();
 
-//5) Definición de rutas principales
-//RUTAS DE USUARIOS — Registro, Login, Perfil
+// 📁 Verificar que exista la carpeta uploads/
+const uploadsPath = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+  console.log("📂 Carpeta 'uploads' creada automáticamente en", uploadsPath);
+}
+
+// Middleware para servir archivos subidos
+app.use("/uploads", express.static(uploadsPath));
+
+// Rutas principales
 app.use("/api/users", require("./routes/userRoutes"));
-
-//RUTAS DE EVENTOS — Crear, listar, editar y eliminar eventos
 app.use("/api/events", require("./routes/eventRoutes"));
-
-//RUTAS DE COMENTARIOS — Agregar y listar comentarios de los eventos
 app.use("/api/comments", require("./routes/commentRoutes"));
-
-//RUTAS DE FAVORITOS — Agregar, quitar y listar eventos favoritos
 app.use("/api/favorites", require("./routes/favoriteRoutes"));
-
-//RUTAS DE NOTIFICACIONES — Mostrar recordatorios y marcarlas como leídas
 app.use("/api/notifications", require("./routes/notificationRoutes"));
-
-//RUTAS CULTURALES — Listar artículos, noticias o secciones culturales
 app.use("/api/cultural", require("./routes/culturalRoutes"));
 
-//6) Puerto y arranque del servidor
-//Definimos el puerto en el que se ejecutará el servidor.
+// Puerto y arranque
 const PORT = process.env.PORT || 5000;
-
-//Iniciamos el servidor escuchando el puerto definido.
-//Cuando esté en ejecución correctamente, mostrará un mensaje en la consola.
-app.listen(PORT, () => console.log(`🚀 Servidor corriendo en puerto ${PORT}`));
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Servidor corriendo en:`);
+  console.log(`🌐 Web: http://localhost:${PORT}`);
+  console.log(`📱 Android (red local): http://192.168.18.19:${PORT}`);
+});

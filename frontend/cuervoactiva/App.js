@@ -5,9 +5,10 @@ import { NavigationContainer } from "@react-navigation/native"; //Contenedor pri
 import { createStackNavigator } from "@react-navigation/stack"; //Sistema de navegación tipo "stack"
 
 //2) Importamos las pantallas principales
-import Intro from "./screens/Intro";       //Pantalla de presentación / portada
+import Intro from "./screens/Intro"; //Pantalla de presentación / portada
 import Register from "./screens/Register"; //Pantalla de registro de usuario
-import Login from "./screens/Login";       //Pantalla de inicio de sesión
+import Login from "./screens/Login"; //Pantalla de inicio de sesión
+import Organizer from "./screens/Organizer";
 
 //3) Creamos el Stack Navigator
 //Este componente permite navegar entre pantallas de forma apilada
@@ -25,8 +26,8 @@ export default function App() {
       <Stack.Navigator initialRouteName="Intro">
         {/*Pantalla inicial — Intro */}
         <Stack.Screen
-          name="Intro"               //Nombre de la ruta
-          component={Intro}          //Componente asociado
+          name="Intro" //Nombre de la ruta
+          component={Intro} //Componente asociado
           options={{ headerShown: false }} //Oculta la cabecera nativa
         />
 
@@ -41,6 +42,12 @@ export default function App() {
         <Stack.Screen
           name="Login"
           component={Login}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="Organizer"
+          component={Organizer}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
