@@ -64,25 +64,27 @@ export default function Login() {
           index: 0,
           routes: [{ name: "Organizer" }],
         });
-      } 
-      else if (role === "admin") {
+      } else if (role === "admin") {
         if (Platform.OS === "web") {
-          // ✅ Solo en web se redirige al panel de administrador
           showAlert("✅ Éxito", "Inicio de sesión exitoso como Administrador.");
           navigation.reset({
-          index: 0,
-          routes: [{ name: "Admin" }],
-        });
+            index: 0,
+            routes: [{ name: "Admin" }],
+          });
         } else {
-          // 🚫 En móvil no está disponible
           showAlert(
             "Acceso restringido",
             "El panel de administrador solo está disponible en la versión web."
           );
           return;
         }
-      } 
-      else {
+      } else if (role === "user") {
+        showAlert("✅ Éxito", "Inicio de sesión exitoso como Usuario.");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "User" }],
+        });
+      } else {
         showAlert("✅ Éxito", "Inicio de sesión exitoso.");
         navigation.reset({
           index: 0,

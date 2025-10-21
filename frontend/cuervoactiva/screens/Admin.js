@@ -287,7 +287,7 @@ export default function Admin() {
                 >
                   {search.trim()
                     ? "🔍 No se encontraron eventos."
-                    : "📭 No hay eventos disponibles actualmente."}
+                    : "📭 No hay eventos disponibles."}
                 </Text>
               )}
             </ScrollView>
