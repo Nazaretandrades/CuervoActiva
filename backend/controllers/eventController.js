@@ -73,22 +73,19 @@ exports.updateEvent = async (req, res) => {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
-    if (!event.createdBy) {
-      return res.status(500).json({ error: "Evento sin creador asignado" });
-    }
-
-    if (req.user.role !== "admin" && !event.createdBy.equals(req.user.id)) {
+    // 🔸 Solo el creador o un admin puede editar
+    if (req.user.role !== "admin" && event.createdBy?.toString() !== req.user.id) {
       return res.status(403).json({ error: "No autorizado" });
     }
 
     Object.assign(event, req.body);
-    await event.save();
+    const updated = await event.save();
 
-    console.log(`✏️ Evento actualizado: ${event.title}`);
-    res.json(event);
+    console.log(`✏️ Evento actualizado: ${updated.title}`);
+    res.json(updated);
   } catch (err) {
     console.error("❌ Error al actualizar evento:", err);
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -98,15 +95,12 @@ exports.deleteEvent = async (req, res) => {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
-    if (!event.createdBy) {
-      return res.status(500).json({ error: "Evento sin creador asignado" });
-    }
-
+    // 🔸 Solo admin puede eliminar
     if (req.user.role !== "admin") {
       return res.status(403).json({ error: "No autorizado" });
     }
 
-    await event.remove();
+    await event.deleteOne();
     console.log(`🗑️ Evento eliminado: ${event.title}`);
     res.json({ message: "Evento eliminado correctamente" });
   } catch (err) {

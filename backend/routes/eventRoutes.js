@@ -11,6 +11,7 @@ const {
 const { auth, authorizeRoles } = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
 
+// 📸 Subir imagen
 router.post(
   "/upload",
   auth,
@@ -24,7 +25,7 @@ router.post(
   }
 );
 
-
+// ✅ IMPORTANTE: las rutas más específicas primero
 router.get(
   "/organizer",
   auth,
@@ -32,6 +33,7 @@ router.get(
   listOrganizerEvents
 );
 
+// 🔹 Rutas generales
 router.get("/", listEvents);
 router.get("/:id", getEvent);
 

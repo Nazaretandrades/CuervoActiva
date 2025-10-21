@@ -15,7 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { loginUser } from "../services/auth";
-import { saveSession } from "../services/sessionManager"; // ✅ nuevo import
+import { saveSession } from "../services/sessionManager"; // ✅ Import correcto
 
 export default function Login() {
   const navigation = useNavigation();
@@ -46,7 +46,10 @@ export default function Login() {
       // 🔹 Petición al backend
       const data = await loginUser({ emailOrUsername, password });
 
-      if (!data?.role) {
+      // ✅ Extraer rol correctamente del backend
+      const role = data.user?.role || data.role;
+
+      if (!role) {
         showAlert("Error", "No se pudo identificar el rol del usuario.");
         return;
       }
@@ -55,19 +58,31 @@ export default function Login() {
       await saveSession(data);
 
       // 🔹 Redirección según rol
-      if (data.role === "organizer") {
+      if (role === "organizer") {
         showAlert("✅ Éxito", "Inicio de sesión exitoso como Organizador.");
         navigation.reset({
           index: 0,
           routes: [{ name: "Organizer" }],
         });
-      } else if (data.role === "admin") {
-        showAlert("✅ Éxito", "Inicio de sesión exitoso como Administrador.");
-        navigation.reset({
+      } 
+      else if (role === "admin") {
+        if (Platform.OS === "web") {
+          // ✅ Solo en web se redirige al panel de administrador
+          showAlert("✅ Éxito", "Inicio de sesión exitoso como Administrador.");
+          navigation.reset({
           index: 0,
           routes: [{ name: "Admin" }],
         });
-      } else {
+        } else {
+          // 🚫 En móvil no está disponible
+          showAlert(
+            "Acceso restringido",
+            "El panel de administrador solo está disponible en la versión web."
+          );
+          return;
+        }
+      } 
+      else {
         showAlert("✅ Éxito", "Inicio de sesión exitoso.");
         navigation.reset({
           index: 0,
