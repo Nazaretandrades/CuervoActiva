@@ -40,24 +40,61 @@ exports.getEvent = async (req, res) => {
   }
 };
 
+const Event = require("../models/event");
+const User = require("../models/user");
+const Notification = require("../models/notification");
+
 // ✅ Crear evento (SOLO ORGANIZADOR)
 exports.createEvent = async (req, res) => {
-  // Solo organizadores pueden crear
-  if (req.user.role !== "organizer") {
-    return res.status(403).json({ error: "Solo los organizadores pueden crear eventos" });
-  }
-
   try {
-    const event = await Event.create({ ...req.body, createdBy: req.user.id });
+    // Solo organizadores pueden crear
+    if (req.user.role !== "organizer") {
+      return res
+        .status(403)
+        .json({ error: "Solo los organizadores pueden crear eventos" });
+    }
 
-    // Notificar a los usuarios normales
+    const { title, description, date, hour, location, category, image_url } =
+      req.body;
+
+    // ✅ Validar campos obligatorios (incluye imagen)
+    if (
+      !title?.trim() ||
+      !description?.trim() ||
+      !date?.trim() ||
+      !hour?.trim() ||
+      !location?.trim() ||
+      !category?.trim() ||
+      !image_url?.trim()
+    ) {
+      return res.status(400).json({
+        error:
+          "Todos los campos (título, descripción, fecha, hora, lugar, categoría e imagen) son obligatorios.",
+      });
+    }
+
+    // ✅ Crear evento
+    const event = await Event.create({
+      title: title.trim(),
+      description: description.trim(),
+      date: date.trim(),
+      hour: hour.trim(),
+      location: location.trim(),
+      category: category.trim(),
+      image_url: image_url.trim(),
+      createdBy: req.user.id,
+    });
+
+    // 🔔 Notificar a los usuarios normales
     const users = await User.find({ role: "user" });
-    const notifications = users.map((user) => ({
-      user: user._id,
-      message: `Nuevo evento disponible: ${event.title}`,
-      event: event._id,
-    }));
-    await Notification.insertMany(notifications);
+    if (users.length > 0) {
+      const notifications = users.map((user) => ({
+        user: user._id,
+        message: `Nuevo evento disponible: ${event.title}`,
+        event: event._id,
+      }));
+      await Notification.insertMany(notifications);
+    }
 
     console.log(`✅ Evento creado por ${req.user.id}: ${event.title}`);
     res.status(201).json(event);
@@ -74,7 +111,10 @@ exports.updateEvent = async (req, res) => {
     if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
     // 🔸 Solo el creador o un admin puede editar
-    if (req.user.role !== "admin" && event.createdBy?.toString() !== req.user.id) {
+    if (
+      req.user.role !== "admin" &&
+      event.createdBy?.toString() !== req.user.id
+    ) {
       return res.status(403).json({ error: "No autorizado" });
     }
 

@@ -187,19 +187,46 @@ export default function Organizer({ navigation }) {
 
   // === Crear o editar evento ===
   const handleSubmit = async () => {
-    if (!form.title || !form.description || !form.location) {
-      Alert.alert(
-        "Campos obligatorios",
-        "Completa todos los campos requeridos."
+    // ✅ Función de alerta universal (sirve para web y móvil)
+    const showAlert = (title, message) => {
+      if (Platform.OS === "web") {
+        window.alert(`${title}\n\n${message}`);
+      } else {
+        Alert.alert(title, message);
+      }
+    };
+
+    // ✅ Validar campos requeridos (incluye imagen)
+    const requiredFields = [
+      { key: "title", label: "Título" },
+      { key: "description", label: "Descripción" },
+      { key: "date", label: "Fecha" },
+      { key: "hour", label: "Hora" },
+      { key: "location", label: "Lugar" },
+      { key: "category", label: "Categoría" },
+      { key: "image_url", label: "Imagen" },
+    ];
+
+    const emptyFields = requiredFields.filter(
+      (field) => !form[field.key] || form[field.key].trim() === ""
+    );
+
+    if (emptyFields.length > 0) {
+      const fieldNames = emptyFields.map((f) => f.label).join(", ");
+      showAlert(
+        "Campos incompletos",
+        `Por favor, completa los siguientes campos: ${fieldNames}.`
       );
       return;
     }
 
     setLoading(true);
     try {
-      const token = await getSessionToken();
+      // 🔹 Obtener token de sesión
+      const session = await getSession();
+      const token = session?.token;
       if (!token) {
-        Alert.alert("Error", "No se encontró token. Inicia sesión nuevamente.");
+        showAlert("Error", "No se encontró token. Inicia sesión nuevamente.");
         return;
       }
 
@@ -207,13 +234,13 @@ export default function Organizer({ navigation }) {
       const url = form._id ? `${API_URL}/${form._id}` : API_URL;
 
       const bodyData = {
-        title: form.title,
-        description: form.description,
-        date: form.date,
-        hour: form.hour,
-        location: form.location,
-        category: form.category,
-        image_url: form.image_url,
+        title: form.title.trim(),
+        description: form.description.trim(),
+        date: form.date.trim(),
+        hour: form.hour.trim(),
+        location: form.location.trim(),
+        category: form.category.trim(),
+        image_url: form.image_url.trim(),
       };
 
       const res = await fetch(url, {
@@ -225,17 +252,22 @@ export default function Organizer({ navigation }) {
         body: JSON.stringify(bodyData),
       });
 
-      if (!res.ok) throw new Error("Error al guardar el evento");
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText);
+      }
+
       const data = await res.json();
 
       if (form._id) {
         setEvents((prev) => prev.map((e) => (e._id === data._id ? data : e)));
-        Alert.alert("✅", "Evento actualizado correctamente.");
+        showAlert("✅ Éxito", "Evento actualizado correctamente.");
       } else {
         setEvents((prev) => [...prev, data]);
-        Alert.alert("✅", "Evento creado correctamente.");
+        showAlert("✅ Éxito", "Evento creado correctamente.");
       }
 
+      // 🔹 Resetear formulario
       setForm({
         _id: null,
         title: "",
@@ -247,8 +279,11 @@ export default function Organizer({ navigation }) {
         image_url: "",
       });
     } catch (err) {
-      console.error(err);
-      Alert.alert("Error", err.message);
+      console.error("❌ Error al guardar evento:", err);
+      showAlert(
+        "Error",
+        err.message || "Ocurrió un error al guardar el evento."
+      );
     } finally {
       setLoading(false);
     }
