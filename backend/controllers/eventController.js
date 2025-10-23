@@ -1,3 +1,4 @@
+// ✅ SOLO una vez
 const Event = require("../models/event");
 const User = require("../models/user");
 const Notification = require("../models/notification");
@@ -13,7 +14,7 @@ exports.listEvents = async (req, res) => {
   }
 };
 
-// ✅ Listar solo los eventos creados por el organizador autenticado
+// ✅ Listar eventos de organizador
 exports.listOrganizerEvents = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -40,14 +41,9 @@ exports.getEvent = async (req, res) => {
   }
 };
 
-const Event = require("../models/event");
-const User = require("../models/user");
-const Notification = require("../models/notification");
-
-// ✅ Crear evento (SOLO ORGANIZADOR)
+// ✅ Crear evento (solo organizador)
 exports.createEvent = async (req, res) => {
   try {
-    // Solo organizadores pueden crear
     if (req.user.role !== "organizer") {
       return res
         .status(403)
@@ -57,7 +53,6 @@ exports.createEvent = async (req, res) => {
     const { title, description, date, hour, location, category, image_url } =
       req.body;
 
-    // ✅ Validar campos obligatorios (incluye imagen)
     if (
       !title?.trim() ||
       !description?.trim() ||
@@ -73,7 +68,6 @@ exports.createEvent = async (req, res) => {
       });
     }
 
-    // ✅ Crear evento
     const event = await Event.create({
       title: title.trim(),
       description: description.trim(),
@@ -85,7 +79,7 @@ exports.createEvent = async (req, res) => {
       createdBy: req.user.id,
     });
 
-    // 🔔 Notificar a los usuarios normales
+    // Notificar a usuarios normales
     const users = await User.find({ role: "user" });
     if (users.length > 0) {
       const notifications = users.map((user) => ({
@@ -104,17 +98,13 @@ exports.createEvent = async (req, res) => {
   }
 };
 
-// ✅ Editar evento (organizer puede editar los suyos, admin todos)
+// ✅ Editar evento
 exports.updateEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
-    // 🔸 Solo el creador o un admin puede editar
-    if (
-      req.user.role !== "admin" &&
-      event.createdBy?.toString() !== req.user.id
-    ) {
+    if (req.user.role !== "admin" && event.createdBy?.toString() !== req.user.id) {
       return res.status(403).json({ error: "No autorizado" });
     }
 
@@ -135,7 +125,6 @@ exports.deleteEvent = async (req, res) => {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
-    // 🔸 Solo admin puede eliminar
     if (req.user.role !== "admin") {
       return res.status(403).json({ error: "No autorizado" });
     }

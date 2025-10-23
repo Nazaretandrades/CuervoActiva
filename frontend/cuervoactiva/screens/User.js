@@ -5,10 +5,14 @@ import {
   TextInput,
   Pressable,
   ScrollView,
+  Image,
+  Animated,
+  TouchableWithoutFeedback,
   Platform,
   Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native"; // ✅ para navegación simulada
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
@@ -20,12 +24,15 @@ const API_URL = `${API_BASE}/api/events`;
 const FAVORITES_URL = `${API_BASE}/api/favorites`;
 
 export default function User() {
+  const navigation = useNavigation();
   const [userName, setUserName] = useState("Usuario");
   const [events, setEvents] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [favorites, setFavorites] = useState([]);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuAnim] = useState(new Animated.Value(-250));
 
   // === Obtener token multiplataforma ===
   const getSessionToken = async () => {
@@ -55,24 +62,14 @@ export default function User() {
         session = sessionString ? JSON.parse(sessionString) : null;
       }
 
-      console.log("🟢 Sesión detectada en User.js:", session);
-
-      // ✅ Verificamos ambos formatos posibles de sesión
-      if (session?.user?.name) {
-        setUserName(session.user.name);
-      } else if (session?.name) {
-        setUserName(session.name);
-      } else if (session?.user?.username) {
-        setUserName(session.user.username);
-      } else if (session?.username) {
-        setUserName(session.username);
-      } else if (session?.user?.email) {
+      if (session?.user?.name) setUserName(session.user.name);
+      else if (session?.name) setUserName(session.name);
+      else if (session?.user?.username) setUserName(session.user.username);
+      else if (session?.username) setUserName(session.username);
+      else if (session?.user?.email)
         setUserName(session.user.email.split("@")[0]);
-      } else if (session?.email) {
-        setUserName(session.email.split("@")[0]);
-      } else {
-        setUserName("Invitado");
-      }
+      else if (session?.email) setUserName(session.email.split("@")[0]);
+      else setUserName("Invitado");
     } catch (err) {
       console.error("Error obteniendo usuario:", err);
       setUserName("Invitado");
@@ -86,19 +83,16 @@ export default function User() {
         await getUserName();
         const token = await getSessionToken();
 
-        // 🔹 Cargar eventos públicos
         const resEvents = await fetch(API_URL);
         if (!resEvents.ok) throw new Error("Error al obtener eventos");
         const dataEvents = await resEvents.json();
         setEvents(dataEvents);
         setFiltered(dataEvents);
 
-        // 🔹 Cargar favoritos del usuario autenticado
         if (token) {
           const resFav = await fetch(FAVORITES_URL, {
             headers: { Authorization: `Bearer ${token}` },
           });
-
           if (resFav.ok) {
             const favs = await resFav.json();
             setFavorites(favs.map((f) => f._id));
@@ -111,18 +105,15 @@ export default function User() {
         else Alert.alert("Error", "No se pudieron cargar los eventos.");
       }
     };
-
     loadData();
   }, []);
 
-  // === Filtrar búsqueda + categoría ===
+  // === Filtro ===
   useEffect(() => {
     let data = events;
-
     if (selectedCategory !== "all") {
       data = data.filter((e) => e.category === selectedCategory);
     }
-
     if (search.trim()) {
       const term = search.toLowerCase();
       data = data.filter(
@@ -132,78 +123,43 @@ export default function User() {
           e.category?.toLowerCase().includes(term)
       );
     }
-
     setFiltered(data);
   }, [search, selectedCategory, events]);
 
-  // === Agregar o quitar favorito (instantáneo) ===
-  const toggleFavorite = async (eventId) => {
-    try {
-      const token = await getSessionToken();
-      if (!token) throw new Error("Sesión no válida");
-
-      const normalizedId = String(eventId);
-      const currentlyFavorite = favorites.includes(normalizedId);
-
-      // Actualización instantánea
-      setFavorites((prev) =>
-        currentlyFavorite
-          ? prev.filter((id) => id !== normalizedId)
-          : [...prev, normalizedId]
-      );
-
-      // Petición al backend
-      const res = await fetch(`${FAVORITES_URL}/${normalizedId}`, {
-        method: currentlyFavorite ? "DELETE" : "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error("Error al actualizar favoritos");
-
-      // Refrescar favoritos desde el backend
-      const updatedRes = await fetch(FAVORITES_URL, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (updatedRes.ok) {
-        const updatedFavs = await updatedRes.json();
-        setFavorites(updatedFavs.map((f) => String(f._id)));
-      }
-    } catch (err) {
-      console.error("❌ Error al cambiar favorito:", err);
+  // === Alternar menú lateral ===
+  const toggleMenu = () => {
+    if (menuVisible) {
+      Animated.timing(menuAnim, {
+        toValue: -250,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setMenuVisible(false));
+    } else {
+      setMenuVisible(true);
+      Animated.timing(menuAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
     }
   };
 
-  // === Botón de categoría ===
-  const CategoryButton = ({ label, value, color }) => (
-    <Pressable
-      onPress={() => setSelectedCategory(value)}
-      style={{
-        backgroundColor: selectedCategory === value ? color : `${color}33`,
-        paddingVertical: 10,
-        borderRadius: 8,
-        marginBottom: 10,
-        alignItems: "center",
-        transition: "0.3s",
-      }}
-    >
-      <Text
-        style={{
-          color: selectedCategory === value ? "#fff" : "#014869",
-          fontWeight: "bold",
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
+  // === Simulación de navegación ===
+  const simulateNavigation = (route) => {
+    toggleMenu();
+    if (Platform.OS === "web") {
+      alert(`🔗 Navegando a: ${route}`);
+    } else {
+      Alert.alert("Navegación simulada", `Iría a: ${route}`);
+    }
+  };
 
   // === Render ===
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons={true} />
 
-      {/* Barra superior */}
+      {/* ====== Barra superior ====== */}
       <View
         style={{
           flexDirection: "row",
@@ -229,20 +185,216 @@ export default function User() {
           }}
         />
 
-        <View style={{ flexDirection: "row" }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable style={{ marginHorizontal: 8 }}>
             <Text>🔔</Text>
           </Pressable>
           <Pressable style={{ marginHorizontal: 8 }}>
             <Text>📅</Text>
           </Pressable>
-          <Pressable style={{ marginHorizontal: 8 }}>
-            <Text>≡</Text>
+          <Pressable style={{ marginHorizontal: 8 }} onPress={toggleMenu}>
+            <Image
+              source={require("../assets/iconos/menu-usuario.png")}
+              style={{ width: 24, height: 24, tintColor: "#014869" }}
+            />
           </Pressable>
         </View>
       </View>
 
-      {/* Contenido principal */}
+      {/* ====== MENÚ ====== */}
+      {Platform.OS === "web" ? (
+        // 🌐 VERSIÓN WEB
+        <>
+          {menuVisible && (
+            <TouchableWithoutFeedback onPress={toggleMenu}>
+              <View
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  zIndex: 9,
+                }}
+              />
+            </TouchableWithoutFeedback>
+          )}
+
+          <Animated.View
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: 250,
+              height: "100%",
+              backgroundColor: "#f8f8f8",
+              padding: 20,
+              zIndex: 10,
+              transform: [{ translateX: menuAnim }],
+              elevation: 6,
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+            }}
+          >
+            <Text
+              style={{ fontWeight: "bold", fontSize: 18, marginBottom: 30 }}
+            >
+              Menú
+            </Text>
+
+            {[
+              { label: "Perfil", route: "Perfil" },
+              { label: "Sobre nosotros", route: "Sobre nosotros" },
+              { label: "Cultura e Historia", route: "Cultura e Historia" },
+              { label: "Ver favoritos", route: "Favoritos" },
+              { label: "Contacto", route: "Contacto" },
+            ].map((item, index) => (
+              <Pressable
+                key={index}
+                onPress={() => simulateNavigation(item.route)}
+                style={{ marginBottom: 20 }}
+              >
+                <Text
+                  style={{ color: "#014869", fontSize: 16, fontWeight: "600" }}
+                >
+                  {item.label}
+                </Text>
+              </Pressable>
+            ))}
+          </Animated.View>
+        </>
+      ) : (
+        // 📱 VERSIÓN MÓVIL
+        menuVisible && (
+          <View
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "#f4f6f7",
+              zIndex: 20,
+              paddingHorizontal: 24,
+              paddingTop: 50,
+            }}
+          >
+            {/* 🔙 Header */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 30,
+              }}
+            >
+              <Pressable onPress={toggleMenu} style={{ marginRight: 15 }}>
+                <Image
+                  source={require("../assets/iconos/back-usuario.png")}
+                  style={{ width: 22, height: 22, tintColor: "#014869" }}
+                />
+              </Pressable>
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontWeight: "bold",
+                  color: "#014869",
+                  textAlign: "center",
+                  flex: 1,
+                  marginRight: 37,
+                }}
+              >
+                Menú
+              </Text>
+            </View>
+
+            {/* 🔹 Opciones */}
+            <View style={{ flex: 1 }}>
+              {[
+                {
+                  label: "Sobre nosotros",
+                  icon: require("../assets/iconos/info-usuario.png"),
+                },
+                {
+                  label: "Cultura e Historia",
+                  icon: require("../assets/iconos/museo-usuario.png"),
+                },
+                {
+                  label: "Ver favoritos",
+                  icon: require("../assets/iconos/favs-usuario.png"),
+                },
+                {
+                  label: "Contacto",
+                  icon: require("../assets/iconos/phone-usuario.png"),
+                },
+              ].map((item, index) => (
+                <Pressable
+                  key={index}
+                  onPress={() => simulateNavigation(item.label)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 25,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Image
+                      source={item.icon}
+                      style={{
+                        width: 22,
+                        height: 22,
+                        tintColor: "#014869",
+                        marginRight: 14,
+                      }}
+                    />
+                    <Text
+                      style={{
+                        color: "#014869",
+                        fontSize: 16,
+                        fontWeight: "600",
+                      }}
+                    >
+                      {item.label}
+                    </Text>
+                  </View>
+
+                  <Image
+                    source={require("../assets/iconos/siguiente.png")}
+                    style={{ width: 18, height: 18, tintColor: "#014869" }}
+                  />
+                </Pressable>
+              ))}
+            </View>
+
+            {/* 🔸 Barra inferior */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-around",
+                alignItems: "center",
+                borderTopWidth: 1,
+                borderTopColor: "#01486933",
+                paddingVertical: 14,
+              }}
+            >
+              <Image
+                source={require("../assets/iconos/search.png")}
+                style={{ width: 22, height: 22, tintColor: "#014869" }}
+              />
+              <Image
+                source={require("../assets/iconos/calendar.png")}
+                style={{ width: 22, height: 22, tintColor: "#014869" }}
+              />
+              <Image
+                source={require("../assets/iconos/user.png")}
+                style={{ width: 22, height: 22, tintColor: "#014869" }}
+              />
+            </View>
+          </View>
+        )
+      )}
+
+      {/* ====== Contenido principal ====== */}
       <View
         style={{
           flex: 1,
@@ -257,22 +409,36 @@ export default function User() {
             Categorías
           </Text>
 
-          <CategoryButton label="Todos" value="all" color="#014869" />
-          <CategoryButton label="Deporte" value="deporte" color="#F3B23F" />
-          <CategoryButton
-            label="Concurso y taller"
-            value="concurso"
-            color="#F5D84A"
-          />
-          <CategoryButton
-            label="Cultura e Historia"
-            value="cultura"
-            color="#784BA0"
-          />
-          <CategoryButton label="Arte y Música" value="arte" color="#3BAE9E" />
+          {[
+            { label: "Todos", value: "all", color: "#014869" },
+            { label: "Deporte", value: "deporte", color: "#F3B23F" },
+            { label: "Cultura e Historia", value: "cultura", color: "#784BA0" },
+          ].map((cat, i) => (
+            <Pressable
+              key={i}
+              onPress={() => setSelectedCategory(cat.value)}
+              style={{
+                backgroundColor:
+                  selectedCategory === cat.value ? cat.color : `${cat.color}33`,
+                paddingVertical: 10,
+                borderRadius: 8,
+                marginBottom: 10,
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  color: selectedCategory === cat.value ? "#fff" : "#014869",
+                  fontWeight: "bold",
+                }}
+              >
+                {cat.label}
+              </Text>
+            </Pressable>
+          ))}
         </View>
 
-        {/* Listado de eventos */}
+        {/* Eventos */}
         <View style={{ flex: 1 }}>
           <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
             Listado de eventos
@@ -295,10 +461,6 @@ export default function User() {
                       borderRadius: 8,
                       borderWidth: 1,
                       borderColor: isFav ? "#014869" : "#ddd",
-                      boxShadow: isFav
-                        ? "0 0 6px rgba(1,72,105,0.3)"
-                        : "0 0 2px rgba(0,0,0,0.1)",
-                      transition: "0.2s",
                     }}
                   >
                     <Text
@@ -313,7 +475,7 @@ export default function User() {
                     </Text>
 
                     <Pressable
-                      onPress={() => toggleFavorite(ev._id)}
+                      onPress={() => simulateNavigation("Detalles del evento")}
                       style={{
                         marginLeft: 10,
                         paddingHorizontal: 10,

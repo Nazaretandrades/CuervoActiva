@@ -5,13 +5,17 @@ import {
   TextInput,
   Pressable,
   ScrollView,
+  Animated,
+  TouchableWithoutFeedback,
+  Platform,
+  Alert,
+  Image,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import DropDownPicker from "react-native-dropdown-picker";
 import { getSession } from "../services/sessionManager";
 
-// ✅ Solo web: conexión directa a localhost
 const API_URL = "http://localhost:5000/api/events";
 
 export default function Admin() {
@@ -20,6 +24,8 @@ export default function Admin() {
   const [search, setSearch] = useState("");
   const [adminName, setAdminName] = useState("Admin");
   const [editing, setEditing] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     _id: null,
@@ -32,8 +38,9 @@ export default function Admin() {
     image_url: "",
   });
 
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // === Menú lateral (solo web) ===
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuAnim] = useState(new Animated.Value(-250));
 
   // === Cargar eventos ===
   useEffect(() => {
@@ -164,11 +171,7 @@ export default function Admin() {
         },
       });
 
-      const text = await res.text();
-      console.log("Respuesta DELETE:", text);
-
-      if (!res.ok) throw new Error(`Error al eliminar: ${text}`);
-
+      if (!res.ok) throw new Error("Error al eliminar evento");
       setEvents((prev) => prev.filter((e) => e._id !== id));
       setFiltered((prev) => prev.filter((e) => e._id !== id));
 
@@ -179,17 +182,43 @@ export default function Admin() {
     }
   };
 
+  // === Menú lateral ===
+  const toggleMenu = () => {
+    if (menuVisible) {
+      Animated.timing(menuAnim, {
+        toValue: -250,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setMenuVisible(false));
+    } else {
+      setMenuVisible(true);
+      Animated.timing(menuAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
+
+  const handleMenuOption = (option) => {
+    toggleMenu();
+    if (Platform.OS === "web") alert(`Iría a: ${option}`);
+    else Alert.alert("Navegación simulada", option);
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons={true} />
 
-      {/* Barra superior */}
+      {/* === BARRA SUPERIOR === */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
           padding: 16,
           justifyContent: "space-between",
+          borderBottomWidth: 1,
+          borderColor: "#eee",
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -212,24 +241,75 @@ export default function Admin() {
           }}
         />
 
-        <View style={{ flexDirection: "row" }}>
-          <Pressable style={{ marginHorizontal: 8 }}>
-            <Text>🔔</Text>
-          </Pressable>
-          <Pressable style={{ marginHorizontal: 8 }}>
-            <Text>📅</Text>
-          </Pressable>
-          <Pressable style={{ marginHorizontal: 8 }}>
-            <Text>≡</Text>
-          </Pressable>
-        </View>
+        {/* === ICONO DE MENÚ COMO IMAGEN === */}
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={require("../assets/iconos/menu-admin.png")} // tu imagen de menú
+            style={{ width: 26, height: 26 }}
+          />
+        </Pressable>
       </View>
 
-      {/* CUERPO PRINCIPAL */}
+      {/* === MENÚ LATERAL (solo web) === */}
+      {Platform.OS === "web" && menuVisible && (
+        <>
+          <TouchableWithoutFeedback onPress={toggleMenu}>
+            <View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                zIndex: 9,
+              }}
+            />
+          </TouchableWithoutFeedback>
+
+          <Animated.View
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: 250,
+              height: "100%",
+              backgroundColor: "#f8f8f8",
+              padding: 20,
+              zIndex: 10,
+              transform: [{ translateX: menuAnim }],
+            }}
+          >
+            {[
+              "Perfil",
+              "Sobre nosotros",
+              "Cultura e Historia",
+              "Ver usuarios",
+              "Contacto",
+            ].map((item, i) => (
+              <Pressable
+                key={i}
+                onPress={() => handleMenuOption(item)}
+                style={{ marginBottom: 25 }}
+              >
+                <Text
+                  style={{
+                    color: "#014869",
+                    fontSize: 18,
+                    fontWeight: "700",
+                  }}
+                >
+                  {item}
+                </Text>
+              </Pressable>
+            ))}
+          </Animated.View>
+        </>
+      )}
+
+      {/* === CUERPO PRINCIPAL === */}
       <View style={{ flex: 1, padding: 16 }}>
         {!editing ? (
           <>
-            {/* Mostrar título solo si hay eventos */}
             {filtered.length > 0 && (
               <Text style={{ fontWeight: "bold", marginBottom: 8 }}>
                 Listado de eventos:
@@ -397,6 +477,7 @@ export default function Admin() {
                 }}
               />
 
+              {/* BOTONES */}
               <View
                 style={{
                   flexDirection: "row",
