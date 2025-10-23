@@ -2,17 +2,18 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  TextInput,
+  Image,
   Pressable,
   ScrollView,
-  Image,
-  Animated,
-  TouchableWithoutFeedback,
+  Modal,
   Platform,
   Alert,
+  Animated,
+  TouchableWithoutFeedback,
+  Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
@@ -21,21 +22,25 @@ const API_BASE =
     ? "http://192.168.18.19:5000"
     : "http://localhost:5000";
 const API_URL = `${API_BASE}/api/events`;
-const FAVORITES_URL = `${API_BASE}/api/favorites`;
+const COMMENTS_URL = `${API_BASE}/api/comments`;
 
-export default function User() {
-  const navigation = useNavigation();
+export default function UserEventDetail() {
+  const route = useRoute();
+  const { eventId } = route.params || {};
+
+  const [event, setEvent] = useState(null);
+  const [rating, setRating] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
+  const [hasRated, setHasRated] = useState(false);
+  const [shareVisible, setShareVisible] = useState(false);
   const [userName, setUserName] = useState("Usuario");
-  const [events, setEvents] = useState([]);
-  const [filtered, setFiltered] = useState([]);
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [favorites, setFavorites] = useState([]);
+
+  // Menú lateral animado
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
   // === Obtener token multiplataforma ===
-  const getSessionToken = async () => {
+  const getToken = async () => {
     try {
       if (Platform.OS === "web") {
         const session = JSON.parse(localStorage.getItem("USER_SESSION"));
@@ -46,13 +51,13 @@ export default function User() {
         return session?.token || null;
       }
     } catch (err) {
-      console.error("Error leyendo sesión:", err);
+      console.error("Error leyendo token:", err);
       return null;
     }
   };
 
-  // === Obtener nombre del usuario logueado ===
-  const getUserName = async () => {
+  // === Obtener info usuario ===
+  const getUserInfo = async () => {
     try {
       let session;
       if (Platform.OS === "web") {
@@ -70,61 +75,113 @@ export default function User() {
         setUserName(session.user.email.split("@")[0]);
       else if (session?.email) setUserName(session.email.split("@")[0]);
       else setUserName("Invitado");
+
+      return session?.user?._id || session?._id || null;
     } catch (err) {
       console.error("Error obteniendo usuario:", err);
-      setUserName("Invitado");
+      return null;
     }
   };
 
-  // === Cargar eventos y favoritos ===
+  // === Cargar evento + comentarios ===
   useEffect(() => {
     const loadData = async () => {
       try {
-        await getUserName();
-        const token = await getSessionToken();
+        const resEvent = await fetch(`${API_URL}/${eventId}`);
+        if (!resEvent.ok) throw new Error("Error al obtener evento");
+        const dataEvent = await resEvent.json();
+        setEvent(dataEvent);
 
-        const resEvents = await fetch(API_URL);
-        if (!resEvents.ok) throw new Error("Error al obtener eventos");
-        const dataEvents = await resEvents.json();
-        setEvents(dataEvents);
-        setFiltered(dataEvents);
+        const userId = await getUserInfo();
 
-        if (token) {
-          const resFav = await fetch(FAVORITES_URL, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (resFav.ok) {
-            const favs = await resFav.json();
-            setFavorites(favs.map((f) => f._id));
+        const resComments = await fetch(`${COMMENTS_URL}/${eventId}`);
+        if (resComments.ok) {
+          const dataComments = await resComments.json();
+
+          if (dataComments.length > 0) {
+            const avg =
+              dataComments.reduce((acc, c) => acc + c.rating, 0) /
+              dataComments.length;
+            setAverageRating(avg);
+          } else {
+            setAverageRating(0);
+          }
+
+          const myComment = dataComments.find(
+            (c) => c.user && c.user._id === userId
+          );
+
+          if (myComment) {
+            setRating(myComment.rating);
+            setHasRated(true);
           }
         }
       } catch (err) {
-        console.error("Error cargando datos:", err);
-        if (Platform.OS === "web")
-          alert("❌ No se pudieron cargar los eventos o favoritos.");
-        else Alert.alert("Error", "No se pudieron cargar los eventos.");
+        console.error("Error cargando detalle:", err);
+        Alert.alert("Error", "No se pudo cargar el detalle del evento");
       }
     };
-    loadData();
-  }, []);
+    if (eventId) loadData();
+  }, [eventId]);
 
-  // === Filtro ===
-  useEffect(() => {
-    let data = events;
-    if (selectedCategory !== "all") {
-      data = data.filter((e) => e.category === selectedCategory);
+  // === Valorar evento ===
+  const handleRate = async (value) => {
+    try {
+      const token = await getToken();
+      if (!token) {
+        Alert.alert("Error", "Debes iniciar sesión para valorar el evento");
+        return;
+      }
+
+      setRating(value);
+
+      const res = await fetch(`${COMMENTS_URL}/${eventId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ rating: value }),
+      });
+
+      if (!res.ok) throw new Error("No se pudo enviar la valoración");
+
+      setHasRated(true);
+      Alert.alert("✅", "Tu valoración se ha registrado correctamente");
+
+      // Actualizar promedio
+      const resComments = await fetch(`${COMMENTS_URL}/${eventId}`);
+      if (resComments.ok) {
+        const dataComments = await resComments.json();
+        const avg =
+          dataComments.reduce((acc, c) => acc + c.rating, 0) /
+          dataComments.length;
+        setAverageRating(avg);
+      }
+    } catch (err) {
+      console.error("Error al valorar:", err);
+      Alert.alert("Error", "No se pudo registrar la valoración");
     }
-    if (search.trim()) {
-      const term = search.toLowerCase();
-      data = data.filter(
-        (e) =>
-          e.title?.toLowerCase().includes(term) ||
-          e.location?.toLowerCase().includes(term) ||
-          e.category?.toLowerCase().includes(term)
-      );
-    }
-    setFiltered(data);
-  }, [search, selectedCategory, events]);
+  };
+
+  // === Compartir ===
+  const shareWhatsApp = () => {
+    const msg = `¡Mira este evento! ${event.title} - ${event.location}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert("Error", "No se pudo abrir WhatsApp")
+    );
+  };
+
+  const shareTwitter = () => {
+    const msg = `¡Mira este evento! ${event.title} - ${event.location}`;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      msg
+    )}`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert("Error", "No se pudo abrir Twitter")
+    );
+  };
 
   // === Alternar menú lateral ===
   const toggleMenu = () => {
@@ -144,49 +201,42 @@ export default function User() {
     }
   };
 
-  // === Navegar al detalle del evento ===
-  const goToEventDetail = (eventId) => {
-    navigation.navigate("UserEventDetail", { eventId });
-  };
-
-  // === Alternar favorito ===
-  const toggleFavorite = async (eventId) => {
-    try {
-      const token = await getSessionToken();
-      if (!token) {
-        Alert.alert(
-          "Inicia sesión",
-          "Debes iniciar sesión para añadir favoritos."
-        );
-        return;
-      }
-
-      const isFav = favorites.includes(eventId);
-      const method = isFav ? "DELETE" : "POST";
-
-      const res = await fetch(`${FAVORITES_URL}/${eventId}`, {
-        method,
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error("Error al actualizar favoritos");
-
-      setFavorites((prev) =>
-        isFav ? prev.filter((id) => id !== eventId) : [...prev, eventId]
-      );
-    } catch (err) {
-      console.error("Error al cambiar favorito:", err);
-      Alert.alert("Error", "No se pudo actualizar el favorito.");
-    }
-  };
-
-  // === Simulación navegación ===
   const simulateNavigation = (route) => {
     toggleMenu();
     Platform.OS === "web"
       ? alert(`Iría a: ${route}`)
       : Alert.alert("Navegación simulada", route);
   };
+
+  // === Renderizar estrellas ===
+  const renderStars = () => {
+    const stars = [];
+    const displayRating = hasRated ? rating : averageRating;
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <Pressable key={i} onPress={() => handleRate(i)}>
+          <Text
+            style={{
+              fontSize: 26,
+              marginRight: 5,
+              color: i <= displayRating ? "#014869" : "#ccc",
+            }}
+          >
+            {i <= displayRating ? "★" : "☆"}
+          </Text>
+        </Pressable>
+      );
+    }
+    return <View style={{ flexDirection: "row" }}>{stars}</View>;
+  };
+
+  if (!event) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <Text>Cargando evento...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -201,22 +251,9 @@ export default function User() {
           justifyContent: "space-between",
         }}
       >
-        <Text>👤 {userName}</Text>
-
-        <TextInput
-          placeholder="Buscar eventos..."
-          value={search}
-          onChangeText={setSearch}
-          style={{
-            flex: 1,
-            marginHorizontal: 16,
-            borderWidth: 1,
-            borderColor: "#ccc",
-            paddingHorizontal: 8,
-            height: 36,
-            borderRadius: 6,
-          }}
-        />
+        <Text style={{ fontWeight: "bold", color: "#014869" }}>
+          👤 {userName}
+        </Text>
 
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable style={{ marginHorizontal: 8 }}>
@@ -225,6 +262,8 @@ export default function User() {
           <Pressable style={{ marginHorizontal: 8 }}>
             <Text>📅</Text>
           </Pressable>
+
+          {/* === Icono de menú === */}
           <Pressable onPress={toggleMenu}>
             <Image
               source={
@@ -240,7 +279,6 @@ export default function User() {
 
       {/* ====== MENÚ ====== */}
       {Platform.OS === "web" ? (
-        // 🌐 WEB (igual que antes)
         <>
           {menuVisible && (
             <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -267,40 +305,32 @@ export default function User() {
               padding: 20,
               zIndex: 10,
               transform: [{ translateX: menuAnim }],
-              elevation: 6,
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
             }}
           >
-            <Text
-              style={{ fontWeight: "bold", fontSize: 18, marginBottom: 30 }}
-            >
-              Menú
-            </Text>
-
             {[
-              { label: "Perfil", route: "Perfil" },
-              { label: "Sobre nosotros", route: "Sobre nosotros" },
-              { label: "Cultura e Historia", route: "Cultura e Historia" },
-              { label: "Ver favoritos", route: "Favoritos" },
-              { label: "Contacto", route: "Contacto" },
+              "Perfil",
+              "Sobre nosotros",
+              "Cultura e Historia",
+              "Ver favoritos",
+              "Contacto",
             ].map((item, i) => (
-              <Pressable
-                key={i}
-                onPress={() => simulateNavigation(item.route)}
-                style={{ marginBottom: 25 }}
-              >
+              <Pressable key={i} onPress={() => simulateNavigation(item)}>
                 <Text
-                  style={{ color: "#014869", fontSize: 16, fontWeight: "600" }}
+                  style={{
+                    color: "#014869",
+                    fontSize: 16,
+                    fontWeight: "600",
+                    marginBottom: 25,
+                  }}
                 >
-                  {item.label}
+                  {item}
                 </Text>
               </Pressable>
             ))}
           </Animated.View>
         </>
       ) : (
-        // 📱 MENÚ MÓVIL (idéntico al segundo código)
+        // 📱 MENÚ MÓVIL (idéntico al User.js)
         menuVisible && (
           <View
             style={{
@@ -430,130 +460,150 @@ export default function User() {
         )
       )}
 
-      {/* ====== Contenido principal ====== */}
-      <View
-        style={{
-          flex: 1,
-          flexDirection: "row",
-          paddingHorizontal: 16,
-          gap: 16,
-        }}
+      {/* ====== CONTENIDO DEL EVENTO ====== */}
+      <ScrollView
+        style={{ flex: 1, paddingHorizontal: 20, paddingVertical: 10 }}
       >
-        {/* Categorías */}
-        <View style={{ width: "25%" }}>
-          <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
-            Categorías
+        <View
+          style={{
+            backgroundColor: "#014869",
+            paddingVertical: 10,
+            paddingHorizontal: 15,
+            marginBottom: 15,
+          }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
+            {event.title}
           </Text>
+        </View>
 
-          {[
-            { label: "Todos", value: "all", color: "#014869" },
-            { label: "Deporte", value: "deporte", color: "#F3B23F" },
-            { label: "Cultura e Historia", value: "cultura", color: "#784BA0" },
-          ].map((cat, i) => (
-            <Pressable
-              key={i}
-              onPress={() => setSelectedCategory(cat.value)}
+        <Image
+          source={{
+            uri: event.image_url.startsWith("http")
+              ? event.image_url.replace("localhost", "192.168.18.19")
+              : `${API_BASE}${
+                  event.image_url.startsWith("/") ? "" : "/"
+                }${event.image_url.replace(/\\/g, "/")}`,
+          }}
+          style={{
+            width: "100%",
+            height: 220,
+            borderRadius: 8,
+            marginBottom: 12,
+          }}
+          resizeMode="cover"
+        />
+
+        <Text style={{ fontWeight: "bold", marginBottom: 6 }}>Descripción</Text>
+        <Text style={{ marginBottom: 12 }}>{event.description}</Text>
+
+        <View style={{ marginTop: 15, marginBottom: 20 }}>
+          <Text style={{ fontWeight: "bold", marginBottom: 5 }}>
+            Valoración
+          </Text>
+          {renderStars()}
+        </View>
+
+        <View style={{ alignItems: "center", marginTop: 10 }}>
+          <Pressable
+            onPress={() => setShareVisible(true)}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+              borderRadius: 8,
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/compartir.png")}
+              style={{ width: 22, height: 22, marginRight: 8 }}
+            />
+          </Pressable>
+        </View>
+      </ScrollView>
+
+      {/* ====== MODAL COMPARTIR ====== */}
+      <Modal
+        visible={shareVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShareVisible(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 10,
+              padding: 20,
+              width: "80%",
+              alignItems: "center",
+            }}
+          >
+            <Text
               style={{
-                backgroundColor:
-                  selectedCategory === cat.value ? cat.color : `${cat.color}33`,
+                fontWeight: "bold",
+                fontSize: 16,
+                color: "#014869",
+                marginBottom: 15,
+              }}
+            >
+              Compartir evento
+            </Text>
+
+            <Pressable
+              onPress={() => {
+                setShareVisible(false);
+                shareWhatsApp();
+              }}
+              style={{
+                backgroundColor: "#25D366",
                 paddingVertical: 10,
                 borderRadius: 8,
+                width: "100%",
+                alignItems: "center",
                 marginBottom: 10,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                WhatsApp
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                setShareVisible(false);
+                shareTwitter();
+              }}
+              style={{
+                backgroundColor: "#1DA1F2",
+                paddingVertical: 10,
+                borderRadius: 8,
+                width: "100%",
                 alignItems: "center",
               }}
             >
-              <Text
-                style={{
-                  color: selectedCategory === cat.value ? "#fff" : "#014869",
-                  fontWeight: "bold",
-                }}
-              >
-                {cat.label}
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Twitter</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setShareVisible(false)}
+              style={{ marginTop: 15 }}
+            >
+              <Text style={{ color: "#014869", fontWeight: "bold" }}>
+                Cancelar
               </Text>
             </Pressable>
-          ))}
+          </View>
         </View>
-
-        {/* Eventos */}
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
-            Listado de eventos
-          </Text>
-
-          <ScrollView>
-            {filtered.length > 0 ? (
-              filtered.map((ev) => {
-                const isFav = favorites.includes(ev._id);
-                return (
-                  <Pressable
-                    key={ev._id}
-                    onPress={() => goToEventDetail(ev._id)}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: 10,
-                      padding: 10,
-                      backgroundColor: "#f9f9f9",
-                      borderRadius: 8,
-                      borderWidth: 1,
-                      borderColor: isFav ? "#014869" : "#ddd",
-                    }}
-                  >
-                    <Text
-                      numberOfLines={1}
-                      style={{
-                        flex: 1,
-                        color: isFav ? "#014869" : "#333",
-                        fontWeight: isFav ? "bold" : "500",
-                      }}
-                    >
-                      {ev.title}
-                    </Text>
-
-                    {/* Botón de favorito */}
-                    <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(ev._id);
-                      }}
-                      style={{
-                        marginLeft: 10,
-                        paddingHorizontal: 10,
-                        paddingVertical: 6,
-                        borderRadius: 8,
-                        backgroundColor: isFav ? "#014869" : "#E0E0E0",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: isFav ? "#fff" : "#555",
-                          fontSize: 16,
-                        }}
-                      >
-                        {isFav ? "★" : "☆"}
-                      </Text>
-                    </Pressable>
-                  </Pressable>
-                );
-              })
-            ) : (
-              <Text
-                style={{
-                  textAlign: "center",
-                  marginTop: 40,
-                  color: "#777",
-                  fontStyle: "italic",
-                }}
-              >
-                {search.trim()
-                  ? "🔍 No se encontraron eventos."
-                  : "📭 No hay eventos disponibles."}
-              </Text>
-            )}
-          </ScrollView>
-        </View>
-      </View>
+      </Modal>
 
       {Platform.OS === "web" && <Footer />}
     </View>

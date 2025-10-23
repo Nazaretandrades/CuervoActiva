@@ -68,6 +68,18 @@ exports.createEvent = async (req, res) => {
       });
     }
 
+    // 🧩 --- ARREGLO CLAVE PARA IMÁGENES ---
+    let fixedImageUrl = image_url.trim();
+
+    // Si contiene "localhost", reemplazar por la IP local de tu PC
+    if (fixedImageUrl.includes("localhost")) {
+      fixedImageUrl = fixedImageUrl.replace("localhost", "192.168.18.19"); // 👈 Ajusta si tu IP cambia
+    }
+
+    // Aseguramos que las barras sean correctas
+    fixedImageUrl = fixedImageUrl.replace(/\\/g, "/");
+
+    // ✅ Crear el evento con la URL corregida
     const event = await Event.create({
       title: title.trim(),
       description: description.trim(),
@@ -75,11 +87,11 @@ exports.createEvent = async (req, res) => {
       hour: hour.trim(),
       location: location.trim(),
       category: category.trim(),
-      image_url: image_url.trim(),
+      image_url: fixedImageUrl,
       createdBy: req.user.id,
     });
 
-    // Notificar a usuarios normales
+    // ✅ Notificar a usuarios normales
     const users = await User.find({ role: "user" });
     if (users.length > 0) {
       const notifications = users.map((user) => ({
@@ -90,7 +102,9 @@ exports.createEvent = async (req, res) => {
       await Notification.insertMany(notifications);
     }
 
-    console.log(`✅ Evento creado por ${req.user.id}: ${event.title}`);
+    console.log(
+      `✅ Evento creado correctamente por ${req.user.id}: ${event.title}`
+    );
     res.status(201).json(event);
   } catch (err) {
     console.error("❌ Error al crear evento:", err);
@@ -104,7 +118,10 @@ exports.updateEvent = async (req, res) => {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
-    if (req.user.role !== "admin" && event.createdBy?.toString() !== req.user.id) {
+    if (
+      req.user.role !== "admin" &&
+      event.createdBy?.toString() !== req.user.id
+    ) {
       return res.status(403).json({ error: "No autorizado" });
     }
 

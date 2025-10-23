@@ -27,15 +27,6 @@ const commentSchema = new mongoose.Schema(
     },
 
     /**
-     * text
-     * Contiene el texto o mensaje del comentario.
-     */
-    text: {
-      type: String,
-      required: true,
-    },
-
-    /**
      * rating
      * Valoración numérica del evento por parte del usuario.
      */

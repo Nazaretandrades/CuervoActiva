@@ -241,10 +241,14 @@ export default function Admin() {
           }}
         />
 
-        {/* === ICONO DE MENÚ COMO IMAGEN === */}
+        {/* === ICONO DE MENÚ QUE CAMBIA === */}
         <Pressable onPress={toggleMenu}>
           <Image
-            source={require("../assets/iconos/menu-admin.png")} // tu imagen de menú
+            source={
+              menuVisible
+                ? require("../assets/iconos/close-admin.png") // ✅ Nuevo icono de cerrar
+                : require("../assets/iconos/menu-admin.png") // Icono normal
+            }
             style={{ width: 26, height: 26 }}
           />
         </Pressable>

@@ -117,7 +117,8 @@ export default function Organizer({ navigation }) {
   // === Elegir imagen ===
   const pickImage = async () => {
     try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permission.status !== "granted") {
         Alert.alert("Permiso denegado", "Se necesita acceso a tus fotos.");
         return;
@@ -203,7 +204,9 @@ export default function Organizer({ navigation }) {
       if (!res.ok) throw new Error("Error al guardar evento");
       const data = await res.json();
       setEvents((prev) =>
-        form._id ? prev.map((e) => (e._id === data._id ? data : e)) : [...prev, data]
+        form._id
+          ? prev.map((e) => (e._id === data._id ? data : e))
+          : [...prev, data]
       );
       showAlert("✅ Éxito", "Evento guardado correctamente.");
       setForm({
@@ -269,7 +272,9 @@ export default function Organizer({ navigation }) {
       >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <Text>👤</Text>
-          <Text style={{ fontWeight: "600", color: "#014869" }}>{userName}</Text>
+          <Text style={{ fontWeight: "600", color: "#014869" }}>
+            {userName}
+          </Text>
         </View>
 
         <TextInput
@@ -289,7 +294,11 @@ export default function Organizer({ navigation }) {
 
         <Pressable onPress={toggleMenu}>
           <Image
-            source={require("../assets/iconos/menu-usuario.png")}
+            source={
+              Platform.OS === "web" && menuVisible
+                ? require("../assets/iconos/close-organizador.png")
+                : require("../assets/iconos/menu-usuario.png")
+            }
             style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
           />
         </Pressable>
@@ -597,9 +606,7 @@ export default function Organizer({ navigation }) {
                 </Text>
                 <TextInput
                   value={form.description}
-                  onChangeText={(t) =>
-                    setForm({ ...form, description: t })
-                  }
+                  onChangeText={(t) => setForm({ ...form, description: t })}
                   multiline
                   style={{
                     backgroundColor: "#fff",
@@ -618,9 +625,7 @@ export default function Organizer({ navigation }) {
                 </Text>
                 <TextInput
                   value={form.location}
-                  onChangeText={(t) =>
-                    setForm({ ...form, location: t })
-                  }
+                  onChangeText={(t) => setForm({ ...form, location: t })}
                   style={{
                     backgroundColor: "#fff",
                     borderRadius: 20,

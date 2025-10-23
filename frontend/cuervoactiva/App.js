@@ -11,6 +11,7 @@ import Login from "./screens/Login"; //Pantalla de inicio de sesión
 import Organizer from "./screens/Organizer";
 import Admin from "./screens/Admin";
 import User from "./screens/User";
+import UserEventDetail from "./screens/UserEventDetail";
 
 //3) Creamos el Stack Navigator
 //Este componente permite navegar entre pantallas de forma apilada
@@ -62,6 +63,12 @@ export default function App() {
         <Stack.Screen
           name="User"
           component={User}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="UserEventDetail"
+          component={UserEventDetail}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
