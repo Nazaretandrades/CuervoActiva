@@ -15,6 +15,7 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import DropDownPicker from "react-native-dropdown-picker";
 import { getSession } from "../services/sessionManager";
+import { useNavigation } from "@react-navigation/native";
 
 const API_URL = "http://localhost:5000/api/events";
 
@@ -41,6 +42,14 @@ export default function Admin() {
   // === Menú lateral (solo web) ===
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
+
+  // === Navegación ===
+  const navigation = useNavigation();
+
+  // ✅ Nueva función: Ir al detalle del evento
+  const goToEventDetail = (eventId) => {
+    navigation.navigate("AdminEventDetail", { eventId });
+  };
 
   // === Cargar eventos ===
   useEffect(() => {
@@ -330,8 +339,10 @@ export default function Admin() {
             >
               {filtered.length > 0 ? (
                 filtered.map((ev) => (
-                  <View
+                  // ✅ Ahora se puede hacer clic en el evento para ver su detalle
+                  <Pressable
                     key={ev._id}
+                    onPress={() => goToEventDetail(ev._id)}
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
@@ -347,18 +358,24 @@ export default function Admin() {
                       {ev.title}
                     </Text>
                     <Pressable
-                      onPress={() => handleEdit(ev)}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleEdit(ev);
+                      }}
                       style={{ margin: 4 }}
                     >
                       <Text>✏️</Text>
                     </Pressable>
                     <Pressable
-                      onPress={() => handleDelete(ev._id)}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleDelete(ev._id);
+                      }}
                       style={{ margin: 4 }}
                     >
                       <Text>🗑️</Text>
                     </Pressable>
-                  </View>
+                  </Pressable>
                 ))
               ) : (
                 <Text

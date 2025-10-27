@@ -229,6 +229,11 @@ export default function Organizer({ navigation }) {
 
   const handleEdit = (ev) => setForm(ev);
 
+  // === 🔹 Nueva función: Ir al detalle del evento ===
+  const goToEventDetail = (eventId) => {
+    navigation.navigate("OrganizerEventDetail", { eventId });
+  };
+
   // === Menú ===
   const toggleMenu = () => {
     if (menuVisible) {
@@ -258,7 +263,7 @@ export default function Organizer({ navigation }) {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* === BARRA SUPERIOR (única) === */}
+      {/* === BARRA SUPERIOR === */}
       <View
         style={{
           flexDirection: "row",
@@ -488,9 +493,8 @@ export default function Organizer({ navigation }) {
           paddingBottom: 40,
         }}
       >
-        {/* COLUMNA IZQUIERDA + FORMULARIO */}
         <View style={{ flex: 1, flexDirection: "row", gap: 24 }}>
-          {/* Izquierda */}
+          {/* === Lista de eventos === */}
           <View
             style={{
               width: "25%",
@@ -514,8 +518,9 @@ export default function Organizer({ navigation }) {
                 </Text>
               ) : (
                 filteredEvents.map((ev) => (
-                  <View
+                  <Pressable
                     key={ev._id || ev.id}
+                    onPress={() => goToEventDetail(ev._id)}
                     style={{
                       borderWidth: 1,
                       borderColor: "#ddd",
@@ -529,16 +534,21 @@ export default function Organizer({ navigation }) {
                     }}
                   >
                     <Text numberOfLines={1}>{ev.title}</Text>
-                    <Pressable onPress={() => handleEdit(ev)}>
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleEdit(ev);
+                      }}
+                    >
                       <Text>✏️</Text>
                     </Pressable>
-                  </View>
+                  </Pressable>
                 ))
               )}
             </ScrollView>
           </View>
 
-          {/* Derecha */}
+          {/* === Formulario === */}
           <View style={{ flex: 1 }}>
             <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
               {form._id ? "Editar evento" : "Crear evento"}
