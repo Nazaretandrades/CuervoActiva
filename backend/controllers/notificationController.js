@@ -1,26 +1,47 @@
-const Notification = require('../models/notification');
+// controllers/notificationController.js
+const Notification = require("../models/notification");
+const { getDateKey } = require("../utils/dateKey");
 
-//Listar notificaciones del usuario
+// 📩 Listar notificaciones del usuario autenticado
 exports.listNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({ user: req.user.id });
+    const notifications = await Notification.find({ user: req.user.id })
+      .populate("event", "title")
+      .sort({ createdAt: -1 });
     res.json(notifications);
   } catch (err) {
+    console.error("❌ Error al listar notificaciones:", err);
     res.status(500).json({ error: err.message });
   }
 };
 
-//Marcar notificación como leída
+// 📬 Listar solo no leídas
+exports.listUnread = async (req, res) => {
+  try {
+    const notifications = await Notification.find({
+      user: req.user.id,
+      read: false,
+    })
+      .populate("event", "title")
+      .sort({ createdAt: -1 });
+    res.json(notifications);
+  } catch (err) {
+    console.error("❌ Error al listar no leídas:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ✅ Marcar como leída
 exports.markAsRead = async (req, res) => {
   try {
-    const notification = await Notification.findById(req.params.id);
-    if (!notification) return res.status(404).json({ error: 'Notificación no encontrada' });
+    const notif = await Notification.findById(req.params.id);
+    if (!notif) return res.status(404).json({ error: "Notificación no encontrada" });
+    if (notif.user.toString() !== req.user.id)
+      return res.status(403).json({ error: "No autorizado" });
 
-    if (notification.user.toString() !== req.user.id) return res.status(403).json({ error: 'No autorizado' });
-
-    notification.read = true;
-    await notification.save();
-    res.json(notification);
+    notif.read = true;
+    await notif.save();
+    res.json(notif);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

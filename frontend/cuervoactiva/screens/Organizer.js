@@ -229,12 +229,17 @@ export default function Organizer({ navigation }) {
 
   const handleEdit = (ev) => setForm(ev);
 
-  // === 🔹 Nueva función: Ir al detalle del evento ===
+  // === Ir al detalle del evento ===
   const goToEventDetail = (eventId) => {
     navigation.navigate("OrganizerEventDetail", { eventId });
   };
 
-  // === Menú ===
+  // === 🔔 NUEVA FUNCIÓN: Ir a Notificaciones ===
+  const goToNotifications = () => {
+    navigation.navigate("OrganizerNotifications");
+  };
+
+  // === Menú lateral ===
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -297,6 +302,15 @@ export default function Organizer({ navigation }) {
           }}
         />
 
+        {/* === 🔔 ICONO NOTIFICACIONES === */}
+        <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
+          <Image
+            source={require("../assets/iconos/bell.png")}
+            style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+          />
+        </Pressable>
+
+        {/* === ICONO MENÚ === */}
         <Pressable onPress={toggleMenu}>
           <Image
             source={

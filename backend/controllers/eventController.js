@@ -2,6 +2,8 @@
 const Event = require("../models/event");
 const User = require("../models/user");
 const Notification = require("../models/notification");
+const { getDateKey } = require("../utils/dateKey");
+const auth = require("../middlewares/authMiddleware");
 
 // ✅ Listar todos los eventos (usuarios normales)
 exports.listEvents = async (req, res) => {
@@ -41,97 +43,90 @@ exports.getEvent = async (req, res) => {
   }
 };
 
-// ✅ Crear evento (solo organizador)
+// ➕ Crear evento
 exports.createEvent = async (req, res) => {
   try {
-    if (req.user.role !== "organizer") {
-      return res
-        .status(403)
-        .json({ error: "Solo los organizadores pueden crear eventos" });
-    }
+    if (req.user.role !== "organizer")
+      return res.status(403).json({ error: "No autorizado" });
 
     const { title, description, date, hour, location, category, image_url } =
       req.body;
 
-    if (
-      !title?.trim() ||
-      !description?.trim() ||
-      !date?.trim() ||
-      !hour?.trim() ||
-      !location?.trim() ||
-      !category?.trim() ||
-      !image_url?.trim()
-    ) {
-      return res.status(400).json({
-        error:
-          "Todos los campos (título, descripción, fecha, hora, lugar, categoría e imagen) son obligatorios.",
-      });
-    }
-
-    // 🧩 --- ARREGLO CLAVE PARA IMÁGENES ---
-    let fixedImageUrl = image_url.trim();
-
-    // Si contiene "localhost", reemplazar por la IP local de tu PC
-    if (fixedImageUrl.includes("localhost")) {
-      fixedImageUrl = fixedImageUrl.replace("localhost", "192.168.18.19"); // 👈 Ajusta si tu IP cambia
-    }
-
-    // Aseguramos que las barras sean correctas
-    fixedImageUrl = fixedImageUrl.replace(/\\/g, "/");
-
-    // ✅ Crear el evento con la URL corregida
     const event = await Event.create({
-      title: title.trim(),
-      description: description.trim(),
-      date: date.trim(),
-      hour: hour.trim(),
-      location: location.trim(),
-      category: category.trim(),
-      image_url: fixedImageUrl,
+      title,
+      description,
+      date,
+      hour,
+      location,
+      category,
+      image_url,
       createdBy: req.user.id,
     });
 
-    // ✅ Notificar a usuarios normales
-    const users = await User.find({ role: "user" });
-    if (users.length > 0) {
-      const notifications = users.map((user) => ({
-        user: user._id,
-        message: `Nuevo evento disponible: ${event.title}`,
+    // 🔔 Notificación para organizador (creación)
+    await Notification.findOneAndUpdate(
+      {
+        user: req.user.id,
         event: event._id,
-      }));
-      await Notification.insertMany(notifications);
-    }
-
-    console.log(
-      `✅ Evento creado correctamente por ${req.user.id}: ${event.title}`
+        type: "event_created",
+        dateKey: getDateKey(),
+      },
+      {
+        user: req.user.id,
+        event: event._id,
+        type: "event_created",
+        message: `Has creado correctamente el evento "${event.title}" ✅`,
+        dateKey: getDateKey(),
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
     );
+
+    // 🔔 Notificar a usuarios normales del nuevo evento
+    const users = await User.find({ role: "user" });
+    const notifs = users.map((u) => ({
+      user: u._id,
+      event: event._id,
+      type: "new_event",
+      message: `Nuevo evento disponible: ${event.title}`,
+      dateKey: getDateKey(),
+    }));
+    await Notification.insertMany(notifs);
+
     res.status(201).json(event);
   } catch (err) {
-    console.error("❌ Error al crear evento:", err);
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 };
 
-// ✅ Editar evento
+// ✏️ Editar evento
 exports.updateEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
-    if (
-      req.user.role !== "admin" &&
-      event.createdBy?.toString() !== req.user.id
-    ) {
-      return res.status(403).json({ error: "No autorizado" });
-    }
-
     Object.assign(event, req.body);
     const updated = await event.save();
 
-    console.log(`✏️ Evento actualizado: ${updated.title}`);
+    // 🔔 Notificar edición
+    await Notification.findOneAndUpdate(
+      {
+        user: req.user.id,
+        event: updated._id,
+        type: "event_edited",
+        dateKey: getDateKey(),
+      },
+      {
+        user: req.user.id,
+        event: updated._id,
+        type: "event_edited",
+        message: `Has editado el evento "${updated.title}" ✏️`,
+        dateKey: getDateKey(),
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
     res.json(updated);
   } catch (err) {
-    console.error("❌ Error al actualizar evento:", err);
     res.status(500).json({ error: err.message });
   }
 };
