@@ -764,5 +764,3 @@ export default function Organizer({ navigation }) {
     </View>
   );
 }
-
-//Pantalla notificacion
