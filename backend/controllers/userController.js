@@ -1,34 +1,54 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const Notification = require("../models/notification");
 
-//Registro
+// === REGISTRO DE USUARIO ===
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
-    //Validar si el usuario ya existe
+
+    // Evitar duplicados
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    if (existingUser)
       return res.status(400).json({ error: "El correo ya está registrado" });
-    }
-    //Validar rol permitido (no se permite 'admin')
+
+    // Rol permitido
     const allowedRoles = ["user", "organizer"];
     const finalRole = allowedRoles.includes(role) ? role : "user";
-    //Hashear contraseña
+
+    // Crear usuario
     const hashed = await bcrypt.hash(password, 10);
-    //Crear usuario
     const user = await User.create({
       name,
       email,
       password: hashed,
       role: finalRole,
     });
-    //Generar token
+
+    // 📢 Notificación para admin
+    const adminUser = await User.findOne({ role: "admin" });
+    console.log("ADMIN ENCONTRADO:", adminUser?._id);
+
+    if (adminUser) {
+      const noti = await Notification.create({
+        user: adminUser._id,
+        message: `Se ha registrado un nuevo ${
+          finalRole === "organizer" ? "organizador" : "usuario"
+        }: ${user.name}`,
+        type: "user_register",
+        dateKey: new Date().toISOString(),
+      });
+      console.log("✅ Notificación creada:", noti);
+    }
+
+    // Token
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
+
     res.status(201).json({
       id: user._id,
       name: user.name,
@@ -37,6 +57,7 @@ exports.registerUser = async (req, res) => {
       token,
     });
   } catch (err) {
+    console.error("❌ Error en registro:", err);
     res.status(400).json({ error: err.message });
   }
 };

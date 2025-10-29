@@ -125,6 +125,17 @@ exports.updateEvent = async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
+    // 📢 Crear notificación para el admin (si quien edita es admin)
+    const adminUser = await User.findOne({ role: "admin" });
+    if (adminUser) {
+      await Notification.create({
+        user: adminUser._id,
+        message: `Has editado el evento "${event.title}".`,
+        type: "event_edit",
+        dateKey: new Date().toISOString(),
+      });
+    }
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -139,6 +150,17 @@ exports.deleteEvent = async (req, res) => {
 
     if (req.user.role !== "admin") {
       return res.status(403).json({ error: "No autorizado" });
+    }
+
+    // 📢 Crear notificación para el admin
+    const adminUser = await User.findOne({ role: "admin" });
+    if (adminUser) {
+      await Notification.create({
+        user: adminUser._id,
+        message: `Has eliminado el evento "${event.title}".`,
+        type: "event_delete",
+        dateKey: new Date().toISOString(),
+      });
     }
 
     await event.deleteOne();

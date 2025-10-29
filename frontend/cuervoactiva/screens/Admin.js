@@ -46,9 +46,12 @@ export default function Admin() {
   // === Navegación ===
   const navigation = useNavigation();
 
-  // ✅ Nueva función: Ir al detalle del evento
   const goToEventDetail = (eventId) => {
     navigation.navigate("AdminEventDetail", { eventId });
+  };
+
+  const goToNotifications = () => {
+    navigation.navigate("AdminNotifications");
   };
 
   // === Cargar eventos ===
@@ -230,11 +233,13 @@ export default function Admin() {
           borderColor: "#eee",
         }}
       >
+        {/* 👑 Nombre del admin */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Text style={{ marginRight: 6 }}>👑</Text>
           <Text>Admin. {adminName}</Text>
         </View>
 
+        {/* 🔍 Búsqueda */}
         <TextInput
           placeholder="Buscar eventos..."
           value={search}
@@ -250,13 +255,18 @@ export default function Admin() {
           }}
         />
 
-        {/* === ICONO DE MENÚ QUE CAMBIA === */}
+        {/* 🔔 Notificaciones */}
+        <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
+          <Image source={require("../assets/iconos/bell2.png")} />
+        </Pressable>
+
+        {/* ☰ Menú */}
         <Pressable onPress={toggleMenu}>
           <Image
             source={
               menuVisible
-                ? require("../assets/iconos/close-admin.png") // ✅ Nuevo icono de cerrar
-                : require("../assets/iconos/menu-admin.png") // Icono normal
+                ? require("../assets/iconos/close-admin.png")
+                : require("../assets/iconos/menu-admin.png")
             }
             style={{ width: 26, height: 26 }}
           />
@@ -319,7 +329,7 @@ export default function Admin() {
         </>
       )}
 
-      {/* === CUERPO PRINCIPAL === */}
+      {/* === CONTENIDO PRINCIPAL === */}
       <View style={{ flex: 1, padding: 16 }}>
         {!editing ? (
           <>
@@ -332,14 +342,12 @@ export default function Admin() {
             <ScrollView
               contentContainerStyle={{
                 flexGrow: 1,
-                justifyContent:
-                  filtered.length === 0 ? "center" : "flex-start",
+                justifyContent: filtered.length === 0 ? "center" : "flex-start",
                 alignItems: filtered.length === 0 ? "center" : "stretch",
               }}
             >
               {filtered.length > 0 ? (
                 filtered.map((ev) => (
-                  // ✅ Ahora se puede hacer clic en el evento para ver su detalle
                   <Pressable
                     key={ev._id}
                     onPress={() => goToEventDetail(ev._id)}
@@ -399,79 +407,100 @@ export default function Admin() {
               Editar evento
             </Text>
             <ScrollView>
-              <Text>Título:</Text>
+              {/* Título */}
+              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
+                Título:
+              </Text>
               <TextInput
                 value={form.title}
                 onChangeText={(t) => setForm({ ...form, title: t })}
                 style={{
+                  backgroundColor: "#fff",
+                  borderRadius: 10,
                   borderWidth: 1,
                   borderColor: "#ccc",
-                  borderRadius: 10,
-                  paddingHorizontal: 10,
                   height: 36,
-                  marginBottom: 8,
+                  paddingHorizontal: 10,
+                  marginBottom: 10,
                 }}
               />
 
-              <Text>Descripción:</Text>
+              {/* Descripción */}
+              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
+                Descripción:
+              </Text>
               <TextInput
                 value={form.description}
                 onChangeText={(t) => setForm({ ...form, description: t })}
                 multiline
                 style={{
+                  backgroundColor: "#fff",
+                  borderRadius: 10,
                   borderWidth: 1,
                   borderColor: "#ccc",
-                  borderRadius: 10,
-                  height: 80,
-                  textAlignVertical: "top",
+                  height: 90,
                   padding: 10,
-                  marginBottom: 8,
+                  marginBottom: 10,
+                  textAlignVertical: "top",
                 }}
               />
 
-              <Text>Fecha (DD/MM/YYYY):</Text>
+              {/* Fecha */}
+              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
+                Fecha (DD/MM/YYYY):
+              </Text>
               <TextInput
                 value={form.date}
                 onChangeText={(t) => setForm({ ...form, date: t })}
                 style={{
+                  backgroundColor: "#fff",
+                  borderRadius: 10,
                   borderWidth: 1,
                   borderColor: "#ccc",
-                  borderRadius: 10,
-                  paddingHorizontal: 10,
                   height: 36,
-                  marginBottom: 8,
+                  paddingHorizontal: 10,
+                  marginBottom: 10,
                 }}
               />
 
-              <Text>Hora (HH:MM):</Text>
+              {/* Hora */}
+              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
+                Hora (HH:MM):
+              </Text>
               <TextInput
                 value={form.hour}
                 onChangeText={(t) => setForm({ ...form, hour: t })}
                 style={{
+                  backgroundColor: "#fff",
+                  borderRadius: 10,
                   borderWidth: 1,
                   borderColor: "#ccc",
-                  borderRadius: 10,
-                  paddingHorizontal: 10,
                   height: 36,
-                  marginBottom: 8,
+                  paddingHorizontal: 10,
+                  marginBottom: 10,
                 }}
               />
 
-              <Text>Lugar:</Text>
+              {/* Lugar */}
+              <Text style={{ fontWeight: "600", marginBottom: 4 }}>Lugar:</Text>
               <TextInput
                 value={form.location}
                 onChangeText={(t) => setForm({ ...form, location: t })}
                 style={{
+                  backgroundColor: "#fff",
+                  borderRadius: 10,
                   borderWidth: 1,
                   borderColor: "#ccc",
-                  borderRadius: 10,
-                  paddingHorizontal: 10,
                   height: 36,
-                  marginBottom: 8,
+                  paddingHorizontal: 10,
+                  marginBottom: 10,
                 }}
               />
 
-              <Text>Categoría:</Text>
+              {/* Categoría */}
+              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
+                Categoría:
+              </Text>
               <DropDownPicker
                 open={open}
                 value={form.category}
@@ -489,21 +518,24 @@ export default function Admin() {
                   }))
                 }
                 style={{
+                  backgroundColor: "#fff",
                   borderColor: "#ccc",
-                  marginBottom: 10,
                   borderRadius: 10,
+                  height: 40,
+                  marginBottom: 10,
+                  zIndex: 10,
                 }}
                 dropDownContainerStyle={{
                   borderColor: "#ccc",
                 }}
               />
 
-              {/* BOTONES */}
+              {/* Botones */}
               <View
                 style={{
                   flexDirection: "row",
                   justifyContent: "center",
-                  marginTop: 12,
+                  marginTop: 4,
                   gap: 16,
                 }}
               >
@@ -527,6 +559,7 @@ export default function Admin() {
                     borderRadius: 20,
                     paddingVertical: 10,
                     paddingHorizontal: 30,
+                    opacity: loading ? 0.7 : 1,
                   }}
                 >
                   <Text style={{ color: "#fff", fontWeight: "bold" }}>
