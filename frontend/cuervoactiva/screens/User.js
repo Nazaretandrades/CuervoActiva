@@ -149,6 +149,11 @@ export default function User() {
     navigation.navigate("UserEventDetail", { eventId });
   };
 
+  // === ✅ Nueva función: Navegar a notificaciones ===
+  const goToNotifications = () => {
+    navigation.navigate("UserNotifications");
+  };
+
   // === Alternar favorito ===
   const toggleFavorite = async (eventId) => {
     try {
@@ -219,12 +224,17 @@ export default function User() {
         />
 
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Pressable style={{ marginHorizontal: 8 }}>
-            <Text>🔔</Text>
+          {/* === 🔔 ICONO NOTIFICACIONES (nuevo) === */}
+          <Pressable onPress={goToNotifications} style={{ marginHorizontal: 8 }}>
+            <Image
+              source={require("../assets/iconos/bell.png")}
+            />
           </Pressable>
+
           <Pressable style={{ marginHorizontal: 8 }}>
             <Text>📅</Text>
           </Pressable>
+
           <Pressable onPress={toggleMenu}>
             <Image
               source={
@@ -240,7 +250,6 @@ export default function User() {
 
       {/* ====== MENÚ ====== */}
       {Platform.OS === "web" ? (
-        // 🌐 WEB (igual que antes)
         <>
           {menuVisible && (
             <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -272,12 +281,6 @@ export default function User() {
               shadowRadius: 8,
             }}
           >
-            <Text
-              style={{ fontWeight: "bold", fontSize: 18, marginBottom: 30 }}
-            >
-              Menú
-            </Text>
-
             {[
               { label: "Perfil", route: "Perfil" },
               { label: "Sobre nosotros", route: "Sobre nosotros" },
@@ -300,7 +303,6 @@ export default function User() {
           </Animated.View>
         </>
       ) : (
-        // 📱 MENÚ MÓVIL (idéntico al segundo código)
         menuVisible && (
           <View
             style={{

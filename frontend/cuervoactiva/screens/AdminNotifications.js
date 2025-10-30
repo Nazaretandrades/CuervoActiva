@@ -121,26 +121,20 @@ export default function AdminNotifications({ navigation }) {
         {/* 👑 Admin */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <Text>👑</Text>
-          <Text>
+          <Text style={{ fontWeight: "600", color: "#014869" }}>
             Admin: {adminName}
           </Text>
         </View>
 
         {/* 🔔 + Menú */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
-          {/* 🔔 Icono Notificaciones (inactivo en esta pantalla) */}
           <Pressable>
             <Image
               source={require("../assets/iconos/bell2.png")}
-              style={{
-                width: 26,
-                height: 26,
-                opacity: 0.6,
-              }}
+              style={{ width: 26, height: 26, opacity: 0.6 }}
             />
           </Pressable>
 
-          {/* Icono Menú */}
           <Pressable onPress={toggleMenu}>
             <Image
               source={
@@ -154,7 +148,7 @@ export default function AdminNotifications({ navigation }) {
         </View>
       </View>
 
-      {/* === MENÚ LATERAL (idéntico al de Admin.js) === */}
+      {/* === MENÚ LATERAL === */}
       {menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -210,52 +204,62 @@ export default function AdminNotifications({ navigation }) {
         </>
       )}
 
-      {/* === LISTA DE NOTIFICACIONES === */}
-      <ScrollView
-        style={{ flex: 1, padding: 24 }}
-        contentContainerStyle={{ alignItems: "center" }}
-      >
+      {/* === LISTA DE NOTIFICACIONES CON SCROLL === */}
+      <View style={{ flex: 1, padding: 24 }}>
         <Text
           style={{
             fontSize: 22,
             fontWeight: "bold",
             color: "#014869",
             marginBottom: 20,
+            textAlign: "center",
           }}
         >
           Notificaciones
         </Text>
 
-        {notifications.length === 0 ? (
-          <Text style={{ color: "#777" }}>No hay notificaciones aún.</Text>
-        ) : (
-          notifications.map((n) => (
-            <Pressable
-              key={n._id}
-              onPress={() => markAsRead(n._id)}
-              style={{
-                backgroundColor: n.read ? "#9bbad0" : "#014869",
-                paddingVertical: 12,
-                borderRadius: 25,
-                marginBottom: 12,
-                alignItems: "center",
-                width: "80%",
-                cursor: "pointer",
-              }}
-            >
-              <Text
+        <ScrollView
+          style={{
+            maxHeight: 500, // 👈 Limita la altura visible
+            width: "100%",
+          }}
+          contentContainerStyle={{
+            alignItems: "center",
+            paddingBottom: 40,
+          }}
+          showsVerticalScrollIndicator={true} // 👈 Scroll visible
+        >
+          {notifications.length === 0 ? (
+            <Text style={{ color: "#777" }}>No hay notificaciones aún.</Text>
+          ) : (
+            notifications.map((n) => (
+              <Pressable
+                key={n._id}
+                onPress={() => markAsRead(n._id)}
                 style={{
-                  color: "#fff",
-                  fontWeight: "600",
-                  textAlign: "center",
+                  backgroundColor: n.read ? "#9bbad0" : "#014869",
+                  paddingVertical: 12,
+                  borderRadius: 25,
+                  marginBottom: 12,
+                  alignItems: "center",
+                  width: "80%",
+                  cursor: "pointer",
                 }}
               >
-                {n.message}
-              </Text>
-            </Pressable>
-          ))
-        )}
-      </ScrollView>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontWeight: "600",
+                    textAlign: "center",
+                  }}
+                >
+                  {n.message}
+                </Text>
+              </Pressable>
+            ))
+          )}
+        </ScrollView>
+      </View>
 
       <Footer />
     </View>

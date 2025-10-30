@@ -19,8 +19,8 @@ const API_BASE =
     ? "http://192.168.18.19:5000"
     : "http://localhost:5000";
 
-export default function OrganizerNotifications({ navigation }) {
-  const [userName, setUserName] = useState("Organizador");
+export default function UserNotifications({ navigation }) {
+  const [userName, setUserName] = useState("Usuario");
   const [notifications, setNotifications] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
@@ -36,7 +36,7 @@ export default function OrganizerNotifications({ navigation }) {
         if (session?.user?.name || session?.name)
           setUserName(session.user?.name || session.name);
       } catch {
-        setUserName("Organizador");
+        setUserName("Usuario");
       }
     };
     loadUser();
@@ -127,11 +127,6 @@ export default function OrganizerNotifications({ navigation }) {
       : Alert.alert("Navegación simulada", route);
   };
 
-  const goToOrganizer = () => {
-    toggleMenu();
-    navigation.navigate("Organizer");
-  };
-
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
@@ -156,23 +151,30 @@ export default function OrganizerNotifications({ navigation }) {
           </Text>
         </View>
 
-        {/* Menú + Notificaciones */}
+        {/* Menú + Notificaciones (lado derecho) */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
+          {/* 🔔 Icono Notificaciones (ya estás aquí, inactivo) */}
           <Pressable>
             <Image
               source={require("../assets/iconos/bell.png")}
-              style={{ width: 26, height: 26, tintColor: "#F3B23F", opacity: 0.6 }}
+              style={{
+                width: 26,
+                height: 26,
+                tintColor: "#014869",
+                opacity: 0.6,
+              }}
             />
           </Pressable>
 
+          {/* Icono Menú */}
           <Pressable onPress={toggleMenu}>
             <Image
               source={
                 Platform.OS === "web" && menuVisible
-                  ? require("../assets/iconos/close-organizador.png")
+                  ? require("../assets/iconos/close.png")
                   : require("../assets/iconos/menu-usuario.png")
               }
-              style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+              style={{ width: 26, height: 26, tintColor: "#014869" }}
             />
           </Pressable>
         </View>
@@ -208,25 +210,23 @@ export default function OrganizerNotifications({ navigation }) {
               transform: [{ translateX: menuAnim }],
             }}
           >
-            {["Perfil", "Sobre nosotros", "Cultura e Historia", "Contacto"].map(
-              (item, i) => (
-                <Pressable
-                  key={i}
-                  onPress={() => simulateNavigation(item)}
-                  style={{ marginBottom: 25 }}
+            {["Perfil", "Eventos", "Favoritos", "Contacto"].map((item, i) => (
+              <Pressable
+                key={i}
+                onPress={() => simulateNavigation(item)}
+                style={{ marginBottom: 25 }}
+              >
+                <Text
+                  style={{
+                    color: "#014869",
+                    fontSize: 18,
+                    fontWeight: "700",
+                  }}
                 >
-                  <Text
-                    style={{
-                      color: "#014869",
-                      fontSize: 18,
-                      fontWeight: "700",
-                    }}
-                  >
-                    {item}
-                  </Text>
-                </Pressable>
-              )
-            )}
+                  {item}
+                </Text>
+              </Pressable>
+            ))}
           </Animated.View>
         </>
       ) : (
@@ -244,6 +244,7 @@ export default function OrganizerNotifications({ navigation }) {
               paddingTop: 60,
             }}
           >
+            {/* Encabezado menú móvil */}
             <View
               style={{
                 flexDirection: "row",
@@ -254,14 +255,14 @@ export default function OrganizerNotifications({ navigation }) {
               <Pressable onPress={toggleMenu} style={{ marginRight: 15 }}>
                 <Image
                   source={require("../assets/iconos/back-usuario.png")}
-                  style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+                  style={{ width: 22, height: 22, tintColor: "#014869" }}
                 />
               </Pressable>
               <Text
                 style={{
                   fontSize: 18,
                   fontWeight: "bold",
-                  color: "#F3B23F",
+                  color: "#014869",
                   textAlign: "center",
                   flex: 1,
                 }}
@@ -272,23 +273,10 @@ export default function OrganizerNotifications({ navigation }) {
 
             {/* Opciones menú móvil */}
             <View style={{ flex: 1 }}>
-              {[
-                {
-                  label: "Sobre nosotros",
-                  icon: require("../assets/iconos/info-usuario.png"),
-                },
-                {
-                  label: "Cultura e Historia",
-                  icon: require("../assets/iconos/museo-usuario.png"),
-                },
-                {
-                  label: "Contacto",
-                  icon: require("../assets/iconos/phone-usuario.png"),
-                },
-              ].map((item, i) => (
+              {["Eventos", "Favoritos", "Contacto"].map((label, i) => (
                 <Pressable
                   key={i}
-                  onPress={() => simulateNavigation(item.label)}
+                  onPress={() => simulateNavigation(label)}
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
@@ -296,29 +284,18 @@ export default function OrganizerNotifications({ navigation }) {
                     marginBottom: 25,
                   }}
                 >
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <Image
-                      source={item.icon}
-                      style={{
-                        width: 24,
-                        height: 24,
-                        tintColor: "#014869",
-                        marginRight: 14,
-                      }}
-                    />
-                    <Text
-                      style={{
-                        color: "#014869",
-                        fontSize: 16,
-                        fontWeight: "600",
-                      }}
-                    >
-                      {item.label}
-                    </Text>
-                  </View>
+                  <Text
+                    style={{
+                      color: "#014869",
+                      fontSize: 16,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {label}
+                  </Text>
                   <Image
                     source={require("../assets/iconos/siguiente.png")}
-                    style={{ width: 18, height: 18, tintColor: "#F3B23F" }}
+                    style={{ width: 18, height: 18, tintColor: "#014869" }}
                   />
                 </Pressable>
               ))}
@@ -327,7 +304,7 @@ export default function OrganizerNotifications({ navigation }) {
         )
       )}
 
-      {/* === LISTA DE NOTIFICACIONES CON SCROLL === */}
+      {/* === LISTA DE NOTIFICACIONES === */}
       <View style={{ flex: 1, padding: 24 }}>
         <Text
           style={{
@@ -343,14 +320,14 @@ export default function OrganizerNotifications({ navigation }) {
 
         <ScrollView
           style={{
-            maxHeight: 500, // 👈 altura máxima visible con scroll
+            maxHeight: 500, // 👈 Altura máxima visible, ajusta si quieres más
             width: "100%",
           }}
           contentContainerStyle={{
             alignItems: "center",
             paddingBottom: 40,
           }}
-          showsVerticalScrollIndicator={true} // 👈 activa el scroll visible
+          showsVerticalScrollIndicator={true} // 👈 Habilita la barra de desplazamiento
         >
           {notifications.length === 0 ? (
             <Text style={{ color: "#777" }}>No tienes notificaciones aún.</Text>

@@ -16,6 +16,7 @@ import OrganizerEventDetail from "./screens/OrganizerEventDetail";
 import AdminEventDetail from "./screens/AdminEventDetail";
 import OrganizerNotifications from "./screens/OrganizerNotifications";
 import AdminNotifications from "./screens/AdminNotifications";
+import UserNotifications from "./screens/UserNotifications";
 
 //3) Creamos el Stack Navigator
 //Este componente permite navegar entre pantallas de forma apilada
@@ -97,6 +98,12 @@ export default function App() {
         <Stack.Screen
           name="AdminNotifications"
           component={AdminNotifications}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="UserNotifications"
+          component={UserNotifications}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
