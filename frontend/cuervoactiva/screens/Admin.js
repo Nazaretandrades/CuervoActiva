@@ -212,12 +212,6 @@ export default function Admin() {
     }
   };
 
-  const handleMenuOption = (option) => {
-    toggleMenu();
-    if (Platform.OS === "web") alert(`Iría a: ${option}`);
-    else Alert.alert("Navegación simulada", option);
-  };
-
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons={true} />
@@ -303,15 +297,18 @@ export default function Admin() {
             }}
           >
             {[
-              "Perfil",
-              "Sobre nosotros",
-              "Cultura e Historia",
-              "Ver usuarios",
-              "Contacto",
+              { label: "Perfil" },
+              { label: "Sobre nosotros" },
+              { label: "Cultura e Historia" },
+              { label: "Ver usuarios", route: "AdminUsers" },
+              { label: "Contacto" },
             ].map((item, i) => (
               <Pressable
                 key={i}
-                onPress={() => handleMenuOption(item)}
+                onPress={() => {
+                  toggleMenu();
+                  if (item.route) navigation.navigate(item.route);
+                }}
                 style={{ marginBottom: 25 }}
               >
                 <Text
@@ -321,7 +318,7 @@ export default function Admin() {
                     fontWeight: "700",
                   }}
                 >
-                  {item}
+                  {item.label}
                 </Text>
               </Pressable>
             ))}
@@ -403,14 +400,13 @@ export default function Admin() {
           </>
         ) : (
           <>
+            {/* === FORMULARIO EDICIÓN === */}
             <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
               Editar evento
             </Text>
             <ScrollView>
               {/* Título */}
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                Título:
-              </Text>
+              <Text style={{ fontWeight: "600", marginBottom: 4 }}>Título:</Text>
               <TextInput
                 value={form.title}
                 onChangeText={(t) => setForm({ ...form, title: t })}

@@ -120,13 +120,6 @@ export default function UserNotifications({ navigation }) {
     }
   };
 
-  const simulateNavigation = (route) => {
-    toggleMenu();
-    Platform.OS === "web"
-      ? alert(`Iría a: ${route}`)
-      : Alert.alert("Navegación simulada", route);
-  };
-
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
@@ -157,12 +150,6 @@ export default function UserNotifications({ navigation }) {
           <Pressable>
             <Image
               source={require("../assets/iconos/bell.png")}
-              style={{
-                width: 26,
-                height: 26,
-                tintColor: "#014869",
-                opacity: 0.6,
-              }}
             />
           </Pressable>
 
@@ -210,10 +197,18 @@ export default function UserNotifications({ navigation }) {
               transform: [{ translateX: menuAnim }],
             }}
           >
-            {["Perfil", "Eventos", "Favoritos", "Contacto"].map((item, i) => (
+            {[
+              { label: "Perfil", route: "Perfil" },
+              { label: "Eventos", route: "User" },
+              { label: "Ver favoritos", route: "UserFavorites" },
+              { label: "Contacto", route: "Contacto" },
+            ].map((item, i) => (
               <Pressable
                 key={i}
-                onPress={() => simulateNavigation(item)}
+                onPress={() => {
+                  toggleMenu();
+                  navigation.navigate(item.route);
+                }}
                 style={{ marginBottom: 25 }}
               >
                 <Text
@@ -223,7 +218,7 @@ export default function UserNotifications({ navigation }) {
                     fontWeight: "700",
                   }}
                 >
-                  {item}
+                  {item.label}
                 </Text>
               </Pressable>
             ))}
@@ -273,10 +268,17 @@ export default function UserNotifications({ navigation }) {
 
             {/* Opciones menú móvil */}
             <View style={{ flex: 1 }}>
-              {["Eventos", "Favoritos", "Contacto"].map((label, i) => (
+              {[
+                { label: "Eventos", route: "User" },
+                { label: "Ver favoritos", route: "UserFavorites" },
+                { label: "Contacto", route: "Contacto" },
+              ].map((item, i) => (
                 <Pressable
                   key={i}
-                  onPress={() => simulateNavigation(label)}
+                  onPress={() => {
+                    toggleMenu();
+                    navigation.navigate(item.route);
+                  }}
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
@@ -291,7 +293,7 @@ export default function UserNotifications({ navigation }) {
                       fontWeight: "600",
                     }}
                   >
-                    {label}
+                    {item.label}
                   </Text>
                   <Image
                     source={require("../assets/iconos/siguiente.png")}
@@ -320,14 +322,14 @@ export default function UserNotifications({ navigation }) {
 
         <ScrollView
           style={{
-            maxHeight: 500, // 👈 Altura máxima visible, ajusta si quieres más
+            maxHeight: 500,
             width: "100%",
           }}
           contentContainerStyle={{
             alignItems: "center",
             paddingBottom: 40,
           }}
-          showsVerticalScrollIndicator={true} // 👈 Habilita la barra de desplazamiento
+          showsVerticalScrollIndicator={true}
         >
           {notifications.length === 0 ? (
             <Text style={{ color: "#777" }}>No tienes notificaciones aún.</Text>

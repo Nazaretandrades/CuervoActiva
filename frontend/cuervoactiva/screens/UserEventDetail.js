@@ -13,7 +13,7 @@ import {
   Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRoute } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
@@ -26,6 +26,7 @@ const COMMENTS_URL = `${API_BASE}/api/comments`;
 
 export default function UserEventDetail() {
   const route = useRoute();
+  const navigation = useNavigation();
   const { eventId } = route.params || {};
 
   const [event, setEvent] = useState(null);
@@ -35,11 +36,10 @@ export default function UserEventDetail() {
   const [shareVisible, setShareVisible] = useState(false);
   const [userName, setUserName] = useState("Usuario");
 
-  // Menú lateral animado
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  // === Obtener token multiplataforma ===
+  // === Obtener token ===
   const getToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -149,7 +149,6 @@ export default function UserEventDetail() {
       setHasRated(true);
       Alert.alert("✅", "Tu valoración se ha registrado correctamente");
 
-      // Actualizar promedio
       const resComments = await fetch(`${COMMENTS_URL}/${eventId}`);
       if (resComments.ok) {
         const dataComments = await resComments.json();
@@ -183,7 +182,7 @@ export default function UserEventDetail() {
     );
   };
 
-  // === Alternar menú lateral ===
+  // === Menú lateral ===
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -201,11 +200,12 @@ export default function UserEventDetail() {
     }
   };
 
-  const simulateNavigation = (route) => {
-    toggleMenu();
-    Platform.OS === "web"
-      ? alert(`Iría a: ${route}`)
-      : Alert.alert("Navegación simulada", route);
+  const goToNotifications = () => {
+    navigation.navigate("UserNotifications");
+  };
+
+  const goToFavorites = () => {
+    navigation.navigate("UserFavorites");
   };
 
   // === Renderizar estrellas ===
@@ -240,9 +240,9 @@ export default function UserEventDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <Header hideAuthButtons={true} />
+      <Header hideAuthButtons />
 
-      {/* ====== Barra superior ====== */}
+      {/* === BARRA SUPERIOR === */}
       <View
         style={{
           flexDirection: "row",
@@ -256,14 +256,20 @@ export default function UserEventDetail() {
         </Text>
 
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Pressable style={{ marginHorizontal: 8 }}>
-            <Text>🔔</Text>
+          <Pressable
+            onPress={goToNotifications}
+            style={{ marginHorizontal: 8 }}
+          >
+            <Image
+              source={require("../assets/iconos/bell.png")}
+              style={{ width: 26, height: 26, tintColor: "#014869" }}
+            />
           </Pressable>
+
           <Pressable style={{ marginHorizontal: 8 }}>
             <Text>📅</Text>
           </Pressable>
 
-          {/* === Icono de menú === */}
           <Pressable onPress={toggleMenu}>
             <Image
               source={
@@ -277,7 +283,7 @@ export default function UserEventDetail() {
         </View>
       </View>
 
-      {/* ====== MENÚ ====== */}
+      {/* === MENÚ === */}
       {Platform.OS === "web" ? (
         <>
           {menuVisible && (
@@ -308,13 +314,19 @@ export default function UserEventDetail() {
             }}
           >
             {[
-              "Perfil",
-              "Sobre nosotros",
-              "Cultura e Historia",
-              "Ver favoritos",
-              "Contacto",
+              { label: "Perfil", route: "Perfil" },
+              { label: "Sobre nosotros", route: "Sobre nosotros" },
+              { label: "Cultura e Historia", route: "Cultura e Historia" },
+              { label: "Ver favoritos", route: "UserFavorites" },
+              { label: "Contacto", route: "Contacto" },
             ].map((item, i) => (
-              <Pressable key={i} onPress={() => simulateNavigation(item)}>
+              <Pressable
+                key={i}
+                onPress={() => {
+                  toggleMenu();
+                  navigation.navigate(item.route);
+                }}
+              >
                 <Text
                   style={{
                     color: "#014869",
@@ -323,144 +335,15 @@ export default function UserEventDetail() {
                     marginBottom: 25,
                   }}
                 >
-                  {item}
+                  {item.label}
                 </Text>
               </Pressable>
             ))}
           </Animated.View>
         </>
-      ) : (
-        // 📱 MENÚ MÓVIL (idéntico al User.js)
-        menuVisible && (
-          <View
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "#f4f6f7",
-              zIndex: 20,
-              paddingHorizontal: 24,
-              paddingTop: 50,
-            }}
-          >
-            {/* 🔙 Header */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 30,
-              }}
-            >
-              <Pressable onPress={toggleMenu} style={{ marginRight: 15 }}>
-                <Image
-                  source={require("../assets/iconos/back-usuario.png")}
-                  style={{ width: 22, height: 22, tintColor: "#014869" }}
-                />
-              </Pressable>
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: "bold",
-                  color: "#014869",
-                  textAlign: "center",
-                  flex: 1,
-                  marginRight: 37,
-                }}
-              >
-                Menú
-              </Text>
-            </View>
+      ) : null}
 
-            {/* 🔹 Opciones */}
-            <View style={{ flex: 1 }}>
-              {[
-                {
-                  label: "Sobre nosotros",
-                  icon: require("../assets/iconos/info-usuario.png"),
-                },
-                {
-                  label: "Cultura e Historia",
-                  icon: require("../assets/iconos/museo-usuario.png"),
-                },
-                {
-                  label: "Ver favoritos",
-                  icon: require("../assets/iconos/favs-usuario.png"),
-                },
-                {
-                  label: "Contacto",
-                  icon: require("../assets/iconos/phone-usuario.png"),
-                },
-              ].map((item, index) => (
-                <Pressable
-                  key={index}
-                  onPress={() => simulateNavigation(item.label)}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 25,
-                  }}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <Image
-                      source={item.icon}
-                      style={{
-                        width: 22,
-                        height: 22,
-                        tintColor: "#014869",
-                        marginRight: 14,
-                      }}
-                    />
-                    <Text
-                      style={{
-                        color: "#014869",
-                        fontSize: 16,
-                        fontWeight: "600",
-                      }}
-                    >
-                      {item.label}
-                    </Text>
-                  </View>
-
-                  <Image
-                    source={require("../assets/iconos/siguiente.png")}
-                    style={{ width: 18, height: 18, tintColor: "#014869" }}
-                  />
-                </Pressable>
-              ))}
-            </View>
-
-            {/* 🔸 Barra inferior */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-around",
-                alignItems: "center",
-                borderTopWidth: 1,
-                borderTopColor: "#01486933",
-                paddingVertical: 14,
-              }}
-            >
-              <Image
-                source={require("../assets/iconos/search.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
-              />
-              <Image
-                source={require("../assets/iconos/calendar.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
-              />
-              <Image
-                source={require("../assets/iconos/user.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
-              />
-            </View>
-          </View>
-        )
-      )}
-
-      {/* ====== CONTENIDO DEL EVENTO ====== */}
+      {/* === CONTENIDO PRINCIPAL === */}
       <ScrollView
         style={{ flex: 1, paddingHorizontal: 20, paddingVertical: 10 }}
       >
@@ -504,6 +387,33 @@ export default function UserEventDetail() {
           {renderStars()}
         </View>
 
+        {/* === ESTADO DEL EVENTO === */}
+        {/* === ESTADO DEL EVENTO === */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "flex-end",
+            marginBottom: 20,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor:
+                new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
+              borderRadius: 20,
+              paddingHorizontal: 16,
+              paddingVertical: 5,
+            }}
+          >
+            <Text style={{ color: "#fff", fontWeight: "bold" }}>
+              {new Date(event.date) > new Date()
+                ? "Habilitado"
+                : "Deshabilitado"}
+            </Text>
+          </View>
+        </View>
+
+        {/* === BOTÓN COMPARTIR === */}
         <View style={{ alignItems: "center", marginTop: 10 }}>
           <Pressable
             onPress={() => setShareVisible(true)}
@@ -523,7 +433,7 @@ export default function UserEventDetail() {
         </View>
       </ScrollView>
 
-      {/* ====== MODAL COMPARTIR ====== */}
+      {/* === MODAL COMPARTIR === */}
       <Modal
         visible={shareVisible}
         transparent

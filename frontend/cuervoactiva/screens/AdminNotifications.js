@@ -98,6 +98,12 @@ export default function AdminNotifications({ navigation }) {
 
   const handleMenuOption = (option) => {
     toggleMenu();
+
+    if (option === "Ver usuarios") {
+      navigation.navigate("AdminUsers");
+      return;
+    }
+
     alert(`Iría a: ${option}`);
   };
 
@@ -121,7 +127,7 @@ export default function AdminNotifications({ navigation }) {
         {/* 👑 Admin */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <Text>👑</Text>
-          <Text style={{ fontWeight: "600", color: "#014869" }}>
+          <Text>
             Admin: {adminName}
           </Text>
         </View>
@@ -129,10 +135,7 @@ export default function AdminNotifications({ navigation }) {
         {/* 🔔 + Menú */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
           <Pressable>
-            <Image
-              source={require("../assets/iconos/bell2.png")}
-              style={{ width: 26, height: 26, opacity: 0.6 }}
-            />
+            <Image source={require("../assets/iconos/bell2.png")} />
           </Pressable>
 
           <Pressable onPress={toggleMenu}>
@@ -204,7 +207,7 @@ export default function AdminNotifications({ navigation }) {
         </>
       )}
 
-      {/* === LISTA DE NOTIFICACIONES CON SCROLL === */}
+      {/* === LISTA DE NOTIFICACIONES === */}
       <View style={{ flex: 1, padding: 24 }}>
         <Text
           style={{
@@ -220,14 +223,14 @@ export default function AdminNotifications({ navigation }) {
 
         <ScrollView
           style={{
-            maxHeight: 500, // 👈 Limita la altura visible
+            maxHeight: 500,
             width: "100%",
           }}
           contentContainerStyle={{
             alignItems: "center",
             paddingBottom: 40,
           }}
-          showsVerticalScrollIndicator={true} // 👈 Scroll visible
+          showsVerticalScrollIndicator={true}
         >
           {notifications.length === 0 ? (
             <Text style={{ color: "#777" }}>No hay notificaciones aún.</Text>

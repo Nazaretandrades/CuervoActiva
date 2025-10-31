@@ -2,14 +2,14 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  TextInput,
-  Pressable,
   ScrollView,
+  Pressable,
+  Platform,
   Image,
   Animated,
   TouchableWithoutFeedback,
-  Platform,
   Alert,
+  TextInput,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -20,22 +20,19 @@ const API_BASE =
   Platform.OS === "android"
     ? "http://192.168.18.19:5000"
     : "http://localhost:5000";
-const API_URL = `${API_BASE}/api/events`;
 const FAVORITES_URL = `${API_BASE}/api/favorites`;
 
-export default function User() {
+export default function UserFavorites() {
   const navigation = useNavigation();
-  const [userName, setUserName] = useState("Usuario");
-  const [events, setEvents] = useState([]);
-  const [filtered, setFiltered] = useState([]);
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [favorites, setFavorites] = useState([]);
+  const [filteredFavorites, setFilteredFavorites] = useState([]); // 🔍 NUEVO: lista filtrada
+  const [search, setSearch] = useState(""); // 🔍 NUEVO: texto del buscador
+  const [userName, setUserName] = useState("Usuario");
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
   // === Obtener token multiplataforma ===
-  const getSessionToken = async () => {
+  const getToken = async () => {
     try {
       if (Platform.OS === "web") {
         const session = JSON.parse(localStorage.getItem("USER_SESSION"));
@@ -51,7 +48,7 @@ export default function User() {
     }
   };
 
-  // === Obtener nombre del usuario logueado ===
+  // === Obtener usuario logueado ===
   const getUserName = async () => {
     try {
       let session;
@@ -76,55 +73,57 @@ export default function User() {
     }
   };
 
-  // === Cargar eventos y favoritos ===
+  // === Cargar favoritos ===
   useEffect(() => {
-    const loadData = async () => {
+    const loadFavorites = async () => {
       try {
         await getUserName();
-        const token = await getSessionToken();
+        const token = await getToken();
+        if (!token) return;
 
-        const resEvents = await fetch(API_URL);
-        if (!resEvents.ok) throw new Error("Error al obtener eventos");
-        const dataEvents = await resEvents.json();
-        setEvents(dataEvents);
-        setFiltered(dataEvents);
+        const res = await fetch(FAVORITES_URL, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        if (token) {
-          const resFav = await fetch(FAVORITES_URL, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (resFav.ok) {
-            const favs = await resFav.json();
-            setFavorites(favs.map((f) => f._id));
-          }
-        }
+        if (!res.ok) throw new Error("Error al obtener favoritos");
+        const data = await res.json();
+        setFavorites(data);
+        setFilteredFavorites(data); // inicializa el filtro
       } catch (err) {
-        console.error("Error cargando datos:", err);
+        console.error("Error cargando favoritos:", err);
         if (Platform.OS === "web")
-          alert("❌ No se pudieron cargar los eventos o favoritos.");
-        else Alert.alert("Error", "No se pudieron cargar los eventos.");
+          alert("❌ No se pudieron cargar los favoritos.");
+        else Alert.alert("Error", "No se pudieron cargar los favoritos.");
       }
     };
-    loadData();
+    loadFavorites();
   }, []);
 
-  // === Filtro ===
+  // === 🔍 Filtro de búsqueda ===
   useEffect(() => {
-    let data = events;
-    if (selectedCategory !== "all") {
-      data = data.filter((e) => e.category === selectedCategory);
-    }
-    if (search.trim()) {
+    if (!search.trim()) {
+      setFilteredFavorites(favorites);
+    } else {
       const term = search.toLowerCase();
-      data = data.filter(
-        (e) =>
-          e.title?.toLowerCase().includes(term) ||
-          e.location?.toLowerCase().includes(term) ||
-          e.category?.toLowerCase().includes(term)
+      const filtered = favorites.filter(
+        (fav) =>
+          fav.title?.toLowerCase().includes(term) ||
+          fav.location?.toLowerCase().includes(term) ||
+          fav.category?.toLowerCase().includes(term)
       );
+      setFilteredFavorites(filtered);
     }
-    setFiltered(data);
-  }, [search, selectedCategory, events]);
+  }, [search, favorites]);
+
+  // === Ir al detalle del evento ===
+  const goToEventDetail = (eventId) => {
+    navigation.navigate("UserEventDetail", { eventId });
+  };
+
+  // === ✅ Nueva función: Navegar a notificaciones ===
+  const goToNotifications = () => {
+    navigation.navigate("UserNotifications");
+  };
 
   // === Alternar menú lateral ===
   const toggleMenu = () => {
@@ -144,60 +143,11 @@ export default function User() {
     }
   };
 
-  // === Navegar al detalle del evento ===
-  const goToEventDetail = (eventId) => {
-    navigation.navigate("UserEventDetail", { eventId });
-  };
-
-  // === ✅ Nueva función: Navegar a notificaciones ===
-  const goToNotifications = () => {
-    navigation.navigate("UserNotifications");
-  };
-
-  // === Alternar favorito ===
-  const toggleFavorite = async (eventId) => {
-    try {
-      const token = await getSessionToken();
-      if (!token) {
-        Alert.alert(
-          "Inicia sesión",
-          "Debes iniciar sesión para añadir favoritos."
-        );
-        return;
-      }
-
-      const isFav = favorites.includes(eventId);
-      const method = isFav ? "DELETE" : "POST";
-
-      const res = await fetch(`${FAVORITES_URL}/${eventId}`, {
-        method,
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error("Error al actualizar favoritos");
-
-      setFavorites((prev) =>
-        isFav ? prev.filter((id) => id !== eventId) : [...prev, eventId]
-      );
-    } catch (err) {
-      console.error("Error al cambiar favorito:", err);
-      Alert.alert("Error", "No se pudo actualizar el favorito.");
-    }
-  };
-
-  // === Simulación navegación ===
-  const simulateNavigation = (route) => {
-    toggleMenu();
-    Platform.OS === "web"
-      ? alert(`Iría a: ${route}`)
-      : Alert.alert("Navegación simulada", route);
-  };
-
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons={true} />
 
-      {/* ====== Barra superior ====== */}
+      {/* ======= Barra superior ======= */}
       <View
         style={{
           flexDirection: "row",
@@ -206,10 +156,14 @@ export default function User() {
           justifyContent: "space-between",
         }}
       >
-        <Text>👤 {userName}</Text>
+        {/* 👤 Nombre del usuario */}
+        <Text style={{ color: "#014869", fontWeight: "bold" }}>
+          👤 {userName}
+        </Text>
 
+        {/* 🔍 Buscador de eventos favoritos */}
         <TextInput
-          placeholder="Buscar eventos..."
+          placeholder="Buscar favoritos..."
           value={search}
           onChangeText={setSearch}
           style={{
@@ -223,8 +177,8 @@ export default function User() {
           }}
         />
 
+        {/* 🔔 Iconos */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {/* === 🔔 ICONO NOTIFICACIONES (nuevo) === */}
           <Pressable onPress={goToNotifications} style={{ marginHorizontal: 8 }}>
             <Image source={require("../assets/iconos/bell.png")} />
           </Pressable>
@@ -246,7 +200,7 @@ export default function User() {
         </View>
       </View>
 
-      {/* ====== MENÚ ====== */}
+      {/* ======= MENÚ lateral ======= */}
       {Platform.OS === "web" ? (
         <>
           {menuVisible && (
@@ -408,158 +362,52 @@ export default function User() {
                 </Pressable>
               ))}
             </View>
-
-            {/* 🔸 Barra inferior */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-around",
-                alignItems: "center",
-                borderTopWidth: 1,
-                borderTopColor: "#01486933",
-                paddingVertical: 14,
-              }}
-            >
-              <Image
-                source={require("../assets/iconos/search.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
-              />
-              <Image
-                source={require("../assets/iconos/calendar.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
-              />
-              <Image
-                source={require("../assets/iconos/user.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
-              />
-            </View>
           </View>
         )
       )}
 
-      {/* ====== Contenido principal ====== */}
-      <View
-        style={{
-          flex: 1,
-          flexDirection: "row",
-          paddingHorizontal: 16,
-          gap: 16,
-        }}
-      >
-        {/* Categorías */}
-        <View style={{ width: "25%" }}>
-          <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
-            Categorías
-          </Text>
+      {/* ======= Contenido principal ======= */}
+      <View style={{ flex: 1, paddingHorizontal: 20, paddingVertical: 20 }}>
+        <Text
+          style={{
+            textAlign: "center",
+            fontSize: 20,
+            fontWeight: "bold",
+            color: "#014869",
+            marginBottom: 20,
+          }}
+        >
+          Favoritos
+        </Text>
 
-          {[
-            { label: "Todos", value: "all", color: "#014869" },
-            { label: "Deporte", value: "deporte", color: "#F3B23F" },
-            { label: "Cultura e Historia", value: "cultura", color: "#784BA0" },
-          ].map((cat, i) => (
-            <Pressable
-              key={i}
-              onPress={() => setSelectedCategory(cat.value)}
-              style={{
-                backgroundColor:
-                  selectedCategory === cat.value ? cat.color : `${cat.color}33`,
-                paddingVertical: 10,
-                borderRadius: 8,
-                marginBottom: 10,
-                alignItems: "center",
-              }}
-            >
-              <Text
+        <ScrollView>
+          {filteredFavorites.length > 0 ? (
+            filteredFavorites.map((fav) => (
+              <Pressable
+                key={fav._id}
+                onPress={() => goToEventDetail(fav._id)}
                 style={{
-                  color: selectedCategory === cat.value ? "#fff" : "#014869",
-                  fontWeight: "bold",
+                  backgroundColor: "#014869",
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  marginBottom: 14,
+                  alignItems: "center",
                 }}
               >
-                {cat.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Eventos */}
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
-            Listado de eventos
-          </Text>
-
-          <ScrollView>
-            {filtered.length > 0 ? (
-              filtered.map((ev) => {
-                const isFav = favorites.includes(ev._id);
-                return (
-                  <Pressable
-                    key={ev._id}
-                    onPress={() => goToEventDetail(ev._id)}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: 10,
-                      padding: 10,
-                      backgroundColor: "#f9f9f9",
-                      borderRadius: 8,
-                      borderWidth: 1,
-                      borderColor: isFav ? "#014869" : "#ddd",
-                    }}
-                  >
-                    <Text
-                      numberOfLines={1}
-                      style={{
-                        flex: 1,
-                        color: isFav ? "#014869" : "#333",
-                        fontWeight: isFav ? "bold" : "500",
-                      }}
-                    >
-                      {ev.title}
-                    </Text>
-
-                    {/* Botón de favorito */}
-                    <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(ev._id);
-                      }}
-                      style={{
-                        marginLeft: 10,
-                        paddingHorizontal: 10,
-                        paddingVertical: 6,
-                        borderRadius: 8,
-                        backgroundColor: isFav ? "#014869" : "#E0E0E0",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: isFav ? "#fff" : "#555",
-                          fontSize: 16,
-                        }}
-                      >
-                        {isFav ? "★" : "☆"}
-                      </Text>
-                    </Pressable>
-                  </Pressable>
-                );
-              })
-            ) : (
-              <Text
-                style={{
-                  textAlign: "center",
-                  marginTop: 40,
-                  color: "#777",
-                  fontStyle: "italic",
-                }}
-              >
-                {search.trim()
-                  ? "🔍 No se encontraron eventos."
-                  : "📭 No hay eventos disponibles."}
-              </Text>
-            )}
-          </ScrollView>
-        </View>
+                <Text
+                  numberOfLines={1}
+                  style={{ color: "#fff", fontWeight: "bold" }}
+                >
+                  {fav.title}
+                </Text>
+              </Pressable>
+            ))
+          ) : (
+            <Text style={{ textAlign: "center", color: "#777", marginTop: 40 }}>
+              📭 No se encontraron eventos favoritos.
+            </Text>
+          )}
+        </ScrollView>
       </View>
 
       {Platform.OS === "web" && <Footer />}

@@ -8,16 +8,13 @@ exports.registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // Evitar duplicados
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(400).json({ error: "El correo ya está registrado" });
 
-    // Rol permitido
-    const allowedRoles = ["user", "organizer"];
+    const allowedRoles = ["user", "organizer", "admin"];
     const finalRole = allowedRoles.includes(role) ? role : "user";
 
-    // Crear usuario
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({
       name,
@@ -28,10 +25,8 @@ exports.registerUser = async (req, res) => {
 
     // 📢 Notificación para admin
     const adminUser = await User.findOne({ role: "admin" });
-    console.log("ADMIN ENCONTRADO:", adminUser?._id);
-
     if (adminUser) {
-      const noti = await Notification.create({
+      await Notification.create({
         user: adminUser._id,
         message: `Se ha registrado un nuevo ${
           finalRole === "organizer" ? "organizador" : "usuario"
@@ -39,10 +34,8 @@ exports.registerUser = async (req, res) => {
         type: "user_register",
         dateKey: new Date().toISOString(),
       });
-      console.log("✅ Notificación creada:", noti);
     }
 
-    // Token
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -57,24 +50,19 @@ exports.registerUser = async (req, res) => {
       token,
     });
   } catch (err) {
-    console.error("❌ Error en registro:", err);
     res.status(400).json({ error: err.message });
   }
 };
 
-//Login
+// === LOGIN ===
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    //Permitir login con email o username
     const user = await User.findOne({
       $or: [{ email }, { name: email }],
     });
-
-    //Validar si se ha encontrado al usuario
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
 
-    //Comparar la contraseña para ver si es la misma
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ error: "Contraseña incorrecta" });
 
@@ -83,6 +71,7 @@ exports.loginUser = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
+
     res.json({
       id: user._id,
       name: user.name,
@@ -95,7 +84,7 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-//Perfil de usuario
+// === PERFIL ===
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate(
@@ -104,6 +93,51 @@ exports.getProfile = async (req, res) => {
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
     res.json(user);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// === ADMIN: VER TODOS LOS USUARIOS ===
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({ role: { $ne: "admin" } }).select(
+      "_id name email role"
+    );
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// === ADMIN: ELIMINAR USUARIO ===
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    // 🔎 Confirmar que el admin existe
+    const adminUser = await User.findOne({ role: "admin" });
+    if (adminUser) {
+      console.log("📢 Creando notificación de eliminación...");
+
+      await Notification.create({
+        user: adminUser._id,
+        message: `El usuario "${user.name}" ha sido eliminado del sistema.`,
+        type: "user_deleted",
+        dateKey: new Date().toISOString(),
+      });
+
+      console.log("✅ Notificación creada correctamente");
+    } else {
+      console.warn("⚠️ No se encontró usuario con rol 'admin'");
+    }
+
+    // 🗑️ Ahora sí, eliminamos el usuario
+    await user.deleteOne();
+
+    res.json({ message: "Usuario eliminado correctamente" });
+  } catch (err) {
+    console.error("❌ Error en deleteUser:", err);
     res.status(500).json({ error: err.message });
   }
 };

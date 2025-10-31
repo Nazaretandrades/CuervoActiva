@@ -15,6 +15,7 @@ import {
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { getSession } from "../services/sessionManager";
+import { useNavigation } from "@react-navigation/native"; // ✅ NUEVO: para redirigir
 
 const API_BASE = "http://localhost:5000";
 const API_URL = `${API_BASE}/api/events`;
@@ -28,6 +29,8 @@ export default function AdminEventDetail({ route }) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [shareVisible, setShareVisible] = useState(false);
+
+  const navigation = useNavigation(); // ✅ NUEVO: para poder navegar
 
   // === Obtener nombre del admin ===
   useEffect(() => {
@@ -65,7 +68,7 @@ export default function AdminEventDetail({ route }) {
     if (eventId) loadEvent();
   }, [eventId]);
 
-  // === Renderizar estrellas (estilo User/Organizer) ===
+  // === Renderizar estrellas ===
   const renderStars = (rating) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -103,9 +106,16 @@ export default function AdminEventDetail({ route }) {
     }
   };
 
-  const simulateNavigation = (route) => {
+  // === Redirección a notificaciones === ✅ NUEVO
+  const goToNotifications = () => {
+    navigation.navigate("AdminNotifications");
+  };
+
+  // === Redirección del menú lateral === ✅ MODIFICADO
+  const handleMenuPress = (item) => {
     toggleMenu();
-    alert(`Iría a: ${route}`);
+    if (item.route) navigation.navigate(item.route);
+    else alert(`Iría a: ${item.label}`);
   };
 
   // === Compartir ===
@@ -153,21 +163,32 @@ export default function AdminEventDetail({ route }) {
           borderColor: "#eee",
         }}
       >
+        {/* 👑 Admin */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Text style={{ marginRight: 6 }}>👑</Text>
           <Text>Admin. {adminName}</Text>
         </View>
 
-        <Pressable onPress={toggleMenu}>
-          <Image
-            source={
-              menuVisible
-                ? require("../assets/iconos/close-admin.png")
-                : require("../assets/iconos/menu-admin.png")
-            }
-            style={{ width: 26, height: 26 }}
-          />
-        </Pressable>
+        {/* 🔔 Notificaciones + Menú (NUEVO) */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
+            <Image
+              source={require("../assets/iconos/bell2.png")}
+              style={{ width: 22, height: 22 }}
+            />
+          </Pressable>
+
+          <Pressable onPress={toggleMenu}>
+            <Image
+              source={
+                menuVisible
+                  ? require("../assets/iconos/close-admin.png")
+                  : require("../assets/iconos/menu-admin.png")
+              }
+              style={{ width: 26, height: 26 }}
+            />
+          </Pressable>
+        </View>
       </View>
 
       {/* === MENÚ LATERAL === */}
@@ -201,15 +222,15 @@ export default function AdminEventDetail({ route }) {
             }}
           >
             {[
-              "Perfil",
-              "Sobre nosotros",
-              "Cultura e Historia",
-              "Ver usuarios",
-              "Contacto",
+              { label: "Perfil" },
+              { label: "Sobre nosotros" },
+              { label: "Cultura e Historia" },
+              { label: "Ver usuarios", route: "AdminUsers" }, // ✅ NUEVO
+              { label: "Contacto" },
             ].map((item, i) => (
               <Pressable
                 key={i}
-                onPress={() => simulateNavigation(item)}
+                onPress={() => handleMenuPress(item)}
                 style={{ marginBottom: 25 }}
               >
                 <Text
@@ -219,7 +240,7 @@ export default function AdminEventDetail({ route }) {
                     fontWeight: "700",
                   }}
                 >
-                  {item}
+                  {item.label}
                 </Text>
               </Pressable>
             ))}
@@ -248,7 +269,9 @@ export default function AdminEventDetail({ route }) {
           source={{
             uri: event.image_url.startsWith("http")
               ? event.image_url
-              : `${API_BASE}${event.image_url.startsWith("/") ? "" : "/"}${event.image_url}`,
+              : `${API_BASE}${
+                  event.image_url.startsWith("/") ? "" : "/"
+                }${event.image_url}`,
           }}
           style={{
             width: "100%",
@@ -326,7 +349,7 @@ export default function AdminEventDetail({ route }) {
           </View>
         </View>
 
-        {/* === Botón compartir (mismo que OrganizerEventDetail) === */}
+        {/* === Botón compartir === */}
         <View style={{ alignItems: "center", marginTop: 20 }}>
           <Pressable
             onPress={() => setShareVisible(true)}
