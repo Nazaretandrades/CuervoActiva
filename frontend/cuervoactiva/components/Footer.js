@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, Pressable, Image, Linking } from "react-native";
 
-export default function Footer() {
+export default function Footer({ onAboutPress }) {
   // 🌐 Abrir enlaces externos
   const openLink = async (url) => {
     try {
@@ -51,8 +51,27 @@ export default function Footer() {
             <Text style={{ color: "#555", fontSize: 12 }}>Condiciones</Text>
           </Pressable>
 
-          <Pressable style={{ marginHorizontal: 6 }}>
-            <Text style={{ color: "#555", fontSize: 12 }}>Sobre Nosotros</Text>
+          {/* ✅ ENLACE ACTIVO A "Sobre Nosotros" */}
+          <Pressable
+            style={{ marginHorizontal: 6 }}
+            onPress={() => {
+              if (onAboutPress) {
+                onAboutPress(); // Usa la navegación recibida desde el componente padre
+              } else {
+                console.warn(
+                  "⚠️ No se pasó la función onAboutPress al Footer. Añádela en el componente padre."
+                );
+              }
+            }}
+          >
+            <Text
+              style={{
+                color: "#555",
+                fontSize: 12,
+              }}
+            >
+              Sobre Nosotros
+            </Text>
           </Pressable>
         </View>
 

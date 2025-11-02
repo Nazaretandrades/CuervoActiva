@@ -228,15 +228,13 @@ export default function Organizer({ navigation }) {
   };
 
   const handleEdit = (ev) => setForm(ev);
-
-  // === Ir al detalle del evento ===
-  const goToEventDetail = (eventId) => {
+  const goToEventDetail = (eventId) =>
     navigation.navigate("OrganizerEventDetail", { eventId });
-  };
+  const goToNotifications = () => navigation.navigate("OrganizerNotifications");
 
-  // === 🔔 NUEVA FUNCIÓN: Ir a Notificaciones ===
-  const goToNotifications = () => {
-    navigation.navigate("OrganizerNotifications");
+  const goToAbout = () => {
+    toggleMenu();
+    navigation.navigate("SobreNosotros");
   };
 
   // === Menú lateral ===
@@ -259,13 +257,15 @@ export default function Organizer({ navigation }) {
 
   const simulateNavigation = (route) => {
     toggleMenu();
-    Platform.OS === "web"
-      ? alert(`Iría a: ${route}`)
-      : Alert.alert("Navegación simulada", route);
+    if (route === "Sobre nosotros" || route === "SobreNosotros") {
+      goToAbout();
+    } else {
+      navigation.navigate(route);
+    }
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={{ flex: 1, backgroundColor: "#fff", position: "relative" }}>
       <Header hideAuthButtons />
 
       {/* === BARRA SUPERIOR === */}
@@ -278,6 +278,7 @@ export default function Organizer({ navigation }) {
           paddingVertical: 14,
           borderBottomWidth: 1,
           borderColor: "#eee",
+          zIndex: 1,
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -302,7 +303,6 @@ export default function Organizer({ navigation }) {
           }}
         />
 
-        {/* === 🔔 ICONO NOTIFICACIONES === */}
         <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
           <Image
             source={require("../assets/iconos/bell.png")}
@@ -310,7 +310,6 @@ export default function Organizer({ navigation }) {
           />
         </Pressable>
 
-        {/* === ICONO MENÚ === */}
         <Pressable onPress={toggleMenu}>
           <Image
             source={
@@ -330,19 +329,21 @@ export default function Organizer({ navigation }) {
             <TouchableWithoutFeedback onPress={toggleMenu}>
               <View
                 style={{
-                  position: "absolute",
+                  position: "fixed",
                   top: 0,
                   left: 0,
                   width: "100%",
                   height: "100%",
+                  backgroundColor: "rgba(0,0,0,0.1)",
                   zIndex: 9,
                 }}
               />
             </TouchableWithoutFeedback>
           )}
+
           <Animated.View
             style={{
-              position: "absolute",
+              position: "fixed",
               top: 0,
               left: 0,
               width: 250,
@@ -351,30 +352,35 @@ export default function Organizer({ navigation }) {
               padding: 20,
               zIndex: 10,
               transform: [{ translateX: menuAnim }],
+              boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
             }}
           >
-            {["Perfil", "Sobre nosotros", "Cultura e Historia", "Contacto"].map(
-              (item, i) => (
-                <Pressable
-                  key={i}
-                  onPress={() => simulateNavigation(item)}
-                  style={{ marginBottom: 25 }}
+            {[
+              { label: "Perfil", route: "Perfil" },
+              { label: "Cultura e Historia", route: "Cultura e Historia" },
+              { label: "Contacto", route: "Contacto" },
+            ].map((item, i) => (
+              <Pressable
+                key={i}
+                onPress={() => simulateNavigation(item.label)}
+                style={{ marginBottom: 25 }}
+              >
+                <Text
+                  style={{
+                    color: "#014869",
+                    fontSize: 18,
+                    fontWeight: "700",
+                    cursor: "pointer",
+                  }}
                 >
-                  <Text
-                    style={{
-                      color: "#014869",
-                      fontSize: 18,
-                      fontWeight: "700",
-                    }}
-                  >
-                    {item}
-                  </Text>
-                </Pressable>
-              )
-            )}
+                  {item.label}
+                </Text>
+              </Pressable>
+            ))}
           </Animated.View>
         </>
       ) : (
+        // === NUEVO MENÚ MÓVIL COMPLETO ===
         menuVisible && (
           <View
             style={{
@@ -496,7 +502,7 @@ export default function Organizer({ navigation }) {
         )
       )}
 
-      {/* === FORMULARIO === */}
+      {/* === CONTENIDO PRINCIPAL === */}
       <View
         style={{
           flex: 1,
@@ -696,7 +702,7 @@ export default function Organizer({ navigation }) {
             </View>
 
             {/* Imagen */}
-            <Text style={{ fontWeight: "600", marginBottom: 150 }}>
+            <Text style={{ fontWeight: "600", marginBottom: 8 }}>
               Imagen del evento:
             </Text>
             <View
@@ -760,7 +766,12 @@ export default function Organizer({ navigation }) {
         </View>
       </View>
 
-      {Platform.OS === "web" && <Footer />}
+      {/* === FOOTER === */}
+      {Platform.OS === "web" && (
+        <View style={{ zIndex: 1 }}>
+          <Footer onAboutPress={() => navigation.navigate("SobreNosotros")} />
+        </View>
+      )}
     </View>
   );
 }

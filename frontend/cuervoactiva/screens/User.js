@@ -51,6 +51,12 @@ export default function User() {
     }
   };
 
+  // === Navegar a "Sobre Nosotros" ===
+  const goToAboutUs = () => {
+    toggleMenu();
+    navigation.navigate("SobreNosotros");
+  };
+
   // === Obtener nombre del usuario logueado ===
   const getUserName = async () => {
     try {
@@ -149,7 +155,7 @@ export default function User() {
     navigation.navigate("UserEventDetail", { eventId });
   };
 
-  // === ✅ Nueva función: Navegar a notificaciones ===
+  // === 🔔 Ir a Notificaciones ===
   const goToNotifications = () => {
     navigation.navigate("UserNotifications");
   };
@@ -185,12 +191,14 @@ export default function User() {
     }
   };
 
-  // === Simulación navegación ===
+  // === Simular navegación (solo debug) ===
   const simulateNavigation = (route) => {
     toggleMenu();
-    Platform.OS === "web"
-      ? alert(`Iría a: ${route}`)
-      : Alert.alert("Navegación simulada", route);
+    if (route === "Sobre nosotros") {
+      goToAboutUs();
+    } else {
+      navigation.navigate(route);
+    }
   };
 
   return (
@@ -224,13 +232,9 @@ export default function User() {
         />
 
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {/* === 🔔 ICONO NOTIFICACIONES (nuevo) === */}
+          {/* === 🔔 ICONO NOTIFICACIONES === */}
           <Pressable onPress={goToNotifications} style={{ marginHorizontal: 8 }}>
             <Image source={require("../assets/iconos/bell.png")} />
-          </Pressable>
-
-          <Pressable style={{ marginHorizontal: 8 }}>
-            <Text>📅</Text>
           </Pressable>
 
           <Pressable onPress={toggleMenu}>
@@ -288,10 +292,7 @@ export default function User() {
             ].map((item, i) => (
               <Pressable
                 key={i}
-                onPress={() => {
-                  toggleMenu();
-                  navigation.navigate(item.route);
-                }}
+                onPress={() => simulateNavigation(item.label)}
                 style={{ marginBottom: 25 }}
               >
                 <Text
@@ -369,10 +370,11 @@ export default function User() {
               ].map((item, index) => (
                 <Pressable
                   key={index}
-                  onPress={() => {
-                    toggleMenu();
-                    navigation.navigate(item.route);
-                  }}
+                  onPress={() =>
+                    item.label === "Sobre nosotros"
+                      ? goToAboutUs()
+                      : navigation.navigate(item.route)
+                  }
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
@@ -518,7 +520,7 @@ export default function User() {
                       {ev.title}
                     </Text>
 
-                    {/* Botón de favorito */}
+                    {/* Botón favorito */}
                     <Pressable
                       onPress={(e) => {
                         e.stopPropagation();
@@ -562,7 +564,8 @@ export default function User() {
         </View>
       </View>
 
-      {Platform.OS === "web" && <Footer />}
+      {/* ====== FOOTER (solo web) ====== */}
+      {Platform.OS === "web" && <Footer onAboutPress={goToAboutUs} />}
     </View>
   );
 }

@@ -54,6 +54,11 @@ export default function Admin() {
     navigation.navigate("AdminNotifications");
   };
 
+
+  const goToAboutUs = () => {
+    navigation.navigate("SobreNosotros");
+  };
+
   // === Cargar eventos ===
   useEffect(() => {
     const loadData = async () => {
@@ -298,7 +303,7 @@ export default function Admin() {
           >
             {[
               { label: "Perfil" },
-              { label: "Sobre nosotros" },
+              { label: "Sobre nosotros", route: "SobreNosotros" },
               { label: "Cultura e Historia" },
               { label: "Ver usuarios", route: "AdminUsers" },
               { label: "Contacto" },
@@ -568,7 +573,8 @@ export default function Admin() {
         )}
       </View>
 
-      <Footer />
+      {/* === FOOTER (versión web) === */}
+      {Platform.OS === "web" && <Footer onAboutPress={goToAboutUs} />}
     </View>
   );
 }

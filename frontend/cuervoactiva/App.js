@@ -19,6 +19,7 @@ import AdminNotifications from "./screens/AdminNotifications";
 import UserNotifications from "./screens/UserNotifications";
 import UserFavorites from "./screens/UserFavorites";
 import AdminUsers from "./screens/AdminUsers";
+import SobreNosotros from "./screens/SobreNosotros";
 
 //3) Creamos el Stack Navigator
 //Este componente permite navegar entre pantallas de forma apilada
@@ -118,6 +119,12 @@ export default function App() {
         <Stack.Screen
           name="AdminUsers"
           component={AdminUsers}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="SobreNosotros"
+          component={SobreNosotros}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
