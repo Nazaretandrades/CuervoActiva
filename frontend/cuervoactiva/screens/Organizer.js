@@ -262,6 +262,8 @@ export default function Organizer({ navigation }) {
       goToAbout();
     } else if (route === "Perfil" || route === "OrganizerProfile") {
       navigation.navigate("OrganizerProfile"); // ✅ nuevo acceso a perfil
+    } else if (route === "PoliticaPrivacidad") {
+      navigation.navigate("PoliticaPrivacidad");
     } else {
       navigation.navigate(route);
     }
@@ -361,11 +363,12 @@ export default function Organizer({ navigation }) {
             {[
               { label: "Perfil", route: "OrganizerProfile" },
               { label: "Cultura e Historia", route: "Cultura e Historia" },
+              { label: "Política y Privacidad", route: "PoliticaPrivacidad" },
               { label: "Contacto", route: "Contacto" },
             ].map((item, i) => (
               <Pressable
                 key={i}
-                onPress={() => simulateNavigation(item.label)}
+                onPress={() => simulateNavigation(item.route)}
                 style={{ marginBottom: 25 }}
               >
                 <Text
@@ -434,6 +437,11 @@ export default function Organizer({ navigation }) {
                 {
                   label: "Sobre nosotros",
                   icon: require("../assets/iconos/info-usuario.png"),
+                },
+                {
+                  label: "Política y Privacidad",
+                  icon: require("../assets/iconos/info-usuario.png"),
+                  route: "PoliticaPrivacidad",
                 },
                 {
                   label: "Cultura e Historia",
@@ -777,7 +785,10 @@ export default function Organizer({ navigation }) {
       {/* === FOOTER === */}
       {Platform.OS === "web" && (
         <View style={{ zIndex: 1 }}>
-          <Footer onAboutPress={() => navigation.navigate("SobreNosotros")} />
+          <Footer
+            onAboutPress={() => navigation.navigate("SobreNosotros")}
+            onPrivacyPress={() => navigation.navigate("PoliticaPrivacidad")}
+          />
         </View>
       )}
     </View>

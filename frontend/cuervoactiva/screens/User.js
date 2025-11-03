@@ -57,6 +57,12 @@ export default function User() {
     navigation.navigate("SobreNosotros");
   };
 
+  // === Navegar a "Política y Privacidad" ===
+  const goToPrivacy = () => {
+    toggleMenu();
+    navigation.navigate("PoliticaPrivacidad");
+  };
+
   // === Obtener nombre del usuario logueado ===
   const getUserName = async () => {
     try {
@@ -196,6 +202,7 @@ export default function User() {
     toggleMenu();
     if (route === "Perfil") navigation.navigate("UserProfile");
     else if (route === "Sobre nosotros") goToAboutUs();
+    else if (route === "Política y Privacidad") goToPrivacy();
     else navigation.navigate(route);
   };
 
@@ -283,6 +290,7 @@ export default function User() {
             {[
               { label: "Perfil", route: "UserProfile" },
               { label: "Sobre nosotros", route: "Sobre nosotros" },
+              { label: "Política y Privacidad", route: "Política y Privacidad" },
               { label: "Cultura e Historia", route: "Cultura e Historia" },
               { label: "Ver favoritos", route: "UserFavorites" },
               { label: "Contacto", route: "Contacto" },
@@ -347,12 +355,13 @@ export default function User() {
             {/* 🔹 Opciones */}
             <View style={{ flex: 1 }}>
               {[
-                {
-                  label: "Perfil",
-                  icon: require("../assets/iconos/user.png"),
-                },
+                { label: "Perfil", icon: require("../assets/iconos/user.png") },
                 {
                   label: "Sobre nosotros",
+                  icon: require("../assets/iconos/info-usuario.png"),
+                },
+                {
+                  label: "Política y Privacidad",
                   icon: require("../assets/iconos/info-usuario.png"),
                 },
                 {
@@ -376,6 +385,8 @@ export default function User() {
                       ? navigation.navigate("UserProfile")
                       : item.label === "Sobre nosotros"
                       ? goToAboutUs()
+                      : item.label === "Política y Privacidad"
+                      ? goToPrivacy()
                       : navigation.navigate(item.route)
                   }
                   style={{
@@ -568,7 +579,12 @@ export default function User() {
       </View>
 
       {/* ====== FOOTER (solo web) ====== */}
-      {Platform.OS === "web" && <Footer onAboutPress={goToAboutUs} />}
+      {Platform.OS === "web" && (
+        <Footer
+          onAboutPress={goToAboutUs}
+          onPrivacyPress={() => navigation.navigate("PoliticaPrivacidad")}
+        />
+      )}
     </View>
   );
 }

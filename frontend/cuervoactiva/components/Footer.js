@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, Pressable, Image, Linking } from "react-native";
 
-export default function Footer({ onAboutPress }) {
+export default function Footer({ onAboutPress, onPrivacyPress }) {
   // 🌐 Abrir enlaces externos
   const openLink = async (url) => {
     try {
@@ -43,7 +43,19 @@ export default function Footer({ onAboutPress }) {
             © 2025 CuervoActiva, Inc.
           </Text>
 
-          <Pressable style={{ marginHorizontal: 6 }}>
+          {/* ✅ ENLACE ACTIVO A "Privacidad" */}
+          <Pressable
+            style={{ marginHorizontal: 6 }}
+            onPress={() => {
+              if (onPrivacyPress) {
+                onPrivacyPress(); // Usa la navegación recibida desde el componente padre
+              } else {
+                console.warn(
+                  "⚠️ No se pasó la función onPrivacyPress al Footer. Añádela en el componente padre."
+                );
+              }
+            }}
+          >
             <Text style={{ color: "#555", fontSize: 12 }}>Privacidad</Text>
           </Pressable>
 

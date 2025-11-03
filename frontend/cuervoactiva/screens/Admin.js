@@ -545,7 +545,7 @@ export default function Admin() {
         )}
       </View>
 
-      {Platform.OS === "web" && <Footer onAboutPress={goToAboutUs} />}
+      {Platform.OS === "web" && <Footer onAboutPress={goToAboutUs} onPrivacyPress={() => navigation.navigate("PoliticaPrivacidad")} />}
     </View>
   );
 }
