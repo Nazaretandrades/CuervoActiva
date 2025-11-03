@@ -191,14 +191,12 @@ export default function User() {
     }
   };
 
-  // === Simular navegación (solo debug) ===
+  // === Simular navegación ===
   const simulateNavigation = (route) => {
     toggleMenu();
-    if (route === "Sobre nosotros") {
-      goToAboutUs();
-    } else {
-      navigation.navigate(route);
-    }
+    if (route === "Perfil") navigation.navigate("UserProfile");
+    else if (route === "Sobre nosotros") goToAboutUs();
+    else navigation.navigate(route);
   };
 
   return (
@@ -232,7 +230,6 @@ export default function User() {
         />
 
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {/* === 🔔 ICONO NOTIFICACIONES === */}
           <Pressable onPress={goToNotifications} style={{ marginHorizontal: 8 }}>
             <Image source={require("../assets/iconos/bell.png")} />
           </Pressable>
@@ -284,7 +281,7 @@ export default function User() {
             }}
           >
             {[
-              { label: "Perfil", route: "Perfil" },
+              { label: "Perfil", route: "UserProfile" },
               { label: "Sobre nosotros", route: "Sobre nosotros" },
               { label: "Cultura e Historia", route: "Cultura e Historia" },
               { label: "Ver favoritos", route: "UserFavorites" },
@@ -351,6 +348,10 @@ export default function User() {
             <View style={{ flex: 1 }}>
               {[
                 {
+                  label: "Perfil",
+                  icon: require("../assets/iconos/user.png"),
+                },
+                {
                   label: "Sobre nosotros",
                   icon: require("../assets/iconos/info-usuario.png"),
                 },
@@ -371,7 +372,9 @@ export default function User() {
                 <Pressable
                   key={index}
                   onPress={() =>
-                    item.label === "Sobre nosotros"
+                    item.label === "Perfil"
+                      ? navigation.navigate("UserProfile")
+                      : item.label === "Sobre nosotros"
                       ? goToAboutUs()
                       : navigation.navigate(item.route)
                   }

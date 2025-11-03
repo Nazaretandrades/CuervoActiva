@@ -8,7 +8,6 @@ import {
   Animated,
   TouchableWithoutFeedback,
   Platform,
-  Alert,
   Image,
 } from "react-native";
 import Header from "../components/HeaderIntro";
@@ -17,7 +16,10 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { getSession } from "../services/sessionManager";
 import { useNavigation } from "@react-navigation/native";
 
-const API_URL = "http://localhost:5000/api/events";
+const API_URL =
+  Platform.OS === "android"
+    ? "http://192.168.18.19:5000/api/events"
+    : "http://localhost:5000/api/events";
 
 export default function Admin() {
   const [events, setEvents] = useState([]);
@@ -39,27 +41,11 @@ export default function Admin() {
     image_url: "",
   });
 
-  // === Menú lateral (solo web) ===
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
-
-  // === Navegación ===
   const navigation = useNavigation();
 
-  const goToEventDetail = (eventId) => {
-    navigation.navigate("AdminEventDetail", { eventId });
-  };
-
-  const goToNotifications = () => {
-    navigation.navigate("AdminNotifications");
-  };
-
-
-  const goToAboutUs = () => {
-    navigation.navigate("SobreNosotros");
-  };
-
-  // === Cargar eventos ===
+  // === Cargar eventos y usuario ===
   useEffect(() => {
     const loadData = async () => {
       const session = await getSession();
@@ -85,11 +71,10 @@ export default function Admin() {
     loadData();
   }, []);
 
-  // === Filtrar búsqueda ===
+  // === Filtro de búsqueda ===
   useEffect(() => {
-    if (!search.trim()) {
-      setFiltered(events);
-    } else {
+    if (!search.trim()) setFiltered(events);
+    else {
       const term = search.toLowerCase();
       setFiltered(
         events.filter(
@@ -102,7 +87,7 @@ export default function Admin() {
     }
   }, [search, events]);
 
-  // === Editar evento ===
+  // === Edición de evento ===
   const handleEdit = (ev) => {
     setForm({
       _id: ev._id,
@@ -117,7 +102,6 @@ export default function Admin() {
     setEditing(true);
   };
 
-  // === Cancelar edición ===
   const handleCancel = () => {
     setEditing(false);
     setForm({
@@ -132,12 +116,10 @@ export default function Admin() {
     });
   };
 
-  // === Guardar cambios ===
+  // === Guardar cambios de evento ===
   const handleSave = async () => {
-    if (!form.title || !form.description || !form.location) {
-      alert("Completa todos los campos requeridos.");
-      return;
-    }
+    if (!form.title || !form.description || !form.location)
+      return alert("Completa todos los campos requeridos.");
 
     setLoading(true);
     try {
@@ -179,7 +161,6 @@ export default function Admin() {
     try {
       const session = await getSession();
       const token = session?.token;
-
       const res = await fetch(`${API_URL}/${id}`, {
         method: "DELETE",
         headers: {
@@ -194,10 +175,15 @@ export default function Admin() {
 
       alert("✅ Evento eliminado correctamente.");
     } catch (err) {
-      console.error("Error al eliminar evento:", err);
+      console.error(err);
       alert(err.message);
     }
   };
+
+  // === Navegaciones ===
+  const goToProfile = () => navigation.navigate("AdminProfile");
+  const goToNotifications = () => navigation.navigate("AdminNotifications");
+  const goToAboutUs = () => navigation.navigate("SobreNosotros");
 
   // === Menú lateral ===
   const toggleMenu = () => {
@@ -219,9 +205,9 @@ export default function Admin() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <Header hideAuthButtons={true} />
+      <Header hideAuthButtons />
 
-      {/* === BARRA SUPERIOR === */}
+      {/* === Barra superior === */}
       <View
         style={{
           flexDirection: "row",
@@ -232,13 +218,11 @@ export default function Admin() {
           borderColor: "#eee",
         }}
       >
-        {/* 👑 Nombre del admin */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Text style={{ marginRight: 6 }}>👑</Text>
           <Text>Admin. {adminName}</Text>
         </View>
 
-        {/* 🔍 Búsqueda */}
         <TextInput
           placeholder="Buscar eventos..."
           value={search}
@@ -254,12 +238,10 @@ export default function Admin() {
           }}
         />
 
-        {/* 🔔 Notificaciones */}
         <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
           <Image source={require("../assets/iconos/bell2.png")} />
         </Pressable>
 
-        {/* ☰ Menú */}
         <Pressable onPress={toggleMenu}>
           <Image
             source={
@@ -272,7 +254,7 @@ export default function Admin() {
         </Pressable>
       </View>
 
-      {/* === MENÚ LATERAL (solo web) === */}
+      {/* === Menú lateral (solo web) === */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -302,7 +284,7 @@ export default function Admin() {
             }}
           >
             {[
-              { label: "Perfil" },
+              { label: "Perfil", action: goToProfile },
               { label: "Sobre nosotros", route: "SobreNosotros" },
               { label: "Cultura e Historia" },
               { label: "Ver usuarios", route: "AdminUsers" },
@@ -312,7 +294,8 @@ export default function Admin() {
                 key={i}
                 onPress={() => {
                   toggleMenu();
-                  if (item.route) navigation.navigate(item.route);
+                  if (item.action) item.action();
+                  else if (item.route) navigation.navigate(item.route);
                 }}
                 style={{ marginBottom: 25 }}
               >
@@ -331,7 +314,7 @@ export default function Admin() {
         </>
       )}
 
-      {/* === CONTENIDO PRINCIPAL === */}
+      {/* === Contenido principal === */}
       <View style={{ flex: 1, padding: 16 }}>
         {!editing ? (
           <>
@@ -352,7 +335,7 @@ export default function Admin() {
                 filtered.map((ev) => (
                   <Pressable
                     key={ev._id}
-                    onPress={() => goToEventDetail(ev._id)}
+                    onPress={() => navigation.navigate("AdminEventDetail", { eventId: ev._id })}
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
@@ -410,7 +393,6 @@ export default function Admin() {
               Editar evento
             </Text>
             <ScrollView>
-              {/* Título */}
               <Text style={{ fontWeight: "600", marginBottom: 4 }}>Título:</Text>
               <TextInput
                 value={form.title}
@@ -426,10 +408,7 @@ export default function Admin() {
                 }}
               />
 
-              {/* Descripción */}
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                Descripción:
-              </Text>
+              <Text style={{ fontWeight: "600", marginBottom: 4 }}>Descripción:</Text>
               <TextInput
                 value={form.description}
                 onChangeText={(t) => setForm({ ...form, description: t })}
@@ -446,7 +425,6 @@ export default function Admin() {
                 }}
               />
 
-              {/* Fecha */}
               <Text style={{ fontWeight: "600", marginBottom: 4 }}>
                 Fecha (DD/MM/YYYY):
               </Text>
@@ -464,7 +442,6 @@ export default function Admin() {
                 }}
               />
 
-              {/* Hora */}
               <Text style={{ fontWeight: "600", marginBottom: 4 }}>
                 Hora (HH:MM):
               </Text>
@@ -482,7 +459,6 @@ export default function Admin() {
                 }}
               />
 
-              {/* Lugar */}
               <Text style={{ fontWeight: "600", marginBottom: 4 }}>Lugar:</Text>
               <TextInput
                 value={form.location}
@@ -498,10 +474,7 @@ export default function Admin() {
                 }}
               />
 
-              {/* Categoría */}
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                Categoría:
-              </Text>
+              <Text style={{ fontWeight: "600", marginBottom: 4 }}>Categoría:</Text>
               <DropDownPicker
                 open={open}
                 value={form.category}
@@ -531,7 +504,6 @@ export default function Admin() {
                 }}
               />
 
-              {/* Botones */}
               <View
                 style={{
                   flexDirection: "row",
@@ -573,7 +545,6 @@ export default function Admin() {
         )}
       </View>
 
-      {/* === FOOTER (versión web) === */}
       {Platform.OS === "web" && <Footer onAboutPress={goToAboutUs} />}
     </View>
   );

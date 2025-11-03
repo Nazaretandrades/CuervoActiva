@@ -255,10 +255,13 @@ export default function Organizer({ navigation }) {
     }
   };
 
+  // === Navegación del menú ===
   const simulateNavigation = (route) => {
     toggleMenu();
     if (route === "Sobre nosotros" || route === "SobreNosotros") {
       goToAbout();
+    } else if (route === "Perfil" || route === "OrganizerProfile") {
+      navigation.navigate("OrganizerProfile"); // ✅ nuevo acceso a perfil
     } else {
       navigation.navigate(route);
     }
@@ -356,7 +359,7 @@ export default function Organizer({ navigation }) {
             }}
           >
             {[
-              { label: "Perfil", route: "Perfil" },
+              { label: "Perfil", route: "OrganizerProfile" },
               { label: "Cultura e Historia", route: "Cultura e Historia" },
               { label: "Contacto", route: "Contacto" },
             ].map((item, i) => (
@@ -380,7 +383,7 @@ export default function Organizer({ navigation }) {
           </Animated.View>
         </>
       ) : (
-        // === NUEVO MENÚ MÓVIL COMPLETO ===
+        // === MENÚ MÓVIL ===
         menuVisible && (
           <View
             style={{
@@ -424,6 +427,11 @@ export default function Organizer({ navigation }) {
             <View style={{ flex: 1 }}>
               {[
                 {
+                  label: "Perfil",
+                  icon: require("../assets/iconos/user.png"),
+                  route: "OrganizerProfile",
+                },
+                {
                   label: "Sobre nosotros",
                   icon: require("../assets/iconos/info-usuario.png"),
                 },
@@ -438,7 +446,7 @@ export default function Organizer({ navigation }) {
               ].map((item, i) => (
                 <Pressable
                   key={i}
-                  onPress={() => simulateNavigation(item.label)}
+                  onPress={() => simulateNavigation(item.route || item.label)}
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
