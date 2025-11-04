@@ -1,3 +1,4 @@
+// frontend/src/screens/User.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -51,16 +52,45 @@ export default function User() {
     }
   };
 
-  // === Navegar a "Sobre Nosotros" ===
+  // === Navegaciones ===
+  const goToProfile = () => {
+    toggleMenu();
+    navigation.navigate("UserProfile");
+  };
+
   const goToAboutUs = () => {
     toggleMenu();
     navigation.navigate("SobreNosotros");
   };
 
-  // === Navegar a "Política y Privacidad" ===
   const goToPrivacy = () => {
     toggleMenu();
     navigation.navigate("PoliticaPrivacidad");
+  };
+
+  const goToConditions = () => {
+    toggleMenu();
+    navigation.navigate("Condiciones");
+  };
+
+  // ✅ Navegación a Cultura e Historia (solo desde menú)
+  const goToCulturaHistoria = () => {
+    toggleMenu();
+    navigation.navigate("CulturaHistoria");
+  };
+
+  const goToContact = () => {
+    toggleMenu();
+    navigation.navigate("Contacto");
+  };
+
+  const goToFavorites = () => {
+    toggleMenu();
+    navigation.navigate("UserFavorites");
+  };
+
+  const goToNotifications = () => {
+    navigation.navigate("UserNotifications");
   };
 
   // === Obtener nombre del usuario logueado ===
@@ -71,7 +101,7 @@ export default function User() {
         session = JSON.parse(localStorage.getItem("USER_SESSION"));
       } else {
         const sessionString = await AsyncStorage.getItem("USER_SESSION");
-        session = sessionString ? JSON.parse(sessionString) : null;
+        session = sessionString ? JSON.parse(sessionString) : null; // ✅ esta sola línea
       }
 
       if (session?.user?.name) setUserName(session.user.name);
@@ -161,11 +191,6 @@ export default function User() {
     navigation.navigate("UserEventDetail", { eventId });
   };
 
-  // === 🔔 Ir a Notificaciones ===
-  const goToNotifications = () => {
-    navigation.navigate("UserNotifications");
-  };
-
   // === Alternar favorito ===
   const toggleFavorite = async (eventId) => {
     try {
@@ -195,15 +220,6 @@ export default function User() {
       console.error("Error al cambiar favorito:", err);
       Alert.alert("Error", "No se pudo actualizar el favorito.");
     }
-  };
-
-  // === Simular navegación ===
-  const simulateNavigation = (route) => {
-    toggleMenu();
-    if (route === "Perfil") navigation.navigate("UserProfile");
-    else if (route === "Sobre nosotros") goToAboutUs();
-    else if (route === "Política y Privacidad") goToPrivacy();
-    else navigation.navigate(route);
   };
 
   return (
@@ -237,7 +253,10 @@ export default function User() {
         />
 
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Pressable onPress={goToNotifications} style={{ marginHorizontal: 8 }}>
+          <Pressable
+            onPress={goToNotifications}
+            style={{ marginHorizontal: 8 }}
+          >
             <Image source={require("../assets/iconos/bell.png")} />
           </Pressable>
 
@@ -254,7 +273,7 @@ export default function User() {
         </View>
       </View>
 
-      {/* ====== MENÚ ====== */}
+      {/* ====== MENÚ WEB ====== */}
       {Platform.OS === "web" ? (
         <>
           {menuVisible && (
@@ -288,16 +307,17 @@ export default function User() {
             }}
           >
             {[
-              { label: "Perfil", route: "UserProfile" },
-              { label: "Sobre nosotros", route: "Sobre nosotros" },
-              { label: "Política y Privacidad", route: "Política y Privacidad" },
-              { label: "Cultura e Historia", route: "Cultura e Historia" },
-              { label: "Ver favoritos", route: "UserFavorites" },
-              { label: "Contacto", route: "Contacto" },
+              { label: "Perfil", action: goToProfile },
+              { label: "Cultura e Historia", action: goToCulturaHistoria },
+              { label: "Sobre nosotros", action: goToAboutUs },
+              { label: "Política y Privacidad", action: goToPrivacy },
+              { label: "Condiciones", action: goToConditions },
+              { label: "Ver favoritos", action: goToFavorites },
+              { label: "Contacto", action: goToContact },
             ].map((item, i) => (
               <Pressable
                 key={i}
-                onPress={() => simulateNavigation(item.label)}
+                onPress={item.action}
                 style={{ marginBottom: 25 }}
               >
                 <Text
@@ -355,40 +375,45 @@ export default function User() {
             {/* 🔹 Opciones */}
             <View style={{ flex: 1 }}>
               {[
-                { label: "Perfil", icon: require("../assets/iconos/user.png") },
                 {
-                  label: "Sobre nosotros",
-                  icon: require("../assets/iconos/info-usuario.png"),
-                },
-                {
-                  label: "Política y Privacidad",
-                  icon: require("../assets/iconos/info-usuario.png"),
+                  label: "Perfil",
+                  icon: require("../assets/iconos/user.png"),
+                  action: goToProfile,
                 },
                 {
                   label: "Cultura e Historia",
                   icon: require("../assets/iconos/museo-usuario.png"),
+                  action: goToCulturaHistoria,
+                },
+                {
+                  label: "Sobre nosotros",
+                  icon: require("../assets/iconos/info-usuario.png"),
+                  action: goToAboutUs,
+                },
+                {
+                  label: "Política y Privacidad",
+                  icon: require("../assets/iconos/info-usuario.png"),
+                  action: goToPrivacy,
+                },
+                {
+                  label: "Condiciones",
+                  icon: require("../assets/iconos/info-usuario.png"),
+                  action: goToConditions,
                 },
                 {
                   label: "Ver favoritos",
                   icon: require("../assets/iconos/favs-usuario.png"),
-                  route: "UserFavorites",
+                  action: goToFavorites,
                 },
                 {
                   label: "Contacto",
                   icon: require("../assets/iconos/phone-usuario.png"),
+                  action: goToContact,
                 },
               ].map((item, index) => (
                 <Pressable
                   key={index}
-                  onPress={() =>
-                    item.label === "Perfil"
-                      ? navigation.navigate("UserProfile")
-                      : item.label === "Sobre nosotros"
-                      ? goToAboutUs()
-                      : item.label === "Política y Privacidad"
-                      ? goToPrivacy()
-                      : navigation.navigate(item.route)
-                  }
+                  onPress={item.action}
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
@@ -468,14 +493,25 @@ export default function User() {
             Categorías
           </Text>
 
+          {/* ✅ CATEGORÍAS COMPLETAS */}
           {[
             { label: "Todos", value: "all", color: "#014869" },
             { label: "Deporte", value: "deporte", color: "#F3B23F" },
+            { label: "Concurso y taller", value: "concurso", color: "#FFD43B" },
             { label: "Cultura e Historia", value: "cultura", color: "#784BA0" },
+            { label: "Arte y Música", value: "arte", color: "#2BBBAD" },
+            {
+              label: "Fiestas y Tradiciones",
+              value: "fiestas",
+              color: "#E67E22",
+            },
           ].map((cat, i) => (
             <Pressable
               key={i}
-              onPress={() => setSelectedCategory(cat.value)}
+              onPress={() => {
+                // 👇 Ya NO redirige; siempre filtra por categoría
+                setSelectedCategory(cat.value);
+              }}
               style={{
                 backgroundColor:
                   selectedCategory === cat.value ? cat.color : `${cat.color}33`,
@@ -582,7 +618,8 @@ export default function User() {
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAboutUs}
-          onPrivacyPress={() => navigation.navigate("PoliticaPrivacidad")}
+          onPrivacyPress={goToPrivacy}
+          onConditionsPress={goToConditions}
         />
       )}
     </View>

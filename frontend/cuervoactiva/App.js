@@ -24,6 +24,9 @@ import UserProfile from "./screens/UserProfile";
 import OrganizerProfile from "./screens/OrganizerProfile";
 import AdminProfile from "./screens/AdminProfile";
 import PoliticaPrivacidad from "./screens/PoliticaPrivacidad";
+import Condiciones from "./screens/Condiciones";
+import Contacto from "./screens/Contacto";
+import CulturaHistoria from "./screens/CulturaHistoria";
 
 //3) Creamos el Stack Navigator
 //Este componente permite navegar entre pantallas de forma apilada
@@ -153,6 +156,24 @@ export default function App() {
         <Stack.Screen
           name="PoliticaPrivacidad"
           component={PoliticaPrivacidad}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="Condiciones"
+          component={Condiciones}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="Contacto"
+          component={Contacto}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="CulturaHistoria"
+          component={CulturaHistoria}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

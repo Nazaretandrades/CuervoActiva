@@ -16,13 +16,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import DropDownPicker from "react-native-dropdown-picker";
+import { useNavigation } from "@react-navigation/native";
 
 const API_URL =
   Platform.OS === "android"
     ? "http://192.168.18.19:5000/api/events"
     : "http://localhost:5000/api/events";
 
-export default function Organizer({ navigation }) {
+export default function Organizer() {
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [search, setSearch] = useState("");
@@ -41,6 +42,8 @@ export default function Organizer({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
+
+  const navigation = useNavigation();
 
   // === Obtener token ===
   const getSessionToken = async () => {
@@ -232,10 +235,13 @@ export default function Organizer({ navigation }) {
     navigation.navigate("OrganizerEventDetail", { eventId });
   const goToNotifications = () => navigation.navigate("OrganizerNotifications");
 
-  const goToAbout = () => {
-    toggleMenu();
-    navigation.navigate("SobreNosotros");
-  };
+  // === Navegación general ===
+  const goToProfile = () => navigation.navigate("OrganizerProfile");
+  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
+  const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
+  const goToConditions = () => navigation.navigate("Condiciones");
+  const goToContact = () => navigation.navigate("Contacto");
+  const goToAbout = () => navigation.navigate("SobreNosotros");
 
   // === Menú lateral ===
   const toggleMenu = () => {
@@ -252,20 +258,6 @@ export default function Organizer({ navigation }) {
         duration: 300,
         useNativeDriver: true,
       }).start();
-    }
-  };
-
-  // === Navegación del menú ===
-  const simulateNavigation = (route) => {
-    toggleMenu();
-    if (route === "Sobre nosotros" || route === "SobreNosotros") {
-      goToAbout();
-    } else if (route === "Perfil" || route === "OrganizerProfile") {
-      navigation.navigate("OrganizerProfile"); // ✅ nuevo acceso a perfil
-    } else if (route === "PoliticaPrivacidad") {
-      navigation.navigate("PoliticaPrivacidad");
-    } else {
-      navigation.navigate(route);
     }
   };
 
@@ -328,23 +320,21 @@ export default function Organizer({ navigation }) {
       </View>
 
       {/* === MENÚ === */}
-      {Platform.OS === "web" ? (
+      {Platform.OS === "web" && menuVisible && (
         <>
-          {menuVisible && (
-            <TouchableWithoutFeedback onPress={toggleMenu}>
-              <View
-                style={{
-                  position: "fixed",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  backgroundColor: "rgba(0,0,0,0.1)",
-                  zIndex: 9,
-                }}
-              />
-            </TouchableWithoutFeedback>
-          )}
+          <TouchableWithoutFeedback onPress={toggleMenu}>
+            <View
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                backgroundColor: "rgba(0,0,0,0.1)",
+                zIndex: 9,
+              }}
+            />
+          </TouchableWithoutFeedback>
 
           <Animated.View
             style={{
@@ -361,14 +351,18 @@ export default function Organizer({ navigation }) {
             }}
           >
             {[
-              { label: "Perfil", route: "OrganizerProfile" },
-              { label: "Cultura e Historia", route: "Cultura e Historia" },
-              { label: "Política y Privacidad", route: "PoliticaPrivacidad" },
-              { label: "Contacto", route: "Contacto" },
+              { label: "Perfil", action: goToProfile },
+              { label: "Cultura e Historia", action: goToCulturaHistoria },
+              { label: "Política y Privacidad", action: goToPrivacy },
+              { label: "Condiciones", action: goToConditions },
+              { label: "Contacto", action: goToContact },
             ].map((item, i) => (
               <Pressable
                 key={i}
-                onPress={() => simulateNavigation(item.route)}
+                onPress={() => {
+                  toggleMenu();
+                  item.action();
+                }}
                 style={{ marginBottom: 25 }}
               >
                 <Text
@@ -385,137 +379,118 @@ export default function Organizer({ navigation }) {
             ))}
           </Animated.View>
         </>
-      ) : (
-        // === MENÚ MÓVIL ===
-        menuVisible && (
+      )}
+
+      {/* === MENÚ MÓVIL === */}
+      {Platform.OS !== "web" && menuVisible && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "#f8f8f8",
+            zIndex: 20,
+            paddingHorizontal: 24,
+            paddingTop: 60,
+          }}
+        >
           <View
             style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "#f8f8f8",
-              zIndex: 20,
-              paddingHorizontal: 24,
-              paddingTop: 60,
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 30,
             }}
           >
-            <View
+            <Pressable onPress={toggleMenu} style={{ marginRight: 15 }}>
+              <Image
+                source={require("../assets/iconos/back-usuario.png")}
+                style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+              />
+            </Pressable>
+            <Text
               style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 30,
+                fontSize: 18,
+                fontWeight: "bold",
+                color: "#F3B23F",
+                textAlign: "center",
+                flex: 1,
               }}
             >
-              <Pressable onPress={toggleMenu} style={{ marginRight: 15 }}>
-                <Image
-                  source={require("../assets/iconos/back-usuario.png")}
-                  style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
-                />
-              </Pressable>
-              <Text
+              Menú
+            </Text>
+          </View>
+
+          <ScrollView>
+            {[
+              {
+                label: "Perfil",
+                icon: require("../assets/iconos/user.png"),
+                action: goToProfile,
+              },
+              {
+                label: "Cultura e Historia",
+                icon: require("../assets/iconos/museo-usuario.png"),
+                action: goToCulturaHistoria,
+              },
+              {
+                label: "Política y Privacidad",
+                icon: require("../assets/iconos/info-usuario.png"),
+                action: goToPrivacy,
+              },
+              {
+                label: "Condiciones",
+                icon: require("../assets/iconos/info-usuario.png"),
+                action: goToConditions,
+              },
+              {
+                label: "Contacto",
+                icon: require("../assets/iconos/phone-usuario.png"),
+                action: goToContact,
+              },
+            ].map((item, i) => (
+              <Pressable
+                key={i}
+                onPress={() => {
+                  toggleMenu();
+                  item.action();
+                }}
                 style={{
-                  fontSize: 18,
-                  fontWeight: "bold",
-                  color: "#F3B23F",
-                  textAlign: "center",
-                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 25,
                 }}
               >
-                Menú
-              </Text>
-            </View>
-
-            <View style={{ flex: 1 }}>
-              {[
-                {
-                  label: "Perfil",
-                  icon: require("../assets/iconos/user.png"),
-                  route: "OrganizerProfile",
-                },
-                {
-                  label: "Sobre nosotros",
-                  icon: require("../assets/iconos/info-usuario.png"),
-                },
-                {
-                  label: "Política y Privacidad",
-                  icon: require("../assets/iconos/info-usuario.png"),
-                  route: "PoliticaPrivacidad",
-                },
-                {
-                  label: "Cultura e Historia",
-                  icon: require("../assets/iconos/museo-usuario.png"),
-                },
-                {
-                  label: "Contacto",
-                  icon: require("../assets/iconos/phone-usuario.png"),
-                },
-              ].map((item, i) => (
-                <Pressable
-                  key={i}
-                  onPress={() => simulateNavigation(item.route || item.label)}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 25,
-                  }}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <Image
-                      source={item.icon}
-                      style={{
-                        width: 24,
-                        height: 24,
-                        tintColor: "#014869",
-                        marginRight: 14,
-                      }}
-                    />
-                    <Text
-                      style={{
-                        color: "#014869",
-                        fontSize: 16,
-                        fontWeight: "600",
-                      }}
-                    >
-                      {item.label}
-                    </Text>
-                  </View>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Image
-                    source={require("../assets/iconos/siguiente.png")}
-                    style={{ width: 18, height: 18, tintColor: "#F3B23F" }}
+                    source={item.icon}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      tintColor: "#014869",
+                      marginRight: 14,
+                    }}
                   />
-                </Pressable>
-              ))}
-            </View>
-
-            {/* Barra inferior */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-around",
-                alignItems: "center",
-                borderTopWidth: 1,
-                borderTopColor: "#F3B23F33",
-                paddingVertical: 14,
-              }}
-            >
-              <Image
-                source={require("../assets/iconos/search.png")}
-                style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
-              />
-              <Image
-                source={require("../assets/iconos/calendar.png")}
-                style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
-              />
-              <Image
-                source={require("../assets/iconos/user.png")}
-                style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
-              />
-            </View>
-          </View>
-        )
+                  <Text
+                    style={{
+                      color: "#014869",
+                      fontSize: 16,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                </View>
+                <Image
+                  source={require("../assets/iconos/siguiente.png")}
+                  style={{ width: 18, height: 18, tintColor: "#F3B23F" }}
+                />
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
       )}
 
       {/* === CONTENIDO PRINCIPAL === */}
@@ -786,8 +761,9 @@ export default function Organizer({ navigation }) {
       {Platform.OS === "web" && (
         <View style={{ zIndex: 1 }}>
           <Footer
-            onAboutPress={() => navigation.navigate("SobreNosotros")}
-            onPrivacyPress={() => navigation.navigate("PoliticaPrivacidad")}
+            onAboutPress={goToAbout}
+            onPrivacyPress={goToPrivacy}
+            onConditionsPress={goToConditions}
           />
         </View>
       )}

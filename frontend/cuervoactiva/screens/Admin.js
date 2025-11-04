@@ -184,6 +184,10 @@ export default function Admin() {
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
+  const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
+  const goToConditions = () => navigation.navigate("Condiciones");
+  const goToContact = () => navigation.navigate("Contacto");
+  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria"); // ✅ nueva función añadida
 
   // === Menú lateral ===
   const toggleMenu = () => {
@@ -286,9 +290,11 @@ export default function Admin() {
             {[
               { label: "Perfil", action: goToProfile },
               { label: "Sobre nosotros", route: "SobreNosotros" },
-              { label: "Cultura e Historia" },
+              { label: "Política y Privacidad", action: goToPrivacy },
+              { label: "Condiciones", action: goToConditions },
+              { label: "Cultura e Historia", action: goToCulturaHistoria }, // ✅ añadida aquí
               { label: "Ver usuarios", route: "AdminUsers" },
-              { label: "Contacto" },
+              { label: "Contacto", action: goToContact },
             ].map((item, i) => (
               <Pressable
                 key={i}
@@ -335,7 +341,11 @@ export default function Admin() {
                 filtered.map((ev) => (
                   <Pressable
                     key={ev._id}
-                    onPress={() => navigation.navigate("AdminEventDetail", { eventId: ev._id })}
+                    onPress={() =>
+                      navigation.navigate("AdminEventDetail", {
+                        eventId: ev._id,
+                      })
+                    }
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
@@ -408,7 +418,9 @@ export default function Admin() {
                 }}
               />
 
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>Descripción:</Text>
+              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
+                Descripción:
+              </Text>
               <TextInput
                 value={form.description}
                 onChangeText={(t) => setForm({ ...form, description: t })}
@@ -474,7 +486,9 @@ export default function Admin() {
                 }}
               />
 
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>Categoría:</Text>
+              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
+                Categoría:
+              </Text>
               <DropDownPicker
                 open={open}
                 value={form.category}
@@ -545,7 +559,13 @@ export default function Admin() {
         )}
       </View>
 
-      {Platform.OS === "web" && <Footer onAboutPress={goToAboutUs} onPrivacyPress={() => navigation.navigate("PoliticaPrivacidad")} />}
+      {Platform.OS === "web" && (
+        <Footer
+          onAboutPress={goToAboutUs}
+          onPrivacyPress={goToPrivacy}
+          onConditionsPress={goToConditions}
+        />
+      )}
     </View>
   );
 }
