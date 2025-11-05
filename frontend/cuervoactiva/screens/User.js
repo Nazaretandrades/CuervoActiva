@@ -93,6 +93,11 @@ export default function User() {
     navigation.navigate("UserNotifications");
   };
 
+  // 👉 NUEVO: Navegación al Calendario
+  const goToCalendar = () => {
+    navigation.navigate("Calendar");
+  };
+
   // === Obtener nombre del usuario logueado ===
   const getUserName = async () => {
     try {
@@ -101,7 +106,7 @@ export default function User() {
         session = JSON.parse(localStorage.getItem("USER_SESSION"));
       } else {
         const sessionString = await AsyncStorage.getItem("USER_SESSION");
-        session = sessionString ? JSON.parse(sessionString) : null; // ✅ esta sola línea
+        const session = sessionString ? JSON.parse(sessionString) : null; // ✅ esta sola línea
       }
 
       if (session?.user?.name) setUserName(session.user.name);
@@ -253,6 +258,14 @@ export default function User() {
         />
 
         <View style={{ flexDirection: "row", alignItems: "center" }}>
+          {/* NUEVO: icono calendario a la izquierda */}
+          <Pressable onPress={goToCalendar} style={{ marginHorizontal: 8 }}>
+            <Image
+              source={require("../assets/iconos/calendar.png")}
+              style={{ width: 26, height: 26 }}
+            />
+          </Pressable>
+
           <Pressable
             onPress={goToNotifications}
             style={{ marginHorizontal: 8 }}

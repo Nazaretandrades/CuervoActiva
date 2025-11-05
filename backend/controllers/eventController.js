@@ -49,9 +49,24 @@ exports.createEvent = async (req, res) => {
     if (req.user.role !== "organizer")
       return res.status(403).json({ error: "No autorizado" });
 
-    const { title, description, date, hour, location, category, image_url } =
+    let { title, description, date, hour, location, category, image_url } =
       req.body;
 
+    // ✅ Normalizar fecha (acepta DD/MM/YYYY o ISO)
+    if (typeof date === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+      const [dd, mm, yyyy] = date.split("/").map(Number);
+      // Creamos fecha local a mediodía para evitar desfase de día por zona horaria
+      date = new Date(yyyy, mm - 1, dd, 12, 0, 0);
+    } else if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}/.test(date)) {
+      const [y, m, d] = date.substring(0, 10).split("-").map(Number);
+      date = new Date(y, m - 1, d, 12, 0, 0);
+    }
+
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      return res.status(400).json({ error: "Formato de fecha inválido" });
+    }
+
+    // ✅ Crear el evento
     const event = await Event.create({
       title,
       description,
@@ -63,7 +78,7 @@ exports.createEvent = async (req, res) => {
       createdBy: req.user.id,
     });
 
-    // 🔔 Notificación para organizador (creación)
+    // 🔔 Notificación para el organizador (creación)
     await Notification.findOneAndUpdate(
       {
         user: req.user.id,
@@ -81,19 +96,23 @@ exports.createEvent = async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // 🔔 Notificar a usuarios normales del nuevo evento
+    // 🔔 Notificar a todos los usuarios normales sobre el nuevo evento
     const users = await User.find({ role: "user" });
-    const notifs = users.map((u) => ({
-      user: u._id,
-      event: event._id,
-      type: "new_event",
-      message: `Nuevo evento disponible: ${event.title}`,
-      dateKey: getDateKey(),
-    }));
-    await Notification.insertMany(notifs);
+    if (users.length > 0) {
+      const notifs = users.map((u) => ({
+        user: u._id,
+        event: event._id,
+        type: "new_event",
+        message: `Nuevo evento disponible: ${event.title}`,
+        dateKey: getDateKey(),
+      }));
+      await Notification.insertMany(notifs);
+    }
 
+    // ✅ Respuesta final
     res.status(201).json(event);
   } catch (err) {
+    console.error("❌ Error al crear evento:", err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -104,10 +123,24 @@ exports.updateEvent = async (req, res) => {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
+    let { date } = req.body;
+
+    // ✅ Normalizar fecha si llega como string (DD/MM/YYYY o ISO)
+    if (typeof date === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+      const [dd, mm, yyyy] = date.split("/").map(Number);
+      date = new Date(yyyy, mm - 1, dd, 12, 0, 0);
+      req.body.date = date;
+    } else if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}/.test(date)) {
+      const [y, m, d] = date.substring(0, 10).split("-").map(Number);
+      date = new Date(y, m - 1, d, 12, 0, 0);
+      req.body.date = date;
+    }
+
+    // 🔒 Actualizamos solo los campos permitidos
     Object.assign(event, req.body);
     const updated = await event.save();
 
-    // 🔔 Notificar edición
+    // 🔔 Notificación de edición al organizador
     await Notification.findOneAndUpdate(
       {
         user: req.user.id,
@@ -125,7 +158,7 @@ exports.updateEvent = async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // 📢 Crear notificación para el admin (si quien edita es admin)
+    // 📢 Notificar al admin si existe
     const adminUser = await User.findOne({ role: "admin" });
     if (adminUser) {
       await Notification.create({
@@ -138,6 +171,7 @@ exports.updateEvent = async (req, res) => {
 
     res.json(updated);
   } catch (err) {
+    console.error("❌ Error al editar evento:", err);
     res.status(500).json({ error: err.message });
   }
 };

@@ -187,7 +187,8 @@ export default function Admin() {
   const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToContact = () => navigation.navigate("Contacto");
-  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria"); // ✅ nueva función añadida
+  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
+  const goToCalendar = () => navigation.navigate("Calendar"); // ✅ NUEVA FUNCIÓN PARA EL ICONO
 
   // === Menú lateral ===
   const toggleMenu = () => {
@@ -242,10 +243,20 @@ export default function Admin() {
           }}
         />
 
+        {/* ✅ ICONO DE CALENDARIO NUEVO */}
+        <Pressable onPress={goToCalendar} style={{ marginRight: 10 }}>
+          <Image
+            source={require("../assets/iconos/calendar-admin.png")}
+            style={{ width: 26, height: 26 }}
+          />
+        </Pressable>
+
+        {/* ICONO DE NOTIFICACIONES */}
         <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
           <Image source={require("../assets/iconos/bell2.png")} />
         </Pressable>
 
+        {/* ICONO DE MENÚ */}
         <Pressable onPress={toggleMenu}>
           <Image
             source={
@@ -292,7 +303,7 @@ export default function Admin() {
               { label: "Sobre nosotros", route: "SobreNosotros" },
               { label: "Política y Privacidad", action: goToPrivacy },
               { label: "Condiciones", action: goToConditions },
-              { label: "Cultura e Historia", action: goToCulturaHistoria }, // ✅ añadida aquí
+              { label: "Cultura e Historia", action: goToCulturaHistoria },
               { label: "Ver usuarios", route: "AdminUsers" },
               { label: "Contacto", action: goToContact },
             ].map((item, i) => (

@@ -27,6 +27,7 @@ import PoliticaPrivacidad from "./screens/PoliticaPrivacidad";
 import Condiciones from "./screens/Condiciones";
 import Contacto from "./screens/Contacto";
 import CulturaHistoria from "./screens/CulturaHistoria";
+import Calendar from "./screens/Calendar";
 
 //3) Creamos el Stack Navigator
 //Este componente permite navegar entre pantallas de forma apilada
@@ -174,6 +175,12 @@ export default function App() {
         <Stack.Screen
           name="CulturaHistoria"
           component={CulturaHistoria}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="Calendar"
+          component={Calendar}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
