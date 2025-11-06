@@ -300,9 +300,6 @@ export default function Admin() {
           >
             {[
               { label: "Perfil", action: goToProfile },
-              { label: "Sobre nosotros", route: "SobreNosotros" },
-              { label: "Política y Privacidad", action: goToPrivacy },
-              { label: "Condiciones", action: goToConditions },
               { label: "Cultura e Historia", action: goToCulturaHistoria },
               { label: "Ver usuarios", route: "AdminUsers" },
               { label: "Contacto", action: goToContact },

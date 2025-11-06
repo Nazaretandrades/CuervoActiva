@@ -102,6 +102,42 @@ export default function UserNotifications({ navigation }) {
     }
   };
 
+  // === Navegaciones (como en User.js) ===
+  const goToProfile = () => {
+    toggleMenu();
+    navigation.navigate("UserProfile");
+  };
+  const goToCulturaHistoria = () => {
+    toggleMenu();
+    navigation.navigate("CulturaHistoria");
+  };
+  const goToFavorites = () => {
+    toggleMenu();
+    navigation.navigate("UserFavorites");
+  };
+  const goToContact = () => {
+    toggleMenu();
+    navigation.navigate("Contacto");
+  };
+  const goToAboutUs = () => {
+    toggleMenu();
+    navigation.navigate("SobreNosotros");
+  };
+  const goToPrivacy = () => {
+    toggleMenu();
+    navigation.navigate("PoliticaPrivacidad");
+  };
+  const goToConditions = () => {
+    toggleMenu();
+    navigation.navigate("Condiciones");
+  };
+  const goToCalendar = () => {
+    navigation.navigate("Calendar");
+  };
+  const goToNotifications = () => {
+    navigation.navigate("UserNotifications");
+  };
+
   // === Menú lateral ===
   const toggleMenu = () => {
     if (menuVisible) {
@@ -144,16 +180,25 @@ export default function UserNotifications({ navigation }) {
           </Text>
         </View>
 
-        {/* Menú + Notificaciones (lado derecho) */}
+        {/* Menú + Iconos (lado derecho) */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
-          {/* 🔔 Icono Notificaciones (ya estás aquí, inactivo) */}
-          <Pressable>
+          {/* 📅 CALENDARIO */}
+          <Pressable onPress={goToCalendar}>
             <Image
-              source={require("../assets/iconos/bell.png")}
+              source={require("../assets/iconos/calendar.png")}
+              style={{ width: 26, height: 26 }}
             />
           </Pressable>
 
-          {/* Icono Menú */}
+          {/* 🔔 Icono Notificaciones (ya estás aquí, inactivo visualmente) */}
+          <Pressable>
+            <Image
+              source={require("../assets/iconos/bell.png")}
+              style={{ width: 26, height: 26}}
+            />
+          </Pressable>
+
+          {/* ☰ Icono Menú */}
           <Pressable onPress={toggleMenu}>
             <Image
               source={
@@ -167,7 +212,7 @@ export default function UserNotifications({ navigation }) {
         </View>
       </View>
 
-      {/* === MENÚ === */}
+      {/* === MENÚ WEB (igual que User.js) === */}
       {Platform.OS === "web" ? (
         <>
           {menuVisible && (
@@ -195,27 +240,27 @@ export default function UserNotifications({ navigation }) {
               padding: 20,
               zIndex: 10,
               transform: [{ translateX: menuAnim }],
+              elevation: 6,
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
             }}
           >
             {[
-              { label: "Perfil", route: "Perfil" },
-              { label: "Eventos", route: "User" },
-              { label: "Ver favoritos", route: "UserFavorites" },
-              { label: "Contacto", route: "Contacto" },
+              { label: "Perfil", action: goToProfile },
+              { label: "Cultura e Historia", action: goToCulturaHistoria },
+              { label: "Ver favoritos", action: goToFavorites },
+              { label: "Contacto", action: goToContact },
             ].map((item, i) => (
               <Pressable
                 key={i}
-                onPress={() => {
-                  toggleMenu();
-                  navigation.navigate(item.route);
-                }}
+                onPress={item.action}
                 style={{ marginBottom: 25 }}
               >
                 <Text
                   style={{
                     color: "#014869",
-                    fontSize: 18,
-                    fontWeight: "700",
+                    fontSize: 16,
+                    fontWeight: "600",
                   }}
                 >
                   {item.label}
@@ -233,13 +278,13 @@ export default function UserNotifications({ navigation }) {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: "#f8f8f8",
+              backgroundColor: "#f4f6f7",
               zIndex: 20,
               paddingHorizontal: 24,
-              paddingTop: 60,
+              paddingTop: 50,
             }}
           >
-            {/* Encabezado menú móvil */}
+            {/* 🔙 Header */}
             <View
               style={{
                 flexDirection: "row",
@@ -260,25 +305,40 @@ export default function UserNotifications({ navigation }) {
                   color: "#014869",
                   textAlign: "center",
                   flex: 1,
+                  marginRight: 37,
                 }}
               >
                 Menú
               </Text>
             </View>
 
-            {/* Opciones menú móvil */}
+            {/* 🔹 Opciones */}
             <View style={{ flex: 1 }}>
               {[
-                { label: "Eventos", route: "User" },
-                { label: "Ver favoritos", route: "UserFavorites" },
-                { label: "Contacto", route: "Contacto" },
-              ].map((item, i) => (
+                {
+                  label: "Cultura e Historia",
+                  icon: require("../assets/iconos/museo-usuario.png"),
+                  action: goToCulturaHistoria,
+                },
+                {
+                  label: "Sobre nosotros",
+                  icon: require("../assets/iconos/info-usuario.png"),
+                  action: goToAboutUs,
+                },
+                {
+                  label: "Ver favoritos",
+                  icon: require("../assets/iconos/favs-usuario.png"),
+                  action: goToFavorites,
+                },
+                {
+                  label: "Contacto",
+                  icon: require("../assets/iconos/phone-usuario.png"),
+                  action: goToContact,
+                },
+              ].map((item, index) => (
                 <Pressable
-                  key={i}
-                  onPress={() => {
-                    toggleMenu();
-                    navigation.navigate(item.route);
-                  }}
+                  key={index}
+                  onPress={item.action}
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
@@ -286,21 +346,58 @@ export default function UserNotifications({ navigation }) {
                     marginBottom: 25,
                   }}
                 >
-                  <Text
-                    style={{
-                      color: "#014869",
-                      fontSize: 16,
-                      fontWeight: "600",
-                    }}
-                  >
-                    {item.label}
-                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Image
+                      source={item.icon}
+                      style={{
+                        width: 22,
+                        height: 22,
+                        tintColor: "#014869",
+                        marginRight: 14,
+                      }}
+                    />
+                    <Text
+                      style={{
+                        color: "#014869",
+                        fontSize: 16,
+                        fontWeight: "600",
+                      }}
+                    >
+                      {item.label}
+                    </Text>
+                  </View>
+
                   <Image
                     source={require("../assets/iconos/siguiente.png")}
                     style={{ width: 18, height: 18, tintColor: "#014869" }}
                   />
                 </Pressable>
               ))}
+            </View>
+
+            {/* 🔸 Barra inferior */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-around",
+                alignItems: "center",
+                borderTopWidth: 1,
+                borderTopColor: "#01486933",
+                paddingVertical: 14,
+              }}
+            >
+              <Image
+                source={require("../assets/iconos/search.png")}
+                style={{ width: 22, height: 22, tintColor: "#014869" }}
+              />
+              <Image
+                source={require("../assets/iconos/calendar.png")}
+                style={{ width: 22, height: 22, tintColor: "#014869" }}
+              />
+              <Image
+                source={require("../assets/iconos/user.png")}
+                style={{ width: 22, height: 22, tintColor: "#014869" }}
+              />
             </View>
           </View>
         )
@@ -362,7 +459,13 @@ export default function UserNotifications({ navigation }) {
         </ScrollView>
       </View>
 
-      {Platform.OS === "web" && <Footer />}
+      {Platform.OS === "web" && (
+        <Footer
+          onAboutPress={goToAboutUs}
+          onPrivacyPress={goToPrivacy}
+          onConditionsPress={goToConditions}
+        />
+      )}
     </View>
   );
 }

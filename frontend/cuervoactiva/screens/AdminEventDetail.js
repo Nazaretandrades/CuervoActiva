@@ -1,3 +1,4 @@
+// frontend/src/screens/AdminEventDetail.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -15,7 +16,7 @@ import {
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { getSession } from "../services/sessionManager";
-import { useNavigation } from "@react-navigation/native"; // ✅ NUEVO: para redirigir
+import { useNavigation } from "@react-navigation/native";
 
 const API_BASE = "http://localhost:5000";
 const API_URL = `${API_BASE}/api/events`;
@@ -30,9 +31,9 @@ export default function AdminEventDetail({ route }) {
   const [menuAnim] = useState(new Animated.Value(-250));
   const [shareVisible, setShareVisible] = useState(false);
 
-  const navigation = useNavigation(); // ✅ NUEVO: para poder navegar
+  const navigation = useNavigation();
 
-  // === Obtener nombre del admin ===
+  // === Obtener sesión del administrador ===
   useEffect(() => {
     const loadAdmin = async () => {
       const session = await getSession();
@@ -41,7 +42,7 @@ export default function AdminEventDetail({ route }) {
     loadAdmin();
   }, []);
 
-  // === Cargar evento + comentarios ===
+  // === Cargar evento y valoraciones ===
   useEffect(() => {
     const loadEvent = async () => {
       try {
@@ -62,7 +63,7 @@ export default function AdminEventDetail({ route }) {
         }
       } catch (err) {
         console.error(err);
-        alert("Error al cargar evento o valoraciones.");
+        Alert.alert("Error", "Error al cargar evento o valoraciones.");
       }
     };
     if (eventId) loadEvent();
@@ -88,8 +89,20 @@ export default function AdminEventDetail({ route }) {
     return <View style={{ flexDirection: "row" }}>{stars}</View>;
   };
 
-  // === Menú lateral ===
+  // === Navegaciones ===
+  const goToProfile = () => navigation.navigate("AdminProfile");
+  const goToUsers = () => navigation.navigate("AdminUsers");
+  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
+  const goToContact = () => navigation.navigate("Contacto");
+  const goToNotifications = () => navigation.navigate("AdminNotifications");
+  const goToAbout = () => navigation.navigate("SobreNosotros");
+  const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
+  const goToConditions = () => navigation.navigate("Condiciones");
+  const goToCalendar = () => navigation.navigate("Calendar");
+
+  // === Alternar menú lateral ===
   const toggleMenu = () => {
+    if (Platform.OS !== "web") return;
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
@@ -104,18 +117,6 @@ export default function AdminEventDetail({ route }) {
         useNativeDriver: true,
       }).start();
     }
-  };
-
-  // === Redirección a notificaciones === ✅ NUEVO
-  const goToNotifications = () => {
-    navigation.navigate("AdminNotifications");
-  };
-
-  // === Redirección del menú lateral === ✅ MODIFICADO
-  const handleMenuPress = (item) => {
-    toggleMenu();
-    if (item.route) navigation.navigate(item.route);
-    else alert(`Iría a: ${item.label}`);
   };
 
   // === Compartir ===
@@ -141,47 +142,56 @@ export default function AdminEventDetail({ route }) {
 
   if (!event)
     return (
-      <View
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-      >
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <Text>Cargando evento...</Text>
       </View>
     );
 
+  // === Render principal ===
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* === BARRA SUPERIOR === */}
+      {/* === CABECERA SUPERIOR === */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: 16,
+          paddingHorizontal: 24,
+          paddingVertical: 14,
           borderBottomWidth: 1,
           borderColor: "#eee",
+          zIndex: 1,
         }}
       >
         {/* 👑 Admin */}
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ marginRight: 6 }}>👑</Text>
-          <Text>Admin. {adminName}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <Text>👑</Text>
+          <Text>
+            Admin. {adminName}
+          </Text>
         </View>
 
-        {/* 🔔 Notificaciones + Menú (NUEVO) */}
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+          <Pressable onPress={goToCalendar}>
+            <Image
+              source={require("../assets/iconos/calendar-admin.png")}
+              style={{ width: 26, height: 26 }}
+            />
+          </Pressable>
+
+          <Pressable onPress={goToNotifications}>
             <Image
               source={require("../assets/iconos/bell2.png")}
-              style={{ width: 22, height: 22 }}
+              style={{ width: 26, height: 26 }}
             />
           </Pressable>
 
           <Pressable onPress={toggleMenu}>
             <Image
               source={
-                menuVisible
+                Platform.OS === "web" && menuVisible
                   ? require("../assets/iconos/close-admin.png")
                   : require("../assets/iconos/menu-admin.png")
               }
@@ -191,26 +201,26 @@ export default function AdminEventDetail({ route }) {
         </View>
       </View>
 
-      {/* === MENÚ LATERAL === */}
-      {Platform.OS === "web" && (
+      {/* === MENÚ LATERAL (estilo moderno y fijo) === */}
+      {Platform.OS === "web" && menuVisible && (
         <>
-          {menuVisible && (
-            <TouchableWithoutFeedback onPress={toggleMenu}>
-              <View
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  zIndex: 9,
-                }}
-              />
-            </TouchableWithoutFeedback>
-          )}
+          <TouchableWithoutFeedback onPress={toggleMenu}>
+            <View
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                backgroundColor: "rgba(0,0,0,0.1)",
+                zIndex: 9,
+              }}
+            />
+          </TouchableWithoutFeedback>
+
           <Animated.View
             style={{
-              position: "absolute",
+              position: "fixed",
               top: 0,
               left: 0,
               width: 250,
@@ -219,18 +229,21 @@ export default function AdminEventDetail({ route }) {
               padding: 20,
               zIndex: 10,
               transform: [{ translateX: menuAnim }],
+              boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
             }}
           >
             {[
-              { label: "Perfil" },
-              { label: "Sobre nosotros" },
-              { label: "Cultura e Historia" },
-              { label: "Ver usuarios", route: "AdminUsers" }, // ✅ NUEVO
-              { label: "Contacto" },
+              { label: "Perfil", action: goToProfile },
+              { label: "Cultura e Historia", action: goToCulturaHistoria },
+              { label: "Ver usuarios", action: goToUsers },
+              { label: "Contacto", action: goToContact },
             ].map((item, i) => (
               <Pressable
                 key={i}
-                onPress={() => handleMenuPress(item)}
+                onPress={() => {
+                  toggleMenu();
+                  item.action();
+                }}
                 style={{ marginBottom: 25 }}
               >
                 <Text
@@ -238,6 +251,7 @@ export default function AdminEventDetail({ route }) {
                     color: "#014869",
                     fontSize: 18,
                     fontWeight: "700",
+                    cursor: "pointer",
                   }}
                 >
                   {item.label}
@@ -249,7 +263,10 @@ export default function AdminEventDetail({ route }) {
       )}
 
       {/* === CONTENIDO PRINCIPAL === */}
-      <ScrollView style={{ flex: 1, paddingHorizontal: 24, paddingVertical: 20 }}>
+      <ScrollView
+        style={{ flex: 1, paddingHorizontal: 24, paddingVertical: 20 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
         {/* === Título === */}
         <View
           style={{
@@ -257,9 +274,10 @@ export default function AdminEventDetail({ route }) {
             paddingVertical: 10,
             paddingHorizontal: 15,
             marginBottom: 20,
+            borderRadius: 6,
           }}
         >
-          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
+          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 18 }}>
             {event.title}
           </Text>
         </View>
@@ -437,14 +455,37 @@ export default function AdminEventDetail({ route }) {
               <Text style={{ color: "#fff", fontWeight: "bold" }}>Twitter</Text>
             </Pressable>
 
-            <Pressable onPress={() => setShareVisible(false)} style={{ marginTop: 15 }}>
-              <Text style={{ color: "#014869", fontWeight: "bold" }}>Cancelar</Text>
+            <Pressable
+              onPress={() => setShareVisible(false)}
+              style={{ marginTop: 15 }}
+            >
+              <Text style={{ color: "#014869", fontWeight: "bold" }}>
+                Cancelar
+              </Text>
             </Pressable>
           </View>
         </View>
       </Modal>
 
-      <Footer />
+      {/* === FOOTER FIJO === */}
+      {Platform.OS === "web" && (
+        <View
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            backgroundColor: "#fff",
+          }}
+        >
+          <Footer
+            onAboutPress={goToAbout}
+            onPrivacyPress={goToPrivacy}
+            onConditionsPress={goToConditions}
+          />
+        </View>
+      )}
     </View>
   );
 }

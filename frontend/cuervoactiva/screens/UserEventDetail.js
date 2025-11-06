@@ -1,3 +1,4 @@
+// frontend/src/screens/UserEventDetail.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -35,7 +36,6 @@ export default function UserEventDetail() {
   const [hasRated, setHasRated] = useState(false);
   const [shareVisible, setShareVisible] = useState(false);
   const [userName, setUserName] = useState("Usuario");
-
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
@@ -182,8 +182,25 @@ export default function UserEventDetail() {
     );
   };
 
+  // === Navegaciones ===
+  const goToProfile = () => navigation.navigate("UserProfile");
+  const goToNotifications = () => navigation.navigate("UserNotifications");
+  const goToCalendar = () => navigation.navigate("Calendar");
+  const goToFavorites = () => navigation.navigate("UserFavorites");
+  const goToAbout = () => navigation.navigate("SobreNosotros");
+  const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
+  const goToConditions = () => navigation.navigate("Condiciones");
+  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
+  const goToContact = () => navigation.navigate("Contacto");
+  const goToSearch = () => navigation.navigate("UserHome");
+
   // === Menú lateral ===
   const toggleMenu = () => {
+    if (Platform.OS !== "web") {
+      setMenuVisible(!menuVisible);
+      return;
+    }
+
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
@@ -198,14 +215,6 @@ export default function UserEventDetail() {
         useNativeDriver: true,
       }).start();
     }
-  };
-
-  const goToNotifications = () => {
-    navigation.navigate("UserNotifications");
-  };
-
-  const goToFavorites = () => {
-    navigation.navigate("UserFavorites");
   };
 
   // === Renderizar estrellas ===
@@ -238,115 +247,259 @@ export default function UserEventDetail() {
     );
   }
 
-  return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <Header hideAuthButtons />
+  // === Cabecera superior ===
+  const renderTopBar = () => (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderColor: "#eee",
+      }}
+    >
+      <Text>👤 {userName}</Text>
 
-      {/* === BARRA SUPERIOR === */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          padding: 16,
-          justifyContent: "space-between",
-        }}
-      >
-        <Text style={{ fontWeight: "bold", color: "#014869" }}>
-          👤 {userName}
-        </Text>
-
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Pressable
-            onPress={goToNotifications}
-            style={{ marginHorizontal: 8 }}
-          >
-            <Image
-              source={require("../assets/iconos/bell.png")}
-              style={{ width: 26, height: 26, tintColor: "#014869" }}
-            />
-          </Pressable>
-
-          <Pressable style={{ marginHorizontal: 8 }}>
-            <Text>📅</Text>
-          </Pressable>
-
-          <Pressable onPress={toggleMenu}>
-            <Image
-              source={
-                Platform.OS === "web" && menuVisible
-                  ? require("../assets/iconos/close.png")
-                  : require("../assets/iconos/menu-usuario.png")
-              }
-              style={{ width: 26, height: 26 }}
-            />
-          </Pressable>
-        </View>
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Pressable onPress={goToCalendar} style={{ marginRight: 10 }}>
+          <Image
+            source={require("../assets/iconos/calendar.png")}
+            style={{ width: 26, height: 26, tintColor: "#014869" }}
+          />
+        </Pressable>
+        <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
+          <Image
+            source={require("../assets/iconos/bell.png")}
+            style={{ width: 24, height: 24, tintColor: "#014869" }}
+          />
+        </Pressable>
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={
+              menuVisible
+                ? require("../assets/iconos/close.png")
+                : require("../assets/iconos/menu-usuario.png")
+            }
+            style={{ width: 26, height: 26, tintColor: "#014869" }}
+          />
+        </Pressable>
       </View>
+    </View>
+  );
 
-      {/* === MENÚ === */}
-      {Platform.OS === "web" ? (
-        <>
-          {menuVisible && (
-            <TouchableWithoutFeedback onPress={toggleMenu}>
-              <View
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  zIndex: 9,
-                }}
-              />
-            </TouchableWithoutFeedback>
-          )}
-          <Animated.View
+  // === Menú lateral WEB ===
+  const renderMenuWeb = () => {
+    if (!menuVisible || Platform.OS !== "web") return null;
+    const userItems = [
+      { label: "Perfil", action: goToProfile },
+      { label: "Favoritos", action: goToFavorites },
+      { label: "Cultura e Historia", action: goToCulturaHistoria },
+      { label: "Contacto", action: goToContact },
+    ];
+
+    return (
+      <>
+        <TouchableWithoutFeedback onPress={toggleMenu}>
+          <View
             style={{
               position: "absolute",
               top: 0,
               left: 0,
-              width: 250,
+              width: "100%",
               height: "100%",
-              backgroundColor: "#f8f8f8",
-              padding: 20,
-              zIndex: 10,
-              transform: [{ translateX: menuAnim }],
+              zIndex: 9,
             }}
-          >
-            {[
-              { label: "Perfil", route: "Perfil" },
-              { label: "Sobre nosotros", route: "Sobre nosotros" },
-              { label: "Cultura e Historia", route: "Cultura e Historia" },
-              { label: "Ver favoritos", route: "UserFavorites" },
-              { label: "Contacto", route: "Contacto" },
-            ].map((item, i) => (
-              <Pressable
-                key={i}
-                onPress={() => {
-                  toggleMenu();
-                  navigation.navigate(item.route);
+          />
+        </TouchableWithoutFeedback>
+
+        <Animated.View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: 250,
+            height: "100%",
+            backgroundColor: "#f8f8f8",
+            padding: 20,
+            zIndex: 10,
+            transform: [{ translateX: menuAnim }],
+          }}
+        >
+          {userItems.map((item, i) => (
+            <Pressable
+              key={i}
+              onPress={() => {
+                toggleMenu();
+                item.action();
+              }}
+              style={{ marginBottom: 25 }}
+            >
+              <Text
+                style={{
+                  color: "#014869",
+                  fontSize: 16,
+                  fontWeight: "600",
                 }}
               >
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+        </Animated.View>
+      </>
+    );
+  };
+
+  // === Menú móvil ===
+  const renderMenuMobile = () =>
+    menuVisible && (
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "#f4f6f7",
+          zIndex: 20,
+          paddingHorizontal: 24,
+          paddingTop: 50,
+        }}
+      >
+        {/* 🔙 Header */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 30,
+          }}
+        >
+          <Pressable onPress={toggleMenu} style={{ marginRight: 15 }}>
+            <Image
+              source={require("../assets/iconos/back-usuario.png")}
+              style={{ width: 22, height: 22, tintColor: "#014869" }}
+            />
+          </Pressable>
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "bold",
+              color: "#014869",
+              textAlign: "center",
+              flex: 1,
+              marginRight: 37,
+            }}
+          >
+            Menú
+          </Text>
+        </View>
+
+        {/* 🔹 Opciones */}
+        <View style={{ flex: 1 }}>
+          {[
+            {
+              label: "Cultura e Historia",
+              icon: require("../assets/iconos/museo-usuario.png"),
+              action: goToCulturaHistoria,
+            },
+            {
+              label: "Sobre nosotros",
+              icon: require("../assets/iconos/info-usuario.png"),
+              action: goToAbout,
+            },
+            {
+              label: "Ver favoritos",
+              icon: require("../assets/iconos/favs-usuario.png"),
+              action: goToFavorites,
+            },
+            {
+              label: "Contacto",
+              icon: require("../assets/iconos/phone-usuario.png"),
+              action: goToContact,
+            },
+          ].map((item, index) => (
+            <Pressable
+              key={index}
+              onPress={item.action}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 25,
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Image
+                  source={item.icon}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    tintColor: "#014869",
+                    marginRight: 14,
+                  }}
+                />
                 <Text
                   style={{
                     color: "#014869",
                     fontSize: 16,
                     fontWeight: "600",
-                    marginBottom: 25,
                   }}
                 >
                   {item.label}
                 </Text>
-              </Pressable>
-            ))}
-          </Animated.View>
-        </>
-      ) : null}
+              </View>
+              <Image
+                source={require("../assets/iconos/siguiente.png")}
+                style={{ width: 18, height: 18, tintColor: "#014869" }}
+              />
+            </Pressable>
+          ))}
+        </View>
+
+        {/* 🔸 Barra inferior */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-around",
+            alignItems: "center",
+            borderTopWidth: 1,
+            borderTopColor: "#01486933",
+            paddingVertical: 14,
+          }}
+        >
+          <Pressable onPress={goToSearch}>
+            <Image
+              source={require("../assets/iconos/search.png")}
+              style={{ width: 22, height: 22, tintColor: "#014869" }}
+            />
+          </Pressable>
+          <Pressable onPress={goToCalendar}>
+            <Image
+              source={require("../assets/iconos/calendar.png")}
+              style={{ width: 22, height: 22, tintColor: "#014869" }}
+            />
+          </Pressable>
+          <Pressable onPress={goToProfile}>
+            <Image
+              source={require("../assets/iconos/user.png")}
+              style={{ width: 22, height: 22, tintColor: "#014869" }}
+            />
+          </Pressable>
+        </View>
+      </View>
+    );
+
+  // === Render principal ===
+  return (
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <Header hideAuthButtons />
+      {renderTopBar()}
+      {Platform.OS === "web" ? renderMenuWeb() : renderMenuMobile()}
 
       {/* === CONTENIDO PRINCIPAL === */}
-      <ScrollView
-        style={{ flex: 1, paddingHorizontal: 20, paddingVertical: 10 }}
-      >
+      <ScrollView style={{ flex: 1, paddingHorizontal: 20, paddingVertical: 10 }}>
         <View
           style={{
             backgroundColor: "#014869",
@@ -381,14 +534,10 @@ export default function UserEventDetail() {
         <Text style={{ marginBottom: 12 }}>{event.description}</Text>
 
         <View style={{ marginTop: 15, marginBottom: 20 }}>
-          <Text style={{ fontWeight: "bold", marginBottom: 5 }}>
-            Valoración
-          </Text>
+          <Text style={{ fontWeight: "bold", marginBottom: 5 }}>Valoración</Text>
           {renderStars()}
         </View>
 
-        {/* === ESTADO DEL EVENTO === */}
-        {/* === ESTADO DEL EVENTO === */}
         <View
           style={{
             flexDirection: "row",
@@ -413,7 +562,7 @@ export default function UserEventDetail() {
           </View>
         </View>
 
-        {/* === BOTÓN COMPARTIR === */}
+        {/* === Compartir === */}
         <View style={{ alignItems: "center", marginTop: 10 }}>
           <Pressable
             onPress={() => setShareVisible(true)}
@@ -482,9 +631,7 @@ export default function UserEventDetail() {
                 marginBottom: 10,
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                WhatsApp
-              </Text>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>WhatsApp</Text>
             </Pressable>
 
             <Pressable
@@ -503,19 +650,21 @@ export default function UserEventDetail() {
               <Text style={{ color: "#fff", fontWeight: "bold" }}>Twitter</Text>
             </Pressable>
 
-            <Pressable
-              onPress={() => setShareVisible(false)}
-              style={{ marginTop: 15 }}
-            >
-              <Text style={{ color: "#014869", fontWeight: "bold" }}>
-                Cancelar
-              </Text>
+            <Pressable onPress={() => setShareVisible(false)} style={{ marginTop: 15 }}>
+              <Text style={{ color: "#014869", fontWeight: "bold" }}>Cancelar</Text>
             </Pressable>
           </View>
         </View>
       </Modal>
 
-      {Platform.OS === "web" && <Footer />}
+      {/* === FOOTER WEB === */}
+      {Platform.OS === "web" && (
+        <Footer
+          onAboutPress={goToAbout}
+          onPrivacyPress={goToPrivacy}
+          onConditionsPress={goToConditions}
+        />
+      )}
     </View>
   );
 }

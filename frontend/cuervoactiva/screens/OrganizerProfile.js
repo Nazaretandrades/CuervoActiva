@@ -1,3 +1,4 @@
+// frontend/src/screens/OrganizerProfile.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -5,22 +6,29 @@ import {
   TextInput,
   Pressable,
   Image,
-  Platform,
   Alert,
+  Platform,
+  Animated,
+  TouchableWithoutFeedback,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
+import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import OrganizerMenu from "./OrganizerMenu"; // ✅ añadido
 
-// === Detectar plataforma y definir API correcta ===
 const API_BASE =
   Platform.OS === "android"
-    ? "http://192.168.18.19:5000" // ⚠️ Sustituye por tu IP local
+    ? "http://192.168.18.19:5000"
     : "http://localhost:5000";
 
-export default function OrganizerProfile({ navigation }) {
+export default function OrganizerProfile() {
+  const navigation = useNavigation();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: "", email: "" });
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuAnim] = useState(new Animated.Value(-250));
+  const [organizerName, setOrganizerName] = useState("Organizador");
 
   // === Cargar usuario logueado ===
   useEffect(() => {
@@ -30,31 +38,34 @@ export default function OrganizerProfile({ navigation }) {
         if (Platform.OS === "web") {
           session = JSON.parse(localStorage.getItem("USER_SESSION"));
         } else {
-          const sessionString = await AsyncStorage.getItem("USER_SESSION");
-          session = sessionString ? JSON.parse(sessionString) : null;
+          const s = await AsyncStorage.getItem("USER_SESSION");
+          session = s ? JSON.parse(s) : null;
         }
-        if (session?.name && session?.email)
+
+        if (session?.name && session?.email) {
           setForm({ name: session.name, email: session.email });
+          setOrganizerName(session.name);
+        }
       } catch (err) {
-        console.error("Error cargando usuario:", err);
+        console.error("Error cargando sesión:", err);
       }
     };
     loadUser();
   }, []);
 
-  // === Guardar cambios (actualiza en base de datos) ===
+  // === Guardar cambios en BD ===
   const handleSave = async () => {
     try {
       let session;
       if (Platform.OS === "web") {
         session = JSON.parse(localStorage.getItem("USER_SESSION"));
       } else {
-        const sessionString = await AsyncStorage.getItem("USER_SESSION");
-        session = sessionString ? JSON.parse(sessionString) : null;
+        const s = await AsyncStorage.getItem("USER_SESSION");
+        session = s ? JSON.parse(s) : null;
       }
 
       if (!session?.token) {
-        Alert.alert("Error", "No hay sesión activa.");
+        Alert.alert("Error", "No se encontró la sesión del organizador.");
         return;
       }
 
@@ -70,18 +81,14 @@ export default function OrganizerProfile({ navigation }) {
         }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Error al actualizar perfil");
-      }
+      if (!res.ok) throw new Error("Error al guardar en la base de datos");
 
-      const data = await res.json();
+      const updatedUser = await res.json();
 
-      // === Actualizar sesión local ===
       const updatedSession = {
         ...session,
-        name: data.name || form.name,
-        email: data.email || form.email,
+        name: updatedUser.name,
+        email: updatedUser.email,
       };
 
       if (Platform.OS === "web") {
@@ -95,12 +102,10 @@ export default function OrganizerProfile({ navigation }) {
 
       Alert.alert("✅ Guardado", "Tu perfil ha sido actualizado correctamente.");
       setEditing(false);
+      setOrganizerName(updatedUser.name);
     } catch (err) {
       console.error("Error guardando perfil:", err);
-      Alert.alert(
-        "Error",
-        "No se pudo conectar con el servidor. Asegúrate de usar la IP correcta."
-      );
+      Alert.alert("Error", err.message);
     }
   };
 
@@ -114,32 +119,153 @@ export default function OrganizerProfile({ navigation }) {
     navigation.navigate("Intro");
   };
 
-  // === Renderizado ===
+  // === Navegaciones ===
+  const goToProfile = () => navigation.navigate("OrganizerProfile");
+  const goToNotifications = () => navigation.navigate("OrganizerNotifications");
+  const goToAboutUs = () => navigation.navigate("SobreNosotros");
+  const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
+  const goToConditions = () => navigation.navigate("Condiciones");
+  const goToContact = () => navigation.navigate("Contacto");
+  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
+  const goToCalendar = () => navigation.navigate("Calendar");
+
+  // === Menú lateral ===
+  const toggleMenu = () => {
+    if (Platform.OS !== "web") {
+      setMenuVisible(!menuVisible);
+      return;
+    }
+
+    if (menuVisible) {
+      Animated.timing(menuAnim, {
+        toValue: -250,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setMenuVisible(false));
+    } else {
+      setMenuVisible(true);
+      Animated.timing(menuAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* === BARRA SUPERIOR === */}
+      {/* === Barra superior (naranja) === */}
       <View
         style={{
-          backgroundColor: "#F3B23F",
-          paddingVertical: 14,
-          paddingHorizontal: 20,
           flexDirection: "row",
           alignItems: "center",
+          padding: 16,
           justifyContent: "space-between",
+          borderBottomWidth: 1,
+          borderColor: "#eee",
         }}
       >
-        <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
-          Organizador
-        </Text>
-        <Image
-          source={require("../assets/iconos/user.png")}
-          style={{ width: 24, height: 24, tintColor: "#fff" }}
-        />
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text>👤</Text>
+          <Text>{organizerName}</Text>
+        </View>
+
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          {/* 📅 CALENDARIO */}
+          <Pressable onPress={goToCalendar} style={{ marginRight: 10 }}>
+            <Image
+              source={require("../assets/iconos/calendar-organizador.png")}
+              style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+            />
+          </Pressable>
+
+          {/* 🔔 NOTIFICACIONES */}
+          <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
+            <Image
+              source={require("../assets/iconos/bell3.png")}
+              style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+            />
+          </Pressable>
+
+          {/* ☰ MENÚ */}
+          <Pressable onPress={toggleMenu}>
+            <Image
+              source={
+                menuVisible
+                  ? require("../assets/iconos/close-organizador.png")
+                  : require("../assets/iconos/menu-organizador.png")
+              }
+              style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+            />
+          </Pressable>
+        </View>
       </View>
 
-      {/* === CONTENIDO PRINCIPAL === */}
+      {/* === Menú lateral web === */}
+      {Platform.OS === "web" && menuVisible && (
+        <>
+          <TouchableWithoutFeedback onPress={toggleMenu}>
+            <View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                zIndex: 9,
+              }}
+            />
+          </TouchableWithoutFeedback>
+
+          <Animated.View
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: 250,
+              height: "100%",
+              backgroundColor: "#f8f8f8",
+              padding: 20,
+              zIndex: 10,
+              transform: [{ translateX: menuAnim }],
+            }}
+          >
+            {[
+              { label: "Perfil", action: goToProfile },
+              { label: "Cultura e Historia", action: goToCulturaHistoria },
+              { label: "Contacto", action: goToContact },
+            ].map((item, i) => (
+              <Pressable
+                key={i}
+                onPress={() => {
+                  toggleMenu();
+                  item.action();
+                }}
+                style={{ marginBottom: 25 }}
+              >
+                <Text
+                  style={{
+                    color: "#014869",
+                    fontSize: 18,
+                    fontWeight: "700",
+                  }}
+                >
+                  {item.label}
+                </Text>
+              </Pressable>
+            ))}
+          </Animated.View>
+        </>
+      )}
+
+      {/* === Menú móvil (igual que Contacto y Calendar) === */}
+      {Platform.OS !== "web" && menuVisible && (
+        <OrganizerMenu onClose={toggleMenu} />
+      )}
+
+      {/* === Contenido principal === */}
       <View style={{ flex: 1, alignItems: "center", paddingTop: 30 }}>
         <Text style={{ fontSize: 22, fontWeight: "bold", marginBottom: 20 }}>
           Perfil
@@ -219,7 +345,14 @@ export default function OrganizerProfile({ navigation }) {
         </View>
       </View>
 
-      {Platform.OS === "web" && <Footer />}
+      {/* === Footer solo en web === */}
+      {Platform.OS === "web" && (
+        <Footer
+          onAboutPress={goToAboutUs}
+          onPrivacyPress={goToPrivacy}
+          onConditionsPress={goToConditions}
+        />
+      )}
     </View>
   );
 }

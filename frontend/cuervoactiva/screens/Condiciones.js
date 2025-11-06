@@ -1,3 +1,4 @@
+// frontend/src/screens/Condiciones.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -19,7 +20,7 @@ export default function Condiciones({ navigation }) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  // === Obtener sesión ===
+  /** === Obtener sesión === */
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -43,15 +44,32 @@ export default function Condiciones({ navigation }) {
     loadSession();
   }, []);
 
-  // === Ir a notificaciones según rol ===
-  const goToNotifications = () => {
-    if (role === "admin") navigation.navigate("AdminNotifications");
-    else if (role === "organizer") navigation.navigate("OrganizerNotifications");
-    else navigation.navigate("UserNotifications");
-  };
+  /** === Navegaciones comunes === */
+  const goToProfile = () =>
+    role === "admin"
+      ? navigation.navigate("AdminProfile")
+      : role === "organizer"
+      ? navigation.navigate("OrganizerProfile")
+      : navigation.navigate("UserProfile");
 
-  // === Alternar menú lateral ===
+  const goToNotifications = () =>
+    role === "admin"
+      ? navigation.navigate("AdminNotifications")
+      : role === "organizer"
+      ? navigation.navigate("OrganizerNotifications")
+      : navigation.navigate("UserNotifications");
+
+  const goToCalendar = () => navigation.navigate("Calendar");
+  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
+  const goToUsers = () => navigation.navigate("AdminUsers");
+  const goToContact = () => navigation.navigate("Contacto");
+  const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
+  const goToConditions = () => navigation.navigate("Condiciones");
+  const goToAbout = () => navigation.navigate("SobreNosotros");
+
+  /** === Alternar menú lateral === */
   const toggleMenu = () => {
+    if (Platform.OS !== "web") return;
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
@@ -68,48 +86,139 @@ export default function Condiciones({ navigation }) {
     }
   };
 
-  // === Colores por rol ===
-  const getRoleColor = () => {
-    if (role === "admin") return "#014869";
-    if (role === "organizer") return "#F3B23F";
-    return "#0072B5";
-  };
+  /** === Cabecera superior === */
+  const renderTopBar = () => {
+    // === ADMIN ===
+    if (Platform.OS === "web" && role === "admin") {
+      return (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: 16,
+            borderBottomWidth: 1,
+            borderColor: "#eee",
+          }}
+        >
+          <Text>👑 Admin. {userName}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+            <Pressable onPress={goToCalendar}>
+              <Image
+                source={require("../assets/iconos/calendar-admin.png")}
+                style={{ width: 26, height: 26 }}
+              />
+            </Pressable>
+            <Pressable onPress={goToNotifications}>
+              <Image
+                source={require("../assets/iconos/bell2.png")}
+                style={{ width: 24, height: 24 }}
+              />
+            </Pressable>
+            <Pressable onPress={toggleMenu}>
+              <Image
+                source={
+                  menuVisible
+                    ? require("../assets/iconos/close-admin.png")
+                    : require("../assets/iconos/menu-admin.png")
+                }
+                style={{ width: 26, height: 26 }}
+              />
+            </Pressable>
+          </View>
+        </View>
+      );
+    }
 
-  // === Header dinámico ===
-  const renderHeaderBar = () => {
-    const color = getRoleColor();
-    const iconUser =
-      role === "admin" ? "👑" : role === "organizer" ? "🟠" : "🟣";
+    // === ORGANIZADOR ===
+    if (Platform.OS === "web" && role === "organizer") {
+      return (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 24,
+            paddingVertical: 14,
+            borderBottomWidth: 1,
+            borderColor: "#eee",
+          }}
+        >
+          <Text style={{ fontWeight: "600", color: "#014869" }}>
+            👤 {userName}
+          </Text>
 
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+            <Pressable onPress={goToCalendar}>
+              <Image
+                source={require("../assets/iconos/calendar-organizador.png")}
+                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+              />
+            </Pressable>
+            <Pressable onPress={goToNotifications}>
+              <Image
+                source={require("../assets/iconos/bell.png")}
+                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+              />
+            </Pressable>
+            <Pressable onPress={toggleMenu}>
+              <Image
+                source={
+                  menuVisible
+                    ? require("../assets/iconos/close-organizador.png")
+                    : require("../assets/iconos/menu-usuario.png")
+                }
+                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+              />
+            </Pressable>
+          </View>
+        </View>
+      );
+    }
+
+    // === USUARIO NORMAL ===
     return (
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: 16,
+          paddingHorizontal: 24,
+          paddingVertical: 14,
+          borderBottomWidth: 1,
+          borderColor: "#eee",
         }}
       >
-        <Text>
-          {iconUser} {role === "admin" ? "Admin." : ""} {userName}
+        <Text style={{ fontWeight: "600", color: "#014869" }}>
+          👤 {userName}
         </Text>
 
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Pressable style={{ marginHorizontal: 8 }} onPress={goToNotifications}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+          {/* CALENDARIO */}
+          <Pressable onPress={goToCalendar}>
             <Image
-              source={require("../assets/iconos/bell.png")}
-              style={{ width: 22, height: 22, tintColor: color }}
+              source={require("../assets/iconos/calendar.png")}
+              style={{ width: 26, height: 26, tintColor: "#014869" }}
             />
           </Pressable>
 
+          {/* NOTIFICACIONES */}
+          <Pressable onPress={goToNotifications}>
+            <Image
+              source={require("../assets/iconos/bell.png")}
+              style={{ width: 26, height: 26, tintColor: "#014869" }}
+            />
+          </Pressable>
+
+          {/* MENÚ */}
           <Pressable onPress={toggleMenu}>
             <Image
               source={
-                Platform.OS === "web" && menuVisible
+                menuVisible
                   ? require("../assets/iconos/close.png")
                   : require("../assets/iconos/menu-usuario.png")
               }
-              style={{ width: 26, height: 26, tintColor: color }}
+              style={{ width: 26, height: 26, tintColor: "#014869" }}
             />
           </Pressable>
         </View>
@@ -117,91 +226,93 @@ export default function Condiciones({ navigation }) {
     );
   };
 
-  // === Menú lateral dinámico ===
-  const getMenuItems = () => {
+  /** === Menú lateral === */
+  const renderMenu = () => {
+    if (!menuVisible || Platform.OS !== "web") return null;
+
+    let items = [];
+
     if (role === "admin") {
-      return [
-        { label: "Perfil", route: "AdminProfile" },
-        { label: "Cultura e Historia", route: "CulturaHistoria" },
-        { label: "Ver usuarios", route: "AdminUsers" },
-        { label: "Contacto", route: "Contacto" },
+      items = [
+        { label: "Perfil", action: goToProfile },
+        { label: "Cultura e Historia", action: goToCulturaHistoria },
+        { label: "Ver usuarios", action: goToUsers },
+        { label: "Contacto", action: goToContact },
       ];
     } else if (role === "organizer") {
-      return [
-        { label: "Perfil", route: "OrganizerProfile" },
-        { label: "Cultura e Historia", route: "CulturaHistoria" },
-        { label: "Contacto", route: "Contacto" },
+      items = [
+        { label: "Perfil", action: goToProfile },
+        { label: "Cultura e Historia", action: goToCulturaHistoria },
+        { label: "Contacto", action: goToContact },
       ];
     } else {
-      return [
-        { label: "Perfil", route: "UserProfile" },
-        { label: "Cultura e Historia", route: "CulturaHistoria" },
-        { label: "Ver favoritos", route: "UserFavorites" },
-        { label: "Contacto", route: "Contacto" },
+      items = [
+        { label: "Perfil", action: goToProfile },
+        { label: "Cultura e Historia", action: goToCulturaHistoria },
+        { label: "Ver favoritos", action: () => navigation.navigate("UserFavorites") },
+        { label: "Contacto", action: goToContact },
       ];
     }
-  };
 
-  const simulateNavigation = (route) => {
-    toggleMenu();
-    navigation.navigate(route);
-  };
-
-  // === Render principal ===
-  return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <Header hideAuthButtons />
-      {renderHeaderBar()}
-
-      {/* === MENÚ LATERAL WEB === */}
-      {Platform.OS === "web" && menuVisible && (
-        <>
-          <TouchableWithoutFeedback onPress={toggleMenu}>
-            <View
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                zIndex: 9,
-              }}
-            />
-          </TouchableWithoutFeedback>
-
-          <Animated.View
+    return (
+      <>
+        <TouchableWithoutFeedback onPress={toggleMenu}>
+          <View
             style={{
               position: "absolute",
               top: 0,
               left: 0,
-              width: 250,
+              width: "100%",
               height: "100%",
-              backgroundColor: "#f8f8f8",
-              padding: 20,
-              zIndex: 10,
-              transform: [{ translateX: menuAnim }],
+              zIndex: 9,
             }}
-          >
-            {getMenuItems().map((item, i) => (
-              <Pressable
-                key={i}
-                onPress={() => simulateNavigation(item.route)}
-                style={{ marginBottom: 25 }}
+          />
+        </TouchableWithoutFeedback>
+
+        <Animated.View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: 250,
+            height: "100%",
+            backgroundColor: "#f8f8f8",
+            padding: 20,
+            zIndex: 10,
+            transform: [{ translateX: menuAnim }],
+          }}
+        >
+          {items.map((item, i) => (
+            <Pressable
+              key={i}
+              onPress={() => {
+                toggleMenu();
+                item.action();
+              }}
+              style={{ marginBottom: 25 }}
+            >
+              <Text
+                style={{
+                  color: "#014869",
+                  fontSize: 16,
+                  fontWeight: "600",
+                }}
               >
-                <Text
-                  style={{
-                    color: getRoleColor(),
-                    fontSize: 16,
-                    fontWeight: "600",
-                  }}
-                >
-                  {item.label}
-                </Text>
-              </Pressable>
-            ))}
-          </Animated.View>
-        </>
-      )}
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+        </Animated.View>
+      </>
+    );
+  };
+
+  /** === Render principal === */
+  return (
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <Header hideAuthButtons />
+      {renderTopBar()}
+      {renderMenu()}
 
       {/* === CONTENIDO PRINCIPAL === */}
       <ScrollView
@@ -211,9 +322,9 @@ export default function Condiciones({ navigation }) {
           alignItems: "center",
           backgroundColor: "#f9f9f9",
           flexGrow: 1,
+          paddingBottom: 120,
         }}
       >
-        {/* TÍTULO */}
         <Text
           style={{
             fontSize: 22,
@@ -226,7 +337,6 @@ export default function Condiciones({ navigation }) {
           Condiciones de Uso
         </Text>
 
-        {/* CONTENEDOR DOBLE */}
         <View
           style={{
             flexDirection: Platform.OS === "web" ? "row" : "column",
@@ -240,7 +350,6 @@ export default function Condiciones({ navigation }) {
             padding: 20,
           }}
         >
-          {/* === TÉRMINOS GENERALES === */}
           <View
             style={{
               backgroundColor: "#fff",
@@ -264,22 +373,17 @@ export default function Condiciones({ navigation }) {
             >
               Términos Generales
             </Text>
-            <Text
-              style={{
-                color: "#333",
-                lineHeight: 20,
-                textAlign: "justify",
-              }}
-            >
+            <Text style={{ color: "#333", lineHeight: 20, textAlign: "justify" }}>
               El uso de la aplicación Cuervo Activa implica la aceptación plena
-              de los presentes términos y condiciones. Los usuarios se comprometen
-              a utilizar la plataforma de manera responsable, sin realizar acciones
-              que perjudiquen su funcionamiento o la experiencia de otros usuarios.
+              de los presentes términos y condiciones. Los usuarios se
+              comprometen a utilizar la plataforma de manera responsable, sin
+              realizar acciones que perjudiquen su funcionamiento o la
+              experiencia de otros usuarios.
               {"\n\n"}
-              Queda prohibido publicar contenido ofensivo, fraudulento, violento o
-              que infrinja derechos de autor o privacidad. Cuervo Activa se reserva
-              el derecho de eliminar cualquier contenido inapropiado y suspender
-              cuentas que vulneren estas normas.
+              Queda prohibido publicar contenido ofensivo, fraudulento, violento
+              o que infrinja derechos de autor o privacidad. Cuervo Activa se
+              reserva el derecho de eliminar cualquier contenido inapropiado y
+              suspender cuentas que vulneren estas normas.
               {"\n\n"}
               El acceso a ciertos servicios puede requerir registro previo y la
               veracidad de la información proporcionada es responsabilidad del
@@ -287,7 +391,6 @@ export default function Condiciones({ navigation }) {
             </Text>
           </View>
 
-          {/* === RESPONSABILIDAD Y USO === */}
           <View
             style={{
               backgroundColor: "#fff",
@@ -311,37 +414,41 @@ export default function Condiciones({ navigation }) {
             >
               Responsabilidad y Uso
             </Text>
-            <Text
-              style={{
-                color: "#333",
-                lineHeight: 20,
-                textAlign: "justify",
-              }}
-            >
+            <Text style={{ color: "#333", lineHeight: 20, textAlign: "justify" }}>
               Cuervo Activa no se hace responsable del mal uso de la aplicación
-              ni de los daños derivados del incumplimiento de las normas por parte
-              del usuario. Las actividades y eventos publicados son responsabilidad
-              de sus respectivos organizadores.
+              ni de los daños derivados del incumplimiento de las normas por
+              parte del usuario. Las actividades y eventos publicados son
+              responsabilidad de sus respectivos organizadores.
               {"\n\n"}
-              El usuario acepta que su participación en actividades es voluntaria y
-              que deberá revisar los detalles, condiciones y requisitos de cada
-              evento antes de asistir.
+              El usuario acepta que su participación en actividades es
+              voluntaria y que deberá revisar los detalles, condiciones y
+              requisitos de cada evento antes de asistir.
               {"\n\n"}
               La plataforma podrá suspender temporalmente el servicio por
-              mantenimiento o mejoras, notificando a los usuarios cuando sea posible.
+              mantenimiento o mejoras, notificando a los usuarios cuando sea
+              posible.
             </Text>
           </View>
         </View>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* === FOOTER === */}
       {Platform.OS === "web" && (
-        <Footer
-          onAboutPress={() => navigation.navigate("SobreNosotros")}
-          onPrivacyPress={() => navigation.navigate("PoliticaPrivacidad")}
-        />
+        <View
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            backgroundColor: "#fff",
+          }}
+        >
+          <Footer
+            onAboutPress={goToAbout}
+            onPrivacyPress={goToPrivacy}
+            onConditionsPress={goToConditions}
+          />
+        </View>
       )}
     </View>
   );

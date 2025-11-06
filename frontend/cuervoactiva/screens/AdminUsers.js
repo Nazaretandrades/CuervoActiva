@@ -68,10 +68,15 @@ export default function AdminUsers() {
     loadUsers();
   }, []);
 
-  // === Redirección a notificaciones ===
-  const goToNotifications = () => {
-    navigation.navigate("AdminNotifications");
-  };
+  // === Navegaciones ===
+  const goToProfile = () => navigation.navigate("AdminProfile");
+  const goToNotifications = () => navigation.navigate("AdminNotifications");
+  const goToAboutUs = () => navigation.navigate("SobreNosotros");
+  const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
+  const goToConditions = () => navigation.navigate("Condiciones");
+  const goToContact = () => navigation.navigate("Contacto");
+  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
+  const goToCalendar = () => navigation.navigate("Calendar"); // ✅ NUEVA FUNCIÓN
 
   // === Eliminar usuario ===
   const handleDelete = async (id) => {
@@ -131,12 +136,22 @@ export default function AdminUsers() {
         }}
       >
         {/* 👑 Admin */}
-        <Text>
-          👑 Admin. {adminName}
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ marginRight: 6 }}>👑</Text>
+          <Text>Admin. {adminName}</Text>
+        </View>
 
-        {/* 🔔 Notificaciones y ☰ Menú */}
+        {/* ICONOS DE CALENDARIO, NOTIFICACIONES Y MENÚ */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          {/* ✅ ICONO DE CALENDARIO */}
+          <Pressable onPress={goToCalendar} style={{ marginRight: 6 }}>
+            <Image
+              source={require("../assets/iconos/calendar-admin.png")}
+              style={{ width: 26, height: 26 }}
+            />
+          </Pressable>
+
+          {/* 🔔 NOTIFICACIONES */}
           <Pressable onPress={goToNotifications} style={{ marginRight: 6 }}>
             <Image
               source={require("../assets/iconos/bell2.png")}
@@ -144,6 +159,7 @@ export default function AdminUsers() {
             />
           </Pressable>
 
+          {/* ☰ MENÚ */}
           <Pressable onPress={toggleMenu}>
             <Image
               source={
@@ -157,7 +173,7 @@ export default function AdminUsers() {
         </View>
       </View>
 
-      {/* === MENÚ WEB === */}
+      {/* === MENÚ LATERAL WEB === */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -187,17 +203,17 @@ export default function AdminUsers() {
             }}
           >
             {[
-              { label: "Perfil" },
-              { label: "Sobre nosotros" },
-              { label: "Cultura e Historia" },
+              { label: "Perfil", action: goToProfile },
+              { label: "Cultura e Historia", action: goToCulturaHistoria },
               { label: "Ver usuarios", route: "AdminUsers" },
-              { label: "Contacto" },
+              { label: "Contacto", action: goToContact },
             ].map((item, i) => (
               <Pressable
                 key={i}
                 onPress={() => {
                   toggleMenu();
-                  if (item.route) navigation.navigate(item.route);
+                  if (item.action) item.action();
+                  else if (item.route) navigation.navigate(item.route);
                 }}
                 style={{ marginBottom: 25 }}
               >
@@ -269,7 +285,14 @@ export default function AdminUsers() {
         )}
       </ScrollView>
 
-      {Platform.OS === "web" && <Footer />}
+      {/* === FOOTER === */}
+      {Platform.OS === "web" && (
+        <Footer
+          onAboutPress={goToAboutUs}
+          onPrivacyPress={goToPrivacy}
+          onConditionsPress={goToConditions}
+        />
+      )}
     </View>
   );
 }

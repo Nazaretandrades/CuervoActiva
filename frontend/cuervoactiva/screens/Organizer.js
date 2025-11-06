@@ -246,19 +246,24 @@ export default function Organizer() {
 
   // === Menú lateral ===
   const toggleMenu = () => {
-    if (menuVisible) {
-      Animated.timing(menuAnim, {
-        toValue: -250,
-        duration: 300,
-        useNativeDriver: true,
-      }).start(() => setMenuVisible(false));
+    if (Platform.OS !== "web") {
+      navigation.navigate("OrganizerMenu"); 
     } else {
-      setMenuVisible(true);
-      Animated.timing(menuAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      // Mantén el menú lateral web
+      if (menuVisible) {
+        Animated.timing(menuAnim, {
+          toValue: -250,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => setMenuVisible(false));
+      } else {
+        setMenuVisible(true);
+        Animated.timing(menuAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }
     }
   };
 
@@ -370,8 +375,6 @@ export default function Organizer() {
             {[
               { label: "Perfil", action: goToProfile },
               { label: "Cultura e Historia", action: goToCulturaHistoria },
-              { label: "Política y Privacidad", action: goToPrivacy },
-              { label: "Condiciones", action: goToConditions },
               { label: "Contacto", action: goToContact },
             ].map((item, i) => (
               <Pressable

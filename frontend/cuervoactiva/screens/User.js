@@ -322,9 +322,6 @@ export default function User() {
             {[
               { label: "Perfil", action: goToProfile },
               { label: "Cultura e Historia", action: goToCulturaHistoria },
-              { label: "Sobre nosotros", action: goToAboutUs },
-              { label: "Política y Privacidad", action: goToPrivacy },
-              { label: "Condiciones", action: goToConditions },
               { label: "Ver favoritos", action: goToFavorites },
               { label: "Contacto", action: goToContact },
             ].map((item, i) => (
@@ -389,11 +386,6 @@ export default function User() {
             <View style={{ flex: 1 }}>
               {[
                 {
-                  label: "Perfil",
-                  icon: require("../assets/iconos/user.png"),
-                  action: goToProfile,
-                },
-                {
                   label: "Cultura e Historia",
                   icon: require("../assets/iconos/museo-usuario.png"),
                   action: goToCulturaHistoria,
@@ -402,16 +394,6 @@ export default function User() {
                   label: "Sobre nosotros",
                   icon: require("../assets/iconos/info-usuario.png"),
                   action: goToAboutUs,
-                },
-                {
-                  label: "Política y Privacidad",
-                  icon: require("../assets/iconos/info-usuario.png"),
-                  action: goToPrivacy,
-                },
-                {
-                  label: "Condiciones",
-                  icon: require("../assets/iconos/info-usuario.png"),
-                  action: goToConditions,
                 },
                 {
                   label: "Ver favoritos",

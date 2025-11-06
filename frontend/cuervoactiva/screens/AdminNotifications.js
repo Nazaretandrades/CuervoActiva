@@ -7,6 +7,7 @@ import {
   Animated,
   TouchableWithoutFeedback,
   Image,
+  Platform,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -78,7 +79,18 @@ export default function AdminNotifications({ navigation }) {
     }
   };
 
-  // === Menú lateral ===
+  // === Navegaciones ===
+  const goToProfile = () => navigation.navigate("AdminProfile");
+  const goToNotifications = () => navigation.navigate("AdminNotifications");
+  const goToAboutUs = () => navigation.navigate("SobreNosotros");
+  const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
+  const goToConditions = () => navigation.navigate("Condiciones");
+  const goToContact = () => navigation.navigate("Contacto");
+  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
+  const goToCalendar = () => navigation.navigate("Calendar"); // ✅ Añadido igual que en Admin.js
+  const goToUsers = () => navigation.navigate("AdminUsers");
+
+  // === Menú lateral (mismo que en Admin.js) ===
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -94,17 +106,6 @@ export default function AdminNotifications({ navigation }) {
         useNativeDriver: true,
       }).start();
     }
-  };
-
-  const handleMenuOption = (option) => {
-    toggleMenu();
-
-    if (option === "Ver usuarios") {
-      navigation.navigate("AdminUsers");
-      return;
-    }
-
-    alert(`Iría a: ${option}`);
   };
 
   // === UI ===
@@ -127,17 +128,25 @@ export default function AdminNotifications({ navigation }) {
         {/* 👑 Admin */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <Text>👑</Text>
-          <Text>
-            Admin: {adminName}
-          </Text>
+          <Text>Admin: {adminName}</Text>
         </View>
 
-        {/* 🔔 + Menú */}
+        {/* === ICONOS DE CALENDARIO + NOTIFICACIONES + MENÚ === */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
-          <Pressable>
+          {/* ✅ ICONO DE CALENDARIO (nuevo) */}
+          <Pressable onPress={goToCalendar} style={{ marginRight: 10 }}>
+            <Image
+              source={require("../assets/iconos/calendar-admin.png")}
+              style={{ width: 26, height: 26 }}
+            />
+          </Pressable>
+
+          {/* 🔔 ICONO DE NOTIFICACIONES */}
+          <Pressable onPress={goToNotifications}>
             <Image source={require("../assets/iconos/bell2.png")} />
           </Pressable>
 
+          {/* ☰ MENÚ LATERAL */}
           <Pressable onPress={toggleMenu}>
             <Image
               source={
@@ -151,8 +160,8 @@ export default function AdminNotifications({ navigation }) {
         </View>
       </View>
 
-      {/* === MENÚ LATERAL === */}
-      {menuVisible && (
+      {/* === MENÚ LATERAL (MISMO QUE EN Admin.js) === */}
+      {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
             <View
@@ -181,15 +190,17 @@ export default function AdminNotifications({ navigation }) {
             }}
           >
             {[
-              "Perfil",
-              "Sobre nosotros",
-              "Cultura e Historia",
-              "Ver usuarios",
-              "Contacto",
+              { label: "Perfil", action: goToProfile },
+              { label: "Cultura e Historia", action: goToCulturaHistoria },
+              { label: "Ver usuarios", action: goToUsers },
+              { label: "Contacto", action: goToContact },
             ].map((item, i) => (
               <Pressable
                 key={i}
-                onPress={() => handleMenuOption(item)}
+                onPress={() => {
+                  toggleMenu();
+                  item.action();
+                }}
                 style={{ marginBottom: 25 }}
               >
                 <Text
@@ -199,7 +210,7 @@ export default function AdminNotifications({ navigation }) {
                     fontWeight: "700",
                   }}
                 >
-                  {item}
+                  {item.label}
                 </Text>
               </Pressable>
             ))}
@@ -264,7 +275,14 @@ export default function AdminNotifications({ navigation }) {
         </ScrollView>
       </View>
 
-      <Footer />
+      {/* === FOOTER === */}
+      {Platform.OS === "web" && (
+        <Footer
+          onAboutPress={goToAboutUs}
+          onPrivacyPress={goToPrivacy}
+          onConditionsPress={goToConditions}
+        />
+      )}
     </View>
   );
 }

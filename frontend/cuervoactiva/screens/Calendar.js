@@ -10,19 +10,25 @@ import {
   ScrollView,
   Modal,
   TouchableOpacity,
+  Animated,
+  TouchableWithoutFeedback,
+  Image,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
+import { useNavigation } from "@react-navigation/native";
+import OrganizerMenu from "./OrganizerMenu"; // ✅ Añadido
+import UserMenu from "./UserMenu"; // ✅ Añadido
 
-/** === CONFIG API (igual que en user.js) === */
+/** === CONFIG API === */
 const API_BASE =
   Platform.OS === "android"
     ? "http://192.168.18.19:5000"
     : "http://localhost:5000";
 const API_URL = `${API_BASE}/api/events`;
 
-/** === Colores por categoría (idénticos a User.js) === */
+/** === Colores por categoría === */
 const CATEGORY_COLORS = {
   all: "#014869",
   deporte: "#F3B23F",
@@ -50,59 +56,39 @@ const monthNamesEs = [
 ];
 const weekNamesShortEs = ["L", "M", "X", "J", "V", "S", "D"];
 
-/** Devuelve un Date clonado con hora 00:00 */
 function atStartOfDay(d) {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
   return x;
 }
-
 function parseDDMMYYYY(str) {
   if (!str || typeof str !== "string") return null;
-
-  // Si es formato ISO o YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
-    const [y, m, d] = str
-      .substring(0, 10)
-      .split("-")
-      .map((x) => parseInt(x, 10));
-    // ⚠️ Corregimos forzando la hora a mediodía
+    const [y, m, d] = str.substring(0, 10).split("-").map(Number);
     const date = new Date(y, m - 1, d, 12, 0, 0);
     if (!isNaN(date.getTime())) return atStartOfDay(date);
   }
-
-  // Si es DD/MM/YYYY
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
-    const [dd, mm, yyyy] = str.split("/").map((x) => parseInt(x, 10));
-    const date = new Date(yyyy, mm - 1, dd, 12, 0, 0); // mediodía
+    const [dd, mm, yyyy] = str.split("/").map(Number);
+    const date = new Date(yyyy, mm - 1, dd, 12, 0, 0);
     if (!isNaN(date.getTime())) return atStartOfDay(date);
   }
-
   return null;
 }
-
-/** Formatea Date -> 'YYYY-MM-DD' (para agrupar) */
 function ymdKey(date) {
   const y = date.getFullYear();
   const m = `${date.getMonth() + 1}`.padStart(2, "0");
   const d = `${date.getDate()}`.padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
-
-/** Crea la matriz del mes empezando en Lunes */
 function getMonthMatrix(year, monthIndex) {
   const first = new Date(year, monthIndex, 1);
   const last = new Date(year, monthIndex + 1, 0);
-  // 0:Dom 1:Lun ... 6:Sab -> queremos lunes como inicio (1)
-  const firstWeekday = (first.getDay() + 6) % 7; // convierte domingo(0)→6, lunes(1)→0...
+  const firstWeekday = (first.getDay() + 6) % 7;
   const daysInMonth = last.getDate();
-
   const matrix = [];
   let week = [];
-
-  // Relleno antes del 1er día del mes
   for (let i = 0; i < firstWeekday; i++) week.push(null);
-
   for (let day = 1; day <= daysInMonth; day++) {
     week.push(new Date(year, monthIndex, day));
     if (week.length === 7) {
@@ -110,15 +96,12 @@ function getMonthMatrix(year, monthIndex) {
       week = [];
     }
   }
-  // Relleno final
   if (week.length > 0) {
     while (week.length < 7) week.push(null);
     matrix.push(week);
   }
   return matrix;
 }
-
-/** Badge de color para cada evento */
 function ColorDot({ color }) {
   return (
     <View
@@ -134,13 +117,16 @@ function ColorDot({ color }) {
 }
 
 export default function Calendar() {
-  const [role, setRole] = useState("user"); // user | organizer | admin
+  const navigation = useNavigation();
+  const [role, setRole] = useState(null);
   const [events, setEvents] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedKey, setSelectedKey] = useState(null); // 'YYYY-MM-DD'
+  const [selectedKey, setSelectedKey] = useState(null);
   const [mobilePanelVisible, setMobilePanelVisible] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [menuAnim] = useState(new Animated.Value(-250));
 
-  /** === Cargar sesión para rol (mismo patrón que CulturaHistoria) === */
+  // === Cargar sesión y rol ===
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -160,26 +146,18 @@ export default function Calendar() {
     loadSession();
   }, []);
 
-  /** === Carga de eventos === */
+  // === Cargar eventos ===
   useEffect(() => {
     const load = async () => {
       try {
         const res = await fetch(API_URL);
         if (!res.ok) throw new Error("No se pudieron obtener los eventos");
         const data = await res.json();
-
-        // Normaliza cada evento: fecha, color por categoría
         const normalized = (data || []).map((ev) => {
-          // Tu backend guarda ev.date como 'DD/MM/YYYY'
           const d = parseDDMMYYYY(ev.date);
           const cat = (ev.category || "").toLowerCase();
           const color = CATEGORY_COLORS[cat] || CATEGORY_COLORS.default;
-          return {
-            ...ev,
-            _date: d, // Date
-            _key: d ? ymdKey(d) : null,
-            _color: color,
-          };
+          return { ...ev, _date: d, _key: d ? ymdKey(d) : null, _color: color };
         });
         setEvents(normalized);
       } catch (e) {
@@ -189,7 +167,6 @@ export default function Calendar() {
     load();
   }, []);
 
-  /** === Agrupar eventos por día (clave 'YYYY-MM-DD') === */
   const eventsByDay = useMemo(() => {
     const map = {};
     for (const ev of events) {
@@ -207,57 +184,182 @@ export default function Calendar() {
     [year, monthIndex]
   );
 
-  const goPrevMonth = () => {
-    const d = new Date(year, monthIndex - 1, 1);
-    setCurrentDate(d);
-    setSelectedKey(null);
-  };
-  const goNextMonth = () => {
-    const d = new Date(year, monthIndex + 1, 1);
-    setCurrentDate(d);
-    setSelectedKey(null);
-  };
-
+  const goPrevMonth = () => setCurrentDate(new Date(year, monthIndex - 1, 1));
+  const goNextMonth = () => setCurrentDate(new Date(year, monthIndex + 1, 1));
   const handleSelectDay = (key) => {
     if (!key) return;
     setSelectedKey((prev) => (prev === key ? null : key));
-    if (Platform.OS !== "web") {
-      // En móvil abrimos panel inferior
-      setMobilePanelVisible(true);
-    }
+    if (Platform.OS !== "web") setMobilePanelVisible(true);
   };
 
-  /** === Panel detalle para el día seleccionado === */
   const selectedEvents = selectedKey ? eventsByDay[selectedKey] || [] : [];
 
-  /** === Restricción de rol (como CulturaHistoria): Admin solo web === */
-  if (role === "admin" && Platform.OS !== "web") {
-    return (
-      <View style={styles.container}>
-        <Header hideAuthButtons />
-        <View style={styles.deniedWrap}>
-          <Text style={styles.deniedText}>
-            Acceso denegado. Esta sección de calendario solo está disponible en
-            web para administradores.
-          </Text>
-        </View>
-        {/* Admin en móvil no muestra footer (mismo criterio de CulturaHistoria) */}
-      </View>
-    );
-  }
+  // === Navegaciones dinámicas ===
+  const goToProfile = () =>
+    role === "admin"
+      ? navigation.navigate("AdminProfile")
+      : role === "organizer"
+      ? navigation.navigate("OrganizerProfile")
+      : navigation.navigate("UserProfile");
+
+  const goToNotifications = () =>
+    role === "admin"
+      ? navigation.navigate("AdminNotifications")
+      : role === "organizer"
+      ? navigation.navigate("OrganizerNotifications")
+      : navigation.navigate("UserNotifications");
+
+  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
+  const goToContact = () => navigation.navigate("Contacto");
+  const goToAboutUs = () => navigation.navigate("SobreNosotros");
+  const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
+  const goToConditions = () => navigation.navigate("Condiciones");
+  const goToCalendar = () => navigation.navigate("Calendar");
+
+  // === Toggle menú lateral ===
+  const toggleMenu = () => {
+    if (Platform.OS !== "web") {
+      setMenuVisible(!menuVisible);
+      return;
+    }
+    if (menuVisible) {
+      Animated.timing(menuAnim, {
+        toValue: -250,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setMenuVisible(false));
+    } else {
+      setMenuVisible(true);
+      Animated.timing(menuAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
 
   const isWeb = Platform.OS === "web";
   const gridMaxWidth = isWeb
     ? 860
     : Math.min(Dimensions.get("window").width - 24, 860);
 
+  /** === Config visual según rol === */
+  let colorMain = "#014869";
+  let iconCalendar, iconBell, iconMenu, iconClose;
+
+  if (role === "organizer") {
+    colorMain = "#F3B23F";
+    iconCalendar = require("../assets/iconos/calendar-organizador.png");
+    iconBell = require("../assets/iconos/bell3.png");
+    iconMenu = require("../assets/iconos/menu-organizador.png");
+    iconClose = require("../assets/iconos/close-organizador.png");
+  } else if (role === "admin") {
+    colorMain = "#33ADB5";
+    iconCalendar = require("../assets/iconos/calendar-admin.png");
+    iconBell = require("../assets/iconos/bell2.png");
+    iconMenu = require("../assets/iconos/menu-admin.png");
+    iconClose = require("../assets/iconos/close-admin.png");
+  } else if (role === "user") {
+    colorMain = "#014869";
+    iconCalendar = require("../assets/iconos/calendar.png");
+    iconBell = require("../assets/iconos/bell.png");
+    iconMenu = require("../assets/iconos/menu-usuario.png");
+    iconClose = require("../assets/iconos/close.png");
+  }
+
+  // === Menú lateral web ===
+  const menuItems =
+    role === "admin"
+      ? [
+          { label: "Perfil", action: goToProfile },
+          { label: "Cultura e Historia", action: goToCulturaHistoria },
+          { label: "Ver Usuarios", action: goToContact },
+        ]
+      : role === "organizer"
+      ? [
+          { label: "Perfil", action: goToProfile },
+          { label: "Cultura e Historia", action: goToCulturaHistoria },
+          { label: "Contacto", action: goToContact },
+        ]
+      : [
+          { label: "Perfil", action: goToProfile },
+          { label: "Cultura e Historia", action: goToCulturaHistoria },
+          { label: "Ver Favoritos", action: goToContact },
+          { label: "Contacto", action: goToContact },
+        ];
+
   return (
     <View style={styles.container}>
       <Header hideAuthButtons />
 
-      {/* === CONTENIDO === */}
+      {/* === Barra superior === */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          padding: 16,
+          justifyContent: "flex-end",
+          borderBottomWidth: 1,
+          borderColor: "#eee",
+          gap: 15,
+        }}
+      >
+        <Pressable onPress={goToCalendar}>
+          <Image
+            source={iconCalendar}
+            style={{ width: 26, height: 26, tintColor: colorMain }}
+          />
+        </Pressable>
+        <Pressable onPress={goToNotifications}>
+          <Image
+            source={iconBell}
+            style={{ width: 26, height: 26, tintColor: colorMain }}
+          />
+        </Pressable>
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={menuVisible ? iconClose : iconMenu}
+            style={{ width: 26, height: 26, tintColor: colorMain }}
+          />
+        </Pressable>
+      </View>
+
+      {/* === Menú lateral web === */}
+      {isWeb && menuVisible && (
+        <>
+          <TouchableWithoutFeedback onPress={toggleMenu}>
+            <View style={styles.menuOverlay} />
+          </TouchableWithoutFeedback>
+          <Animated.View
+            style={[styles.sideMenu, { transform: [{ translateX: menuAnim }] }]}
+          >
+            {menuItems.map((item, i) => (
+              <Pressable
+                key={i}
+                onPress={() => {
+                  toggleMenu();
+                  item.action();
+                }}
+                style={{ marginBottom: 25 }}
+              >
+                <Text style={styles.menuItem}>{item.label}</Text>
+              </Pressable>
+            ))}
+          </Animated.View>
+        </>
+      )}
+
+      {/* === Menú móvil === */}
+      {!isWeb && menuVisible && (
+        role === "organizer" ? (
+          <OrganizerMenu onClose={toggleMenu} />
+        ) : (
+          <UserMenu onClose={toggleMenu} />
+        )
+      )}
+
+      {/* === Contenido del calendario === */}
       <View style={styles.contentWrapper}>
-        {/* Encabezado mes/año + nav */}
         <View style={[styles.headerRow, { width: gridMaxWidth }]}>
           <Pressable onPress={goPrevMonth} style={styles.navBtn}>
             <Text style={styles.navBtnText}>‹</Text>
@@ -270,7 +372,6 @@ export default function Calendar() {
           </Pressable>
         </View>
 
-        {/* Cabecera de días */}
         <View style={[styles.weekHeader, { width: gridMaxWidth }]}>
           {weekNamesShortEs.map((d) => (
             <Text key={d} style={styles.weekHeaderText}>
@@ -279,7 +380,6 @@ export default function Calendar() {
           ))}
         </View>
 
-        {/* Calendario */}
         <View style={[styles.calendarGrid, { width: gridMaxWidth }]}>
           {matrix.map((week, r) => (
             <View key={r} style={styles.weekRow}>
@@ -289,7 +389,6 @@ export default function Calendar() {
                 const todayKey = ymdKey(atStartOfDay(new Date()));
                 const isToday = key && key === todayKey;
                 const dayEvents = key ? eventsByDay[key] || [] : [];
-
                 return (
                   <Pressable
                     key={`${r}-${c}`}
@@ -311,8 +410,6 @@ export default function Calendar() {
                     >
                       {day}
                     </Text>
-
-                    {/* Puntitos de colores (máx 3 visibles) */}
                     {!!dayEvents.length && (
                       <View style={styles.dotsRow}>
                         {dayEvents.slice(0, 3).map((ev, i) => (
@@ -332,54 +429,30 @@ export default function Calendar() {
           ))}
         </View>
 
-        {/* === DETALLE DEL DÍA (Web: tarjeta flotante a la izquierda; Móvil: panel inferior) === */}
+        {/* === Panel detalle === */}
         {isWeb ? (
           selectedKey && (
-            <View
-              style={[
-                styles.webDetailCard,
-                { width: Math.min(340, gridMaxWidth - 520) },
-              ]}
-            >
+            <View style={[styles.webDetailCard]}>
               <Text style={styles.detailDateTitle}>
                 {renderDateTitle(selectedKey)}
               </Text>
-              <View style={styles.detailList}>
+              <ScrollView style={styles.detailList}>
                 {selectedEvents.map((ev) => (
                   <View key={ev._id} style={styles.detailItem}>
                     <View
-                      style={[
-                        styles.detailBadge,
-                        { backgroundColor: ev._color },
-                      ]}
+                      style={[styles.detailBadge, { backgroundColor: ev._color }]}
                     />
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.detailTitle} numberOfLines={1}>
-                        {ev.title}
+                      <Text style={styles.detailTitle}>{ev.title}</Text>
+                      <Text style={styles.detailSub}>
+                        {ev.hour
+                          ? `${ev.hour} · ${labelFromCategory(ev.category)}`
+                          : labelFromCategory(ev.category)}
                       </Text>
-                      {/* Si tienes 'hour' en tu modelo, la mostramos */}
-                      {ev.hour ? (
-                        <Text style={styles.detailSub}>
-                          {ev.hour} · {labelFromCategory(ev.category)}
-                        </Text>
-                      ) : (
-                        <Text style={styles.detailSub}>
-                          {labelFromCategory(ev.category)}
-                        </Text>
-                      )}
                     </View>
                   </View>
                 ))}
-                {selectedEvents.length === 0 && (
-                  <Text style={styles.detailEmpty}>No hay eventos.</Text>
-                )}
-              </View>
-              <Pressable
-                onPress={() => setSelectedKey(null)}
-                style={styles.closeDetailBtn}
-              >
-                <Text style={styles.closeDetailText}>Cerrar</Text>
-              </Pressable>
+              </ScrollView>
             </View>
           )
         ) : (
@@ -411,28 +484,18 @@ export default function Calendar() {
                         <Text style={styles.detailTitle} numberOfLines={2}>
                           {ev.title}
                         </Text>
-                        {ev.hour ? (
-                          <Text style={styles.detailSub}>
-                            {ev.hour} · {labelFromCategory(ev.category)}
-                          </Text>
-                        ) : (
-                          <Text style={styles.detailSub}>
-                            {labelFromCategory(ev.category)}
-                          </Text>
-                        )}
+                        <Text style={styles.detailSub}>
+                          {ev.hour
+                            ? `${ev.hour} · ${labelFromCategory(ev.category)}`
+                            : labelFromCategory(ev.category)}
+                        </Text>
                       </View>
                     </View>
                   ))}
-                  {selectedEvents.length === 0 && (
-                    <Text style={styles.detailEmpty}>No hay eventos.</Text>
-                  )}
                 </ScrollView>
                 <Pressable
                   onPress={() => setMobilePanelVisible(false)}
-                  style={[
-                    styles.closeDetailBtn,
-                    { alignSelf: "center", marginTop: 8 },
-                  ]}
+                  style={[styles.closeDetailBtn, { alignSelf: "center" }]}
                 >
                   <Text style={styles.closeDetailText}>Cerrar</Text>
                 </Pressable>
@@ -442,13 +505,18 @@ export default function Calendar() {
         )}
       </View>
 
-      {/* Footer: en web sí; en móvil puedes ocultarlo si quieres, como hiciste en CulturaHistoria */}
-      {Platform.OS === "web" && <Footer />}
+      {Platform.OS === "web" && (
+        <Footer
+          onAboutPress={goToAboutUs}
+          onPrivacyPress={goToPrivacy}
+          onConditionsPress={goToConditions}
+        />
+      )}
     </View>
   );
 }
 
-/** Label legible desde un valor de categoría */
+/** === Helpers extra === */
 function labelFromCategory(cat) {
   const v = (cat || "").toLowerCase();
   switch (v) {
@@ -466,11 +534,9 @@ function labelFromCategory(cat) {
       return "Otros";
   }
 }
-
-/** Título bonito para el panel de detalle: '12 Sábado' */
 function renderDateTitle(key) {
   if (!key) return "";
-  const [y, m, d] = key.split("-").map((n) => parseInt(n, 10));
+  const [y, m, d] = key.split("-").map(Number);
   const date = new Date(y, m - 1, d);
   const weekNamesLong = [
     "Domingo",
@@ -481,25 +547,41 @@ function renderDateTitle(key) {
     "Viernes",
     "Sábado",
   ];
-  const w = weekNamesLong[date.getDay()];
-  return `${d}  ${w}`;
+  return `${d}  ${weekNamesLong[date.getDay()]}`;
 }
 
 /** === STYLES === */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+  menuOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    zIndex: 9,
+  },
+  sideMenu: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: 250,
+    height: "100%",
+    backgroundColor: "#f8f8f8",
+    padding: 20,
+    zIndex: 10,
+  },
+  menuItem: { color: "#014869", fontSize: 18, fontWeight: "700" },
   contentWrapper: {
     flex: 1,
     alignItems: "center",
     paddingVertical: 20,
     paddingHorizontal: 12,
   },
-
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 8,
     marginBottom: 10,
   },
   monthTitle: { fontSize: 18, fontWeight: "700", color: "#014869" },
@@ -512,7 +594,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#eef5f8",
   },
   navBtnText: { fontSize: 20, fontWeight: "700", color: "#014869" },
-
   weekHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -526,7 +607,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     opacity: 0.85,
   },
-
   calendarGrid: {
     backgroundColor: "#F2F4F5",
     borderRadius: 14,
@@ -545,24 +625,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  dayCellEmpty: {
-    backgroundColor: "transparent",
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  todayCell: {
-    borderWidth: 2,
-    borderColor: "#014869",
-  },
-  selectedCell: {
-    borderWidth: 2,
-    borderColor: "#F3B23F",
-  },
+  dayCellEmpty: { backgroundColor: "transparent" },
+  todayCell: { borderWidth: 2, borderColor: "#014869" },
+  selectedCell: { borderWidth: 2, borderColor: "#F3B23F" },
   dayNumber: { fontWeight: "700", color: "#334155" },
   todayNumber: { color: "#014869" },
   dotsRow: {
@@ -577,8 +643,6 @@ const styles = StyleSheet.create({
     color: "#64748b",
     fontWeight: "600",
   },
-
-  /** Tarjeta de detalle en web */
   webDetailCard: {
     position: "absolute",
     left: 40,
@@ -586,10 +650,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
     borderWidth: 1,
     borderColor: "#e5e7eb",
   },
@@ -606,14 +666,9 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 6,
   },
-  detailBadge: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
+  detailBadge: { width: 10, height: 10, borderRadius: 5 },
   detailTitle: { fontSize: 14, fontWeight: "700", color: "#111827" },
   detailSub: { fontSize: 12, color: "#6b7280", marginTop: 2 },
-  detailEmpty: { color: "#6b7280", fontStyle: "italic" },
   closeDetailBtn: {
     marginTop: 12,
     alignSelf: "flex-end",
@@ -623,8 +678,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   closeDetailText: { color: "#fff", fontWeight: "700" },
-
-  /** Móvil: modal/panel inferior */
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.15)",
@@ -637,13 +690,4 @@ const styles = StyleSheet.create({
     padding: 16,
     maxHeight: Dimensions.get("window").height * 0.6,
   },
-
-  /** Acceso denegado (admin en móvil) */
-  deniedWrap: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  deniedText: { fontSize: 16, color: "#d00", textAlign: "center" },
 });

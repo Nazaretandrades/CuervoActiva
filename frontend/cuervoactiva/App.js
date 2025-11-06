@@ -28,6 +28,8 @@ import Condiciones from "./screens/Condiciones";
 import Contacto from "./screens/Contacto";
 import CulturaHistoria from "./screens/CulturaHistoria";
 import Calendar from "./screens/Calendar";
+import OrganizerMenu from "./screens/OrganizerMenu";
+import UserMenu from "./screens/UserMenu";
 
 //3) Creamos el Stack Navigator
 //Este componente permite navegar entre pantallas de forma apilada
@@ -45,71 +47,86 @@ export default function App() {
       <Stack.Navigator initialRouteName="Intro">
         {/*Pantalla inicial — Intro */}
         <Stack.Screen
-          name="Intro" //Nombre de la ruta
-          component={Intro} //Componente asociado
-          options={{ headerShown: false }} //Oculta la cabecera nativa
+          name="Intro"
+          component={Intro}
+          options={{
+            headerShown: false,
+            title: "Introducción",
+          }}
         />
 
         {/*Pantalla de registro */}
         <Stack.Screen
           name="Register"
           component={Register}
-          options={{ headerShown: false }} //Oculta el encabezado por diseño personalizado
+          options={{ headerShown: false, title: "Registro" }} //Oculta el encabezado por diseño personalizado
         />
 
         {/*Pantalla de inicio de sesión */}
         <Stack.Screen
           name="Login"
           component={Login}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Inicio Sesión" }}
         />
 
         <Stack.Screen
           name="Organizer"
           component={Organizer}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Home - Organizador" }}
         />
 
         <Stack.Screen
           name="Admin"
           component={Admin}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Home - Administrador" }}
         />
 
         <Stack.Screen
           name="User"
           component={User}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Home - Usuario" }}
         />
 
         <Stack.Screen
           name="UserEventDetail"
           component={UserEventDetail}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Detalle Evento - Usuario" }}
         />
 
         <Stack.Screen
           name="OrganizerEventDetail"
           component={OrganizerEventDetail}
-          options={{ headerShown: false }}
+          options={{
+            headerShown: false,
+            title: "Detalle Evento - Organizador",
+          }}
         />
 
-         <Stack.Screen
+        <Stack.Screen
           name="AdminEventDetail"
           component={AdminEventDetail}
-          options={{ headerShown: false }}
+          options={{
+            headerShown: false,
+            title: "Detalle Evento - Administrador",
+          }}
         />
 
         <Stack.Screen
           name="OrganizerNotifications"
           component={OrganizerNotifications}
-          options={{ headerShown: false }}
+          options={{
+            headerShown: false,
+            title: "Notificaciones - Organizador",
+          }}
         />
 
         <Stack.Screen
           name="AdminNotifications"
           component={AdminNotifications}
-          options={{ headerShown: false }}
+          options={{
+            headerShown: false,
+            title: "Notificaciones - Administrador",
+          }}
         />
 
         <Stack.Screen
@@ -121,66 +138,78 @@ export default function App() {
         <Stack.Screen
           name="UserFavorites"
           component={UserFavorites}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Notificaciones - Usuario" }}
         />
 
         <Stack.Screen
           name="AdminUsers"
           component={AdminUsers}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Usuarios" }}
         />
 
         <Stack.Screen
           name="SobreNosotros"
           component={SobreNosotros}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Sobre Nosotros" }}
         />
 
         <Stack.Screen
           name="UserProfile"
           component={UserProfile}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Perfil - Usuario" }}
         />
 
         <Stack.Screen
           name="OrganizerProfile"
           component={OrganizerProfile}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Perfil - Organizador" }}
         />
 
         <Stack.Screen
           name="AdminProfile"
           component={AdminProfile}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Perfil - Administrador" }}
         />
 
         <Stack.Screen
           name="PoliticaPrivacidad"
           component={PoliticaPrivacidad}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Política y Privacidad" }}
         />
 
         <Stack.Screen
           name="Condiciones"
           component={Condiciones}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Condiciones" }}
         />
 
         <Stack.Screen
           name="Contacto"
           component={Contacto}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Contacto" }}
         />
 
         <Stack.Screen
           name="CulturaHistoria"
           component={CulturaHistoria}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, title: "Cultura e Historia" }}
         />
 
         <Stack.Screen
           name="Calendar"
           component={Calendar}
+          options={{ headerShown: false, title: "Calendario" }}
+        />
+
+        <Stack.Screen
+          name="OrganizerMenu"
+          component={OrganizerMenu}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="UserMenu"
+          component={UserMenu}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
