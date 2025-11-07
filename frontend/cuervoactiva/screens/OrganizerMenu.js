@@ -33,7 +33,7 @@ export default function OrganizerMenu({ onClose }) {
     onClose?.();
     navigation.navigate("OrganizerProfile");
   };
-  const goToSearch = () => {
+  const goToHomeOrganizador = () => {
     onClose?.();
     navigation.navigate("Organizer");
   };
@@ -100,9 +100,9 @@ export default function OrganizerMenu({ onClose }) {
       {/* === BARRA INFERIOR === */}
       {Platform.OS !== "web" && (
         <View style={styles.bottomBar}>
-          <Pressable onPress={goToSearch}>
+          <Pressable onPress={goToHomeOrganizador}>
             <Image
-              source={require("../assets/iconos/search-organizador.png")}
+              source={require("../assets/iconos/home-organizador.png")}
               style={styles.bottomIcon}
             />
           </Pressable>

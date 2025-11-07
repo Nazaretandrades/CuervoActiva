@@ -1,3 +1,4 @@
+// frontend/src/screens/AdminNotifications.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -12,13 +13,24 @@ import {
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
-const API_BASE = "http://localhost:5000";
+const API_BASE =
+  Platform.OS === "android"
+    ? "http://192.168.18.19:5000"
+    : "http://localhost:5000";
 
 export default function AdminNotifications({ navigation }) {
   const [adminName, setAdminName] = useState("Administrador");
   const [notifications, setNotifications] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
+
+  // === Toast visual ===
+  const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
+
+  const showToast = (message, type = "info") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ visible: false, message: "", type: "info" }), 2500);
+  };
 
   // === Obtener usuario logueado ===
   useEffect(() => {
@@ -46,10 +58,11 @@ export default function AdminNotifications({ navigation }) {
           const data = await res.json();
           setNotifications(data);
         } else {
-          console.error("❌ Error al cargar notificaciones del admin.");
+          showToast("❌ Error al cargar notificaciones del admin.", "error");
         }
       } catch (err) {
         console.error("Error al cargar notificaciones:", err);
+        showToast("⚠️ No se pudieron obtener las notificaciones.", "error");
       }
     };
     loadNotifications();
@@ -72,10 +85,10 @@ export default function AdminNotifications({ navigation }) {
         prev.map((n) => (n._id === id ? { ...n, read: true } : n))
       );
 
-      alert("✅ Notificación marcada como leída");
+      showToast("✅ Notificación marcada como leída.", "success");
     } catch (err) {
       console.error("Error al marcar como leída:", err);
-      alert("❌ Error al marcar como leída");
+      showToast("❌ No se pudo marcar la notificación.", "error");
     }
   };
 
@@ -87,10 +100,10 @@ export default function AdminNotifications({ navigation }) {
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToContact = () => navigation.navigate("Contacto");
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
-  const goToCalendar = () => navigation.navigate("Calendar"); // ✅ Añadido igual que en Admin.js
+  const goToCalendar = () => navigation.navigate("Calendar");
   const goToUsers = () => navigation.navigate("AdminUsers");
 
-  // === Menú lateral (mismo que en Admin.js) ===
+  // === Menú lateral ===
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -133,7 +146,6 @@ export default function AdminNotifications({ navigation }) {
 
         {/* === ICONOS DE CALENDARIO + NOTIFICACIONES + MENÚ === */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
-          {/* ✅ ICONO DE CALENDARIO (nuevo) */}
           <Pressable onPress={goToCalendar} style={{ marginRight: 10 }}>
             <Image
               source={require("../assets/iconos/calendar-admin.png")}
@@ -141,12 +153,10 @@ export default function AdminNotifications({ navigation }) {
             />
           </Pressable>
 
-          {/* 🔔 ICONO DE NOTIFICACIONES */}
           <Pressable onPress={goToNotifications}>
             <Image source={require("../assets/iconos/bell2.png")} />
           </Pressable>
 
-          {/* ☰ MENÚ LATERAL */}
           <Pressable onPress={toggleMenu}>
             <Image
               source={
@@ -160,7 +170,7 @@ export default function AdminNotifications({ navigation }) {
         </View>
       </View>
 
-      {/* === MENÚ LATERAL (MISMO QUE EN Admin.js) === */}
+      {/* === MENÚ LATERAL === */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -258,6 +268,9 @@ export default function AdminNotifications({ navigation }) {
                   alignItems: "center",
                   width: "80%",
                   cursor: "pointer",
+                  shadowColor: "#000",
+                  shadowOpacity: 0.2,
+                  shadowRadius: 5,
                 }}
               >
                 <Text
@@ -274,6 +287,36 @@ export default function AdminNotifications({ navigation }) {
           )}
         </ScrollView>
       </View>
+
+      {/* === TOAST VISUAL === */}
+      {toast.visible && (
+        <Animated.View
+          style={{
+            position: "absolute",
+            bottom: 30,
+            alignSelf: "center",
+            backgroundColor:
+              toast.type === "success"
+                ? "#4BB543"
+                : toast.type === "error"
+                ? "#D9534F"
+                : toast.type === "warning"
+                ? "#F0AD4E"
+                : "#014869",
+            paddingVertical: 12,
+            paddingHorizontal: 25,
+            borderRadius: 25,
+            shadowColor: "#000",
+            shadowOpacity: 0.3,
+            shadowRadius: 5,
+            elevation: 6,
+          }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "bold", textAlign: "center" }}>
+            {toast.message}
+          </Text>
+        </Animated.View>
+      )}
 
       {/* === FOOTER === */}
       {Platform.OS === "web" && (

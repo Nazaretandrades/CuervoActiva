@@ -73,7 +73,15 @@ export default function User() {
     navigation.navigate("Condiciones");
   };
 
-  // ✅ Navegación a Cultura e Historia (solo desde menú)
+  // ✅ MODIFICADA PARA FUNCIONAR CORRECTAMENTE EN MÓVIL
+  const goToHome = () => {
+    toggleMenu();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "User" }],
+    });
+  };
+
   const goToCulturaHistoria = () => {
     toggleMenu();
     navigation.navigate("CulturaHistoria");
@@ -93,7 +101,6 @@ export default function User() {
     navigation.navigate("UserNotifications");
   };
 
-  // 👉 NUEVO: Navegación al Calendario
   const goToCalendar = () => {
     navigation.navigate("Calendar");
   };
@@ -106,7 +113,7 @@ export default function User() {
         session = JSON.parse(localStorage.getItem("USER_SESSION"));
       } else {
         const sessionString = await AsyncStorage.getItem("USER_SESSION");
-        const session = sessionString ? JSON.parse(sessionString) : null; // ✅ esta sola línea
+        session = sessionString ? JSON.parse(sessionString) : null;
       }
 
       if (session?.user?.name) setUserName(session.user.name);
@@ -319,8 +326,7 @@ export default function User() {
               shadowRadius: 8,
             }}
           >
-            {[
-              { label: "Perfil", action: goToProfile },
+            {[{ label: "Perfil", action: goToProfile },
               { label: "Cultura e Historia", action: goToCulturaHistoria },
               { label: "Ver favoritos", action: goToFavorites },
               { label: "Contacto", action: goToContact },
@@ -384,8 +390,7 @@ export default function User() {
 
             {/* 🔹 Opciones */}
             <View style={{ flex: 1 }}>
-              {[
-                {
+              {[{
                   label: "Cultura e Historia",
                   icon: require("../assets/iconos/museo-usuario.png"),
                   action: goToCulturaHistoria,
@@ -456,24 +461,32 @@ export default function User() {
                 paddingVertical: 14,
               }}
             >
-              <Image
-                source={require("../assets/iconos/search.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
-              />
-              <Image
-                source={require("../assets/iconos/calendar.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
-              />
-              <Image
-                source={require("../assets/iconos/user.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
-              />
+              <Pressable onPress={goToHome}>
+                <Image
+                  source={require("../assets/iconos/home-usuario.png")}
+                  style={{ width: 22, height: 22, tintColor: "#014869" }}
+                />
+              </Pressable>
+              <Pressable onPress={goToCalendar}>
+                <Image
+                  source={require("../assets/iconos/calendar.png")}
+                  style={{ width: 22, height: 22, tintColor: "#014869" }}
+                />
+              </Pressable>
+              {/* ✅ NUEVO: icono perfil que lleva a UserProfile */}
+              <Pressable onPress={goToProfile}>
+                <Image
+                  source={require("../assets/iconos/user.png")}
+                  style={{ width: 22, height: 22, tintColor: "#014869" }}
+                />
+              </Pressable>
             </View>
           </View>
         )
       )}
 
       {/* ====== Contenido principal ====== */}
+      {/* ... resto igual sin tocar */}
       <View
         style={{
           flex: 1,
@@ -488,25 +501,16 @@ export default function User() {
             Categorías
           </Text>
 
-          {/* ✅ CATEGORÍAS COMPLETAS */}
-          {[
-            { label: "Todos", value: "all", color: "#014869" },
+          {[{ label: "Todos", value: "all", color: "#014869" },
             { label: "Deporte", value: "deporte", color: "#F3B23F" },
             { label: "Concurso y taller", value: "concurso", color: "#FFD43B" },
             { label: "Cultura e Historia", value: "cultura", color: "#784BA0" },
             { label: "Arte y Música", value: "arte", color: "#2BBBAD" },
-            {
-              label: "Fiestas y Tradiciones",
-              value: "fiestas",
-              color: "#E67E22",
-            },
+            { label: "Fiestas y Tradiciones", value: "fiestas", color: "#E67E22" },
           ].map((cat, i) => (
             <Pressable
               key={i}
-              onPress={() => {
-                // 👇 Ya NO redirige; siempre filtra por categoría
-                setSelectedCategory(cat.value);
-              }}
+              onPress={() => setSelectedCategory(cat.value)}
               style={{
                 backgroundColor:
                   selectedCategory === cat.value ? cat.color : `${cat.color}33`,
@@ -609,7 +613,6 @@ export default function User() {
         </View>
       </View>
 
-      {/* ====== FOOTER (solo web) ====== */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAboutUs}

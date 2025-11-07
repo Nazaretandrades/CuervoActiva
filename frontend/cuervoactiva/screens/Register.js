@@ -1,3 +1,4 @@
+// frontend/src/screens/Register.js
 import React, { useState } from "react";
 import {
   View,
@@ -6,11 +7,11 @@ import {
   Pressable,
   ScrollView,
   Image,
-  Alert,
   SafeAreaView,
   Platform,
   Dimensions,
   StatusBar,
+  Animated,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation } from "@react-navigation/native";
@@ -28,27 +29,45 @@ export default function Register() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // ✅ Estados para mensajes visuales
+  const [toast, setToast] = useState({ visible: false, type: "", message: "" });
+  const fadeAnim = useState(new Animated.Value(0))[0];
+
   const { height, width } = Dimensions.get("window");
   const isMobile = width < 768;
 
-  const showAlert = (title, message) => {
-    if (Platform.OS === "web") window.alert(`${title}\n\n${message}`);
-    else Alert.alert(title, message);
+  /** === Función para mostrar mensaje visual === */
+  const showToast = (type, message) => {
+    setToast({ visible: true, type, message });
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    setTimeout(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setToast({ visible: false, type: "", message: "" }));
+    }, 3000);
   };
 
+  /** === Enviar formulario === */
   async function onSubmit() {
     if (!email.trim() || !name.trim() || !password.trim()) {
-      showAlert("Campos obligatorios", "Por favor, completa todos los campos.");
+      showToast("error", "Por favor, completa todos los campos obligatorios.");
       return;
     }
 
     try {
       setLoading(true);
       await registerUser({ name, email, password, role });
-      showAlert("✅ Éxito", "Tu registro se ha completado correctamente.");
-      navigation.navigate("Login");
+      showToast("success", "✅ Registro completado correctamente.");
+      setTimeout(() => navigation.navigate("Login"), 1500);
     } catch (e) {
-      showAlert("Error", e.message || "Intenta de nuevo.");
+      showToast("error", e.message || "❌ Error. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -84,7 +103,7 @@ export default function Register() {
       ) : (
         <View
           style={{
-            marginTop: StatusBar.currentHeight ? 0 : 0, // elimina el espacio superior extra
+            marginTop: StatusBar.currentHeight ? 0 : 0,
           }}
         >
           <Header
@@ -251,10 +270,10 @@ export default function Register() {
                   onValueChange={setRole}
                   dropdownIconColor="#014869"
                   style={{
-                    flex: 1, // 🔹 asegura que ocupe el espacio completo
+                    flex: 1,
                     color: "#7a7a7a",
                     fontSize: 15,
-                    height: 50, // 🔹 más alto para evitar corte del texto
+                    height: 50,
                     backgroundColor: "transparent",
                   }}
                   itemStyle={{
@@ -329,6 +348,7 @@ export default function Register() {
                 paddingHorizontal: 28,
                 alignItems: "center",
                 justifyContent: "center",
+                opacity: loading ? 0.7 : 1,
               }}
             >
               <Text
@@ -342,11 +362,59 @@ export default function Register() {
               </Text>
             </Pressable>
           </View>
+
+          {/* ✅ NUEVO: Botón Perfil solo en móvil (para el usuario) */}
+          {isMobile && role === "user" && (
+            <View style={{ alignItems: "center", marginTop: 25 }}>
+              <Pressable
+                onPress={() => navigation.navigate("UserProfile")}
+                style={{
+                  backgroundColor: "#014869",
+                  borderRadius: 25,
+                  paddingVertical: 10,
+                  paddingHorizontal: 28,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+              </Pressable>
+            </View>
+          )}
         </View>
       </ScrollView>
 
-      {/* FOOTER solo en web */}
-      {Platform.OS === "web" && <Footer />}
+      {/* 🔸 MENSAJE VISUAL (TOAST) */}
+      {toast.visible && (
+        <Animated.View
+          style={{
+            position: "absolute",
+            bottom: 60,
+            left: "5%",
+            right: "5%",
+            backgroundColor:
+              toast.type === "success" ? "#4CAF50" : "#E74C3C",
+            paddingVertical: 14,
+            paddingHorizontal: 18,
+            borderRadius: 12,
+            shadowColor: "#000",
+            shadowOpacity: 0.3,
+            shadowRadius: 6,
+            elevation: 5,
+            opacity: fadeAnim,
+          }}
+        >
+          <Text
+            style={{
+              color: "#fff",
+              fontWeight: "700",
+              textAlign: "center",
+              fontSize: 15,
+            }}
+          >
+            {toast.message}
+          </Text>
+        </Animated.View>
+      )}
     </View>
   );
 }

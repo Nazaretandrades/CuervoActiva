@@ -1,3 +1,4 @@
+// frontend/src/screens/AdminEventDetail.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -122,7 +123,20 @@ export default function AdminEventDetail({ route }) {
   const goToAbout = () => navigation.navigate("SobreNosotros");
   const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
   const goToConditions = () => navigation.navigate("Condiciones");
-  const goToSearch = () => navigation.navigate("Organizer");
+
+  // 🟡 NUEVO: Ir a Home Admin (sustituyendo el search en móvil)
+  const goToHomeOrganizador = () => {
+    const currentRoute =
+      navigation.getState().routes.slice(-1)[0].name || "Organizer";
+    if (currentRoute === "Organizer") {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Organizer" }],
+      });
+    } else {
+      navigation.navigate("Organizer");
+    }
+  };
 
   // === Menú lateral (web) ===
   const toggleMenu = () => {
@@ -425,9 +439,10 @@ export default function AdminEventDetail({ route }) {
               backgroundColor: "#fff",
             }}
           >
-            <Pressable onPress={goToSearch}>
+            {/* 🏠 HOME ADMIN en lugar del search */}
+            <Pressable onPress={goToHomeOrganizador}>
               <Image
-                source={require("../assets/iconos/search-organizador.png")}
+                source={require("../assets/iconos/home-organizador.png")}
                 style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
               />
             </Pressable>

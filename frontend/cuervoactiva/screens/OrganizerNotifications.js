@@ -1,3 +1,4 @@
+// frontend/src/screens/OrganizerNotifications.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -8,7 +9,6 @@ import {
   Animated,
   TouchableWithoutFeedback,
   Image,
-  Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
@@ -24,6 +24,21 @@ export default function OrganizerNotifications({ navigation }) {
   const [notifications, setNotifications] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
+
+  // === Toast visual ===
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "info",
+  });
+
+  const showToast = (message, type = "info") => {
+    setToast({ visible: true, message, type });
+    setTimeout(
+      () => setToast({ visible: false, message: "", type: "info" }),
+      2500
+    );
+  };
 
   // === Obtener usuario logueado ===
   useEffect(() => {
@@ -59,9 +74,12 @@ export default function OrganizerNotifications({ navigation }) {
         if (res.ok) {
           const data = await res.json();
           setNotifications(data);
+        } else {
+          showToast("❌ Error al cargar notificaciones.", "error");
         }
       } catch (err) {
         console.error("Error al cargar notificaciones:", err);
+        showToast("⚠️ No se pudieron obtener las notificaciones.", "error");
       }
     };
     loadNotifications();
@@ -87,23 +105,21 @@ export default function OrganizerNotifications({ navigation }) {
         prev.map((n) => (n._id === id ? { ...n, read: true } : n))
       );
 
-      if (Platform.OS === "web") {
-        alert("✅ Notificación marcada como leída");
-      } else {
-        Alert.alert("✅ Hecho", "La notificación se ha marcado como leída.");
-      }
+      showToast("✅ Notificación marcada como leída.", "success");
     } catch (err) {
       console.error("Error al marcar notificación como leída:", err);
-      if (Platform.OS === "web") {
-        alert("❌ Error al marcar notificación como leída");
-      } else {
-        Alert.alert("Error", "No se pudo marcar como leída.");
-      }
+      showToast("❌ No se pudo marcar la notificación.", "error");
     }
   };
 
   // === Navegación y menú ===
   const toggleMenu = () => {
+    if (Platform.OS !== "web") {
+      // En móvil simplemente alternamos visibilidad
+      setMenuVisible((prev) => !prev);
+      return;
+    }
+    // En web animamos el panel lateral
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
@@ -128,7 +144,7 @@ export default function OrganizerNotifications({ navigation }) {
   const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToCalendar = () => navigation.navigate("Calendar");
-  const goToSearch = () => navigation.navigate("Organizer");
+  const goToHomeOrganizador = () => navigation.navigate("Organizer");
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -154,9 +170,8 @@ export default function OrganizerNotifications({ navigation }) {
           </Text>
         </View>
 
-        {/* ICONOS DERECHA (AHORA INCLUYE CALENDARIO EN MOVIL TAMBIÉN) */}
+        {/* ICONOS DERECHA */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
-          {/* Icono calendario visible en TODAS LAS PLATAFORMAS */}
           <Pressable onPress={goToCalendar} style={{ marginRight: 8 }}>
             <Image
               source={require("../assets/iconos/calendar-organizador.png")}
@@ -164,10 +179,9 @@ export default function OrganizerNotifications({ navigation }) {
             />
           </Pressable>
 
-          {/* Notificaciones */}
           <Pressable>
             <Image
-              source={require("../assets/iconos/bell.png")}
+              source={require("../assets/iconos/bell3.png")}
               style={{
                 width: 26,
                 height: 26,
@@ -176,13 +190,12 @@ export default function OrganizerNotifications({ navigation }) {
             />
           </Pressable>
 
-          {/* Menú */}
           <Pressable onPress={toggleMenu}>
             <Image
               source={
                 Platform.OS === "web" && menuVisible
                   ? require("../assets/iconos/close-organizador.png")
-                  : require("../assets/iconos/menu-usuario.png")
+                  : require("../assets/iconos/menu-organizador.png")
               }
               style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
             />
@@ -250,7 +263,7 @@ export default function OrganizerNotifications({ navigation }) {
         </>
       )}
 
-      {/* === MENÚ MÓVIL (importado desde OrganizerMenu.js) === */}
+      {/* === MENÚ MÓVIL (NUEVO) === */}
       {Platform.OS !== "web" && menuVisible && (
         <View
           style={{
@@ -264,7 +277,7 @@ export default function OrganizerNotifications({ navigation }) {
             justifyContent: "space-between",
           }}
         >
-          {/* CABECERA */}
+          {/* CABECERA MENÚ MÓVIL */}
           <View
             style={{
               flexDirection: "row",
@@ -287,7 +300,7 @@ export default function OrganizerNotifications({ navigation }) {
             <View style={{ width: 24 }} />
           </View>
 
-          {/* OPCIONES */}
+          {/* OPCIONES MENÚ MÓVIL */}
           <View
             style={{
               flex: 1,
@@ -353,7 +366,7 @@ export default function OrganizerNotifications({ navigation }) {
             ))}
           </View>
 
-          {/* BARRA INFERIOR */}
+          {/* BARRA INFERIOR MENÚ MÓVIL */}
           <View
             style={{
               flexDirection: "row",
@@ -365,9 +378,9 @@ export default function OrganizerNotifications({ navigation }) {
               backgroundColor: "#fff",
             }}
           >
-            <Pressable onPress={goToSearch}>
+            <Pressable onPress={goToHomeOrganizador}>
               <Image
-                source={require("../assets/iconos/search-organizador.png")}
+                source={require("../assets/iconos/home-organizador.png")}
                 style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
               />
             </Pressable>
@@ -428,6 +441,10 @@ export default function OrganizerNotifications({ navigation }) {
                   marginBottom: 12,
                   alignItems: "center",
                   width: "80%",
+                  cursor: "pointer",
+                  shadowColor: "#000",
+                  shadowOpacity: 0.2,
+                  shadowRadius: 5,
                 }}
               >
                 <Text
@@ -445,7 +462,43 @@ export default function OrganizerNotifications({ navigation }) {
         </ScrollView>
       </View>
 
-      {/* === FOOTER SOLO EN WEB === */}
+      {/* === TOAST VISUAL === */}
+      {toast.visible && (
+        <Animated.View
+          style={{
+            position: "absolute",
+            bottom: 30,
+            alignSelf: "center",
+            backgroundColor:
+              toast.type === "success"
+                ? "#4BB543"
+                : toast.type === "error"
+                ? "#D9534F"
+                : toast.type === "warning"
+                ? "#F0AD4E"
+                : "#014869",
+            paddingVertical: 12,
+            paddingHorizontal: 25,
+            borderRadius: 25,
+            shadowColor: "#000",
+            shadowOpacity: 0.3,
+            shadowRadius: 5,
+            elevation: 6,
+          }}
+        >
+          <Text
+            style={{
+              color: "#fff",
+              fontWeight: "bold",
+              textAlign: "center",
+            }}
+          >
+            {toast.message}
+          </Text>
+        </Animated.View>
+      )}
+
+      {/* === FOOTER === */}
       {Platform.OS === "web" && (
         <View
           style={{

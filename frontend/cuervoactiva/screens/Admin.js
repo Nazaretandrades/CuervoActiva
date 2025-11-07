@@ -1,3 +1,4 @@
+// frontend/src/screens/Admin.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -9,6 +10,7 @@ import {
   TouchableWithoutFeedback,
   Platform,
   Image,
+  Modal,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -43,6 +45,17 @@ export default function Admin() {
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
+  const [modalVisible, setModalVisible] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState(null);
+
+  // === Mensajes visuales (Toast personalizado) ===
+  const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
+
+  const showToast = (message, type = "info") => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ visible: false, message: "", type: "info" }), 2500);
+  };
+
   const navigation = useNavigation();
 
   // === Cargar eventos y usuario ===
@@ -65,7 +78,7 @@ export default function Admin() {
         setFiltered(data);
       } catch (err) {
         console.error(err);
-        alert("No se pudieron cargar los eventos");
+        showToast("❌ No se pudieron cargar los eventos.", "error");
       }
     };
     loadData();
@@ -119,7 +132,7 @@ export default function Admin() {
   // === Guardar cambios de evento ===
   const handleSave = async () => {
     if (!form.title || !form.description || !form.location)
-      return alert("Completa todos los campos requeridos.");
+      return showToast("⚠️ Completa todos los campos requeridos.", "warning");
 
     setLoading(true);
     try {
@@ -141,27 +154,30 @@ export default function Admin() {
       setEvents((prev) => prev.map((e) => (e._id === data._id ? data : e)));
       setFiltered((prev) => prev.map((e) => (e._id === data._id ? data : e)));
 
-      alert("✅ Evento actualizado correctamente.");
+      showToast("✅ Evento actualizado correctamente.", "success");
       handleCancel();
     } catch (err) {
       console.error(err);
-      alert(err.message);
+      showToast("❌ Error al guardar los cambios.", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  // === Eliminar evento ===
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "¿Seguro que quieres eliminar este evento?"
-    );
-    if (!confirmDelete) return;
+  // === Confirmar eliminación (modal visual) ===
+  const confirmDelete = (id) => {
+    setEventToDelete(id);
+    setModalVisible(true);
+  };
+
+  const handleDeleteConfirmed = async () => {
+    setModalVisible(false);
+    if (!eventToDelete) return;
 
     try {
       const session = await getSession();
       const token = session?.token;
-      const res = await fetch(`${API_URL}/${id}`, {
+      const res = await fetch(`${API_URL}/${eventToDelete}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -170,13 +186,15 @@ export default function Admin() {
       });
 
       if (!res.ok) throw new Error("Error al eliminar evento");
-      setEvents((prev) => prev.filter((e) => e._id !== id));
-      setFiltered((prev) => prev.filter((e) => e._id !== id));
+      setEvents((prev) => prev.filter((e) => e._id !== eventToDelete));
+      setFiltered((prev) => prev.filter((e) => e._id !== eventToDelete));
 
-      alert("✅ Evento eliminado correctamente.");
+      showToast("✅ Evento eliminado correctamente.", "success");
     } catch (err) {
       console.error(err);
-      alert(err.message);
+      showToast("❌ No se pudo eliminar el evento.", "error");
+    } finally {
+      setEventToDelete(null);
     }
   };
 
@@ -188,7 +206,7 @@ export default function Admin() {
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToContact = () => navigation.navigate("Contacto");
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
-  const goToCalendar = () => navigation.navigate("Calendar"); // ✅ NUEVA FUNCIÓN PARA EL ICONO
+  const goToCalendar = () => navigation.navigate("Calendar");
 
   // === Menú lateral ===
   const toggleMenu = () => {
@@ -243,7 +261,6 @@ export default function Admin() {
           }}
         />
 
-        {/* ✅ ICONO DE CALENDARIO NUEVO */}
         <Pressable onPress={goToCalendar} style={{ marginRight: 10 }}>
           <Image
             source={require("../assets/iconos/calendar-admin.png")}
@@ -251,12 +268,10 @@ export default function Admin() {
           />
         </Pressable>
 
-        {/* ICONO DE NOTIFICACIONES */}
         <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
           <Image source={require("../assets/iconos/bell2.png")} />
         </Pressable>
 
-        {/* ICONO DE MENÚ */}
         <Pressable onPress={toggleMenu}>
           <Image
             source={
@@ -380,7 +395,7 @@ export default function Admin() {
                     <Pressable
                       onPress={(e) => {
                         e.stopPropagation();
-                        handleDelete(ev._id);
+                        confirmDelete(ev._id);
                       }}
                       style={{ margin: 4 }}
                     >
@@ -566,6 +581,120 @@ export default function Admin() {
           </>
         )}
       </View>
+
+      {/* === MODAL DE CONFIRMACIÓN PERSONALIZADO === */}
+      <Modal transparent visible={modalVisible} animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#fff",
+              width: 350,
+              borderRadius: 15,
+              padding: 25,
+              alignItems: "center",
+              shadowColor: "#000",
+              shadowOpacity: 0.3,
+              shadowRadius: 6,
+              elevation: 5,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "bold",
+                color: "#014869",
+                marginBottom: 10,
+                textAlign: "center",
+              }}
+            >
+              ¿Seguro que quieres eliminar este evento?
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: "#555",
+                marginBottom: 20,
+                textAlign: "center",
+              }}
+            >
+              ⚠️ Esta acción no se puede deshacer.
+            </Text>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+            >
+              <Pressable
+                onPress={() => setModalVisible(false)}
+                style={{
+                  backgroundColor: "#ccc",
+                  borderRadius: 25,
+                  paddingVertical: 10,
+                  paddingHorizontal: 25,
+                }}
+              >
+                <Text style={{ color: "#333", fontWeight: "600" }}>
+                  Cancelar
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleDeleteConfirmed}
+                style={{
+                  backgroundColor: "#F3B23F",
+                  borderRadius: 25,
+                  paddingVertical: 10,
+                  paddingHorizontal: 25,
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  Eliminar
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* === TOAST VISUAL === */}
+      {toast.visible && (
+        <Animated.View
+          style={{
+            position: "absolute",
+            bottom: 30,
+            alignSelf: "center",
+            backgroundColor:
+              toast.type === "success"
+                ? "#4BB543"
+                : toast.type === "error"
+                ? "#D9534F"
+                : toast.type === "warning"
+                ? "#F0AD4E"
+                : "#014869",
+            paddingVertical: 12,
+            paddingHorizontal: 25,
+            borderRadius: 25,
+            shadowColor: "#000",
+            shadowOpacity: 0.3,
+            shadowRadius: 5,
+            elevation: 6,
+          }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "bold", textAlign: "center" }}>
+            {toast.message}
+          </Text>
+        </Animated.View>
+      )}
 
       {Platform.OS === "web" && (
         <Footer

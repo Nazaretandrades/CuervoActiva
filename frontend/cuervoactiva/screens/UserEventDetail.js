@@ -1,4 +1,3 @@
-// frontend/src/screens/UserEventDetail.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -64,7 +63,7 @@ export default function UserEventDetail() {
         session = JSON.parse(localStorage.getItem("USER_SESSION"));
       } else {
         const sessionString = await AsyncStorage.getItem("USER_SESSION");
-        session = sessionString ? JSON.parse(sessionString) : null;
+        session = sessionString ? JSON.parse(sessionString) : null; // ✅ sin const
       }
 
       if (session?.user?.name) setUserName(session.user.name);
@@ -193,6 +192,7 @@ export default function UserEventDetail() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToContact = () => navigation.navigate("Contacto");
   const goToSearch = () => navigation.navigate("UserHome");
+  const goToHome = () => navigation.navigate("User");
 
   // === Menú lateral ===
   const toggleMenu = () => {
@@ -238,14 +238,6 @@ export default function UserEventDetail() {
     }
     return <View style={{ flexDirection: "row" }}>{stars}</View>;
   };
-
-  if (!event) {
-    return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <Text>Cargando evento...</Text>
-      </View>
-    );
-  }
 
   // === Cabecera superior ===
   const renderTopBar = () => (
@@ -469,9 +461,9 @@ export default function UserEventDetail() {
             paddingVertical: 14,
           }}
         >
-          <Pressable onPress={goToSearch}>
+          <Pressable onPress={goToHome}>
             <Image
-              source={require("../assets/iconos/search.png")}
+              source={require("../assets/iconos/home-usuario.png")}
               style={{ width: 22, height: 22, tintColor: "#014869" }}
             />
           </Pressable>
@@ -499,88 +491,96 @@ export default function UserEventDetail() {
       {Platform.OS === "web" ? renderMenuWeb() : renderMenuMobile()}
 
       {/* === CONTENIDO PRINCIPAL === */}
-      <ScrollView style={{ flex: 1, paddingHorizontal: 20, paddingVertical: 10 }}>
-        <View
-          style={{
-            backgroundColor: "#014869",
-            paddingVertical: 10,
-            paddingHorizontal: 15,
-            marginBottom: 15,
-          }}
-        >
-          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
-            {event.title}
-          </Text>
-        </View>
-
-        <Image
-          source={{
-            uri: event.image_url.startsWith("http")
-              ? event.image_url.replace("localhost", "192.168.18.19")
-              : `${API_BASE}${
-                  event.image_url.startsWith("/") ? "" : "/"
-                }${event.image_url.replace(/\\/g, "/")}`,
-          }}
-          style={{
-            width: "100%",
-            height: 220,
-            borderRadius: 8,
-            marginBottom: 12,
-          }}
-          resizeMode="cover"
-        />
-
-        <Text style={{ fontWeight: "bold", marginBottom: 6 }}>Descripción</Text>
-        <Text style={{ marginBottom: 12 }}>{event.description}</Text>
-
-        <View style={{ marginTop: 15, marginBottom: 20 }}>
-          <Text style={{ fontWeight: "bold", marginBottom: 5 }}>Valoración</Text>
-          {renderStars()}
-        </View>
-
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "flex-end",
-            marginBottom: 20,
-          }}
+      {event && (
+        <ScrollView
+          style={{ flex: 1, paddingHorizontal: 20, paddingVertical: 10 }}
         >
           <View
             style={{
-              backgroundColor:
-                new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
-              borderRadius: 20,
-              paddingHorizontal: 16,
-              paddingVertical: 5,
+              backgroundColor: "#014869",
+              paddingVertical: 10,
+              paddingHorizontal: 15,
+              marginBottom: 15,
             }}
           >
-            <Text style={{ color: "#fff", fontWeight: "bold" }}>
-              {new Date(event.date) > new Date()
-                ? "Habilitado"
-                : "Deshabilitado"}
+            <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>
+              {event.title}
             </Text>
           </View>
-        </View>
 
-        {/* === Compartir === */}
-        <View style={{ alignItems: "center", marginTop: 10 }}>
-          <Pressable
-            onPress={() => setShareVisible(true)}
+          <Image
+            source={{
+              uri: event.image_url.startsWith("http")
+                ? event.image_url.replace("localhost", "192.168.18.19")
+                : `${API_BASE}${
+                    event.image_url.startsWith("/") ? "" : "/"
+                  }${event.image_url.replace(/\\/g, "/")}`,
+            }}
+            style={{
+              width: "100%",
+              height: 220,
+              borderRadius: 8,
+              marginBottom: 12,
+            }}
+            resizeMode="cover"
+          />
+
+          <Text style={{ fontWeight: "bold", marginBottom: 6 }}>
+            Descripción
+          </Text>
+          <Text style={{ marginBottom: 12 }}>{event.description}</Text>
+
+          <View style={{ marginTop: 15, marginBottom: 20 }}>
+            <Text style={{ fontWeight: "bold", marginBottom: 5 }}>
+              Valoración
+            </Text>
+            {renderStars()}
+          </View>
+
+          <View
             style={{
               flexDirection: "row",
-              alignItems: "center",
-              paddingHorizontal: 16,
-              paddingVertical: 10,
-              borderRadius: 8,
+              justifyContent: "flex-end",
+              marginBottom: 20,
             }}
           >
-            <Image
-              source={require("../assets/iconos/compartir.png")}
-              style={{ width: 22, height: 22, marginRight: 8 }}
-            />
-          </Pressable>
-        </View>
-      </ScrollView>
+            <View
+              style={{
+                backgroundColor:
+                  new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
+                borderRadius: 20,
+                paddingHorizontal: 16,
+                paddingVertical: 5,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                {new Date(event.date) > new Date()
+                  ? "Habilitado"
+                  : "Deshabilitado"}
+              </Text>
+            </View>
+          </View>
+
+          {/* === Compartir === */}
+          <View style={{ alignItems: "center", marginTop: 10 }}>
+            <Pressable
+              onPress={() => setShareVisible(true)}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                borderRadius: 8,
+              }}
+            >
+              <Image
+                source={require("../assets/iconos/compartir.png")}
+                style={{ width: 22, height: 22, marginRight: 8 }}
+              />
+            </Pressable>
+          </View>
+        </ScrollView>
+      )}
 
       {/* === MODAL COMPARTIR === */}
       <Modal
@@ -631,7 +631,9 @@ export default function UserEventDetail() {
                 marginBottom: 10,
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>WhatsApp</Text>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                WhatsApp
+              </Text>
             </Pressable>
 
             <Pressable
@@ -650,8 +652,13 @@ export default function UserEventDetail() {
               <Text style={{ color: "#fff", fontWeight: "bold" }}>Twitter</Text>
             </Pressable>
 
-            <Pressable onPress={() => setShareVisible(false)} style={{ marginTop: 15 }}>
-              <Text style={{ color: "#014869", fontWeight: "bold" }}>Cancelar</Text>
+            <Pressable
+              onPress={() => setShareVisible(false)}
+              style={{ marginTop: 15 }}
+            >
+              <Text style={{ color: "#014869", fontWeight: "bold" }}>
+                Cancelar
+              </Text>
             </Pressable>
           </View>
         </View>

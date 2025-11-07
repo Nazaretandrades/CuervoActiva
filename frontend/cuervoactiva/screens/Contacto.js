@@ -1,5 +1,5 @@
 // frontend/src/screens/Contacto.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -10,15 +10,14 @@ import {
   Platform,
   Animated,
   TouchableWithoutFeedback,
-  Alert,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as EmailJS from "@emailjs/browser"; // npm i @emailjs/browser
 import { useNavigation } from "@react-navigation/native";
-import OrganizerMenu from "./OrganizerMenu"; // ✅ Importamos menú organizador
-import UserMenu from "./UserMenu"; // ✅ Importamos menú usuario
+import OrganizerMenu from "./OrganizerMenu";
+import UserMenu from "./UserMenu";
 
 const API_BASE =
   Platform.OS === "android"
@@ -26,7 +25,6 @@ const API_BASE =
     : "http://localhost:5000";
 const API_URL = `${API_BASE}/api/contact`;
 
-// === Datos EmailJS ===
 const EMAILJS_SERVICE_ID = "service_e2ogh6c";
 const EMAILJS_TEMPLATE_ID = "template_uisdxgb";
 const EMAILJS_PUBLIC_KEY = "tWyqaMDt1ylAxxUb1";
@@ -45,6 +43,27 @@ export default function Contacto({ navigation }) {
   const [menuAnim] = useState(new Animated.Value(-250));
   const [sending, setSending] = useState(false);
   const nav = useNavigation();
+
+  // === TOAST visual (como login) ===
+  const [toast, setToast] = useState({ visible: false, type: "", message: "" });
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  const showToast = (type, message) => {
+    setToast({ visible: true, type, message });
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    setTimeout(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setToast({ visible: false, type: "", message: "" }));
+    }, 3000);
+  };
 
   // === Cargar sesión ===
   useEffect(() => {
@@ -73,16 +92,29 @@ export default function Contacto({ navigation }) {
   // === Validar formulario ===
   const validateForm = () => {
     const { name, lastname, email, phone, message } = form;
-    if (!name.trim()) return Alert.alert("Error", "Por favor, escribe tu nombre.");
-    if (!lastname.trim()) return Alert.alert("Error", "Por favor, escribe tus apellidos.");
-    if (!email.trim()) return Alert.alert("Error", "Por favor, escribe tu correo electrónico.");
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) return Alert.alert("Error", "Correo electrónico no válido.");
-    if (!phone.trim()) return Alert.alert("Error", "Por favor, escribe tu número de teléfono.");
     const phoneRegex = /^[0-9]{6,15}$/;
-    if (!phoneRegex.test(phone.trim()))
-      return Alert.alert("Error", "Introduce un número de teléfono válido.");
-    if (!message.trim()) return Alert.alert("Error", "Por favor, escribe un mensaje.");
+
+    if (!name.trim()) {
+      showToast("error", "Por favor, escribe tu nombre.");
+      return false;
+    }
+    if (!lastname.trim()) {
+      showToast("error", "Por favor, escribe tus apellidos.");
+      return false;
+    }
+    if (!email.trim() || !emailRegex.test(email.trim())) {
+      showToast("error", "Correo electrónico no válido.");
+      return false;
+    }
+    if (!phone.trim() || !phoneRegex.test(phone.trim())) {
+      showToast("error", "Introduce un número de teléfono válido.");
+      return false;
+    }
+    if (!message.trim()) {
+      showToast("error", "Por favor, escribe un mensaje.");
+      return false;
+    }
     return true;
   };
 
@@ -106,7 +138,7 @@ export default function Contacto({ navigation }) {
           EMAILJS_TEMPLATE_ID,
           templateParams
         );
-        Alert.alert("✅ Enviado", "Tu mensaje se ha enviado correctamente (EmailJS).");
+        showToast("success", "✅ Tu mensaje se ha enviado correctamente.");
       } else {
         const res = await fetch(API_URL, {
           method: "POST",
@@ -115,12 +147,12 @@ export default function Contacto({ navigation }) {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Error en el servidor");
-        Alert.alert("✅ Guardado", "Tu mensaje se ha registrado correctamente.");
+        showToast("success", "✅ Tu mensaje se ha registrado correctamente.");
       }
       setForm({ name: "", lastname: "", email: "", phone: "", message: "" });
     } catch (err) {
       console.error("Error al enviar contacto:", err);
-      Alert.alert("❌ Error", "No se pudo enviar el mensaje. Intenta de nuevo.");
+      showToast("error", "❌ No se pudo enviar el mensaje. Intenta de nuevo.");
     } finally {
       setSending(false);
     }
@@ -171,7 +203,6 @@ export default function Contacto({ navigation }) {
 
   // === Barra superior ===
   const renderTopBar = () => {
-    // === ADMIN ===
     if (role === "admin") {
       return (
         <View style={styles.topBar}>
@@ -204,7 +235,6 @@ export default function Contacto({ navigation }) {
       );
     }
 
-    // === ORGANIZER ===
     if (role === "organizer") {
       return (
         <View style={styles.topBar}>
@@ -247,7 +277,6 @@ export default function Contacto({ navigation }) {
       );
     }
 
-    // === USUARIO ===
     return (
       <View style={styles.topBar}>
         <Text>👤 {userName}</Text>
@@ -292,7 +321,6 @@ export default function Contacto({ navigation }) {
   // === Menú lateral (solo web) ===
   const renderMenu = () => {
     if (!menuVisible || Platform.OS !== "web") return null;
-
     let menuItems = [];
     if (role === "admin") {
       menuItems = [
@@ -348,7 +376,6 @@ export default function Contacto({ navigation }) {
       {renderTopBar()}
       {renderMenu()}
 
-      {/* === Menú móvil === */}
       {Platform.OS !== "web" && menuVisible && (
         role === "organizer" ? (
           <OrganizerMenu onClose={toggleMenu} />
@@ -357,7 +384,6 @@ export default function Contacto({ navigation }) {
         )
       )}
 
-      {/* === FORMULARIO === */}
       <ScrollView
         contentContainerStyle={{
           padding: 24,
@@ -489,6 +515,39 @@ export default function Contacto({ navigation }) {
         </View>
       </ScrollView>
 
+      {/* === TOAST visual (éxito / error) === */}
+      {toast.visible && (
+        <Animated.View
+          style={{
+            position: "absolute",
+            bottom: 40,
+            left: "5%",
+            right: "5%",
+            backgroundColor:
+              toast.type === "success" ? "#4CAF50" : "#E74C3C",
+            paddingVertical: 14,
+            paddingHorizontal: 18,
+            borderRadius: 12,
+            shadowColor: "#000",
+            shadowOpacity: 0.3,
+            shadowRadius: 6,
+            elevation: 5,
+            opacity: fadeAnim,
+          }}
+        >
+          <Text
+            style={{
+              color: "#fff",
+              fontWeight: "700",
+              textAlign: "center",
+              fontSize: 15,
+            }}
+          >
+            {toast.message}
+          </Text>
+        </Animated.View>
+      )}
+
       {/* FOOTER */}
       {Platform.OS === "web" && (
         <Footer
@@ -512,7 +571,6 @@ const styles = {
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
-  topBarLeft: { flexDirection: "row", alignItems: "center" },
   topBarIcons: { flexDirection: "row", alignItems: "center" },
   overlay: {
     position: "absolute",

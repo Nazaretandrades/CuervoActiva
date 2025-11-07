@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+// frontend/src/screens/Organizer.js
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,7 +7,6 @@ import {
   Pressable,
   Image,
   Platform,
-  Alert,
   ScrollView,
   Animated,
   TouchableWithoutFeedback,
@@ -43,6 +43,29 @@ export default function Organizer() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
+  // === Banner visual (fade in/out) ===
+  const [bannerMessage, setBannerMessage] = useState("");
+  const [bannerColor, setBannerColor] = useState("#33ADB5");
+  const bannerOpacity = useRef(new Animated.Value(0)).current;
+
+  const showBanner = (msg, color = "#33ADB5") => {
+    setBannerMessage(msg);
+    setBannerColor(color);
+    Animated.timing(bannerOpacity, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setTimeout(() => {
+        Animated.timing(bannerOpacity, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }).start(() => setBannerMessage(""));
+      }, 2500);
+    });
+  };
+
   const navigation = useNavigation();
 
   // === Obtener token ===
@@ -56,8 +79,7 @@ export default function Organizer() {
         const session = sessionString ? JSON.parse(sessionString) : null;
         return session?.token || null;
       }
-    } catch (err) {
-      console.error("Error leyendo sesión:", err);
+    } catch {
       return null;
     }
   };
@@ -99,7 +121,7 @@ export default function Organizer() {
       setEvents(data);
       setFilteredEvents(data);
     } catch (err) {
-      console.error("Error al cargar eventos:", err);
+      showBanner("⚠️ No se pudieron cargar tus eventos", "#e74c3c");
     }
   };
 
@@ -123,7 +145,7 @@ export default function Organizer() {
       const permission =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permission.status !== "granted") {
-        Alert.alert("Permiso denegado", "Se necesita acceso a tus fotos.");
+        showBanner("⚠️ Se necesita acceso a tus fotos", "#e67e22");
         return;
       }
 
@@ -138,7 +160,7 @@ export default function Organizer() {
         const uri = result.assets[0].uri;
         const token = await getSessionToken();
         if (!token) {
-          Alert.alert("Error", "No se encontró token.");
+          showBanner("❌ No se encontró sesión activa", "#e74c3c");
           return;
         }
 
@@ -163,19 +185,14 @@ export default function Organizer() {
         if (!res.ok) throw new Error("Error al subir la imagen");
         const data = await res.json();
         setForm({ ...form, image_url: data.image_url });
-        Alert.alert("✅ Imagen subida", "La imagen se subió correctamente.");
       }
     } catch (err) {
-      console.error("Error al subir imagen:", err);
-      Alert.alert("Error", err.message);
+      showBanner("❌ Error al subir la imagen", "#e74c3c");
     }
   };
 
   // === Crear o editar evento ===
   const handleSubmit = async () => {
-    const showAlert = (t, m) =>
-      Platform.OS === "web" ? alert(`${t}\n\n${m}`) : Alert.alert(t, m);
-
     const required = [
       "title",
       "description",
@@ -186,13 +203,18 @@ export default function Organizer() {
       "image_url",
     ];
     const missing = required.filter((f) => !form[f]?.trim());
-    if (missing.length > 0)
-      return showAlert("Campos incompletos", `Completa: ${missing.join(", ")}`);
+    if (missing.length > 0) {
+      showBanner("⚠️ Completa todos los campos antes de continuar", "#f1c40f");
+      return;
+    }
 
     setLoading(true);
     try {
       const token = await getSessionToken();
-      if (!token) return showAlert("Error", "Token no encontrado.");
+      if (!token) {
+        showBanner("❌ Sesión no encontrada", "#e74c3c");
+        return;
+      }
 
       const method = form._id ? "PUT" : "POST";
       const url = form._id ? `${API_URL}/${form._id}` : API_URL;
@@ -211,7 +233,12 @@ export default function Organizer() {
           ? prev.map((e) => (e._id === data._id ? data : e))
           : [...prev, data]
       );
-      showAlert("✅ Éxito", "Evento guardado correctamente.");
+      showBanner(
+        form._id
+          ? "✏️ Cambios guardados correctamente"
+          : "🎉 Evento creado con éxito",
+        "#2ecc71"
+      );
       setForm({
         _id: null,
         title: "",
@@ -222,9 +249,8 @@ export default function Organizer() {
         category: "deporte",
         image_url: "",
       });
-    } catch (err) {
-      console.error("Error:", err);
-      showAlert("Error", err.message);
+    } catch {
+      showBanner("❌ No se pudo guardar el evento", "#e74c3c");
     } finally {
       setLoading(false);
     }
@@ -244,26 +270,25 @@ export default function Organizer() {
   const goToContact = () => navigation.navigate("Contacto");
   const goToAbout = () => navigation.navigate("SobreNosotros");
 
-  // === Menú lateral ===
+  // === Menú lateral (corregido para móvil) ===
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
-      navigation.navigate("OrganizerMenu"); 
+      setMenuVisible((prev) => !prev);
+      return;
+    }
+    if (menuVisible) {
+      Animated.timing(menuAnim, {
+        toValue: -250,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setMenuVisible(false));
     } else {
-      // Mantén el menú lateral web
-      if (menuVisible) {
-        Animated.timing(menuAnim, {
-          toValue: -250,
-          duration: 300,
-          useNativeDriver: true,
-        }).start(() => setMenuVisible(false));
-      } else {
-        setMenuVisible(true);
-        Animated.timing(menuAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }).start();
-      }
+      setMenuVisible(true);
+      Animated.timing(menuAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
     }
   };
 
@@ -313,7 +338,7 @@ export default function Organizer() {
           }}
         />
 
-        {/* === ICONO CALENDARIO === */}
+        {/* === ICONOS === */}
         <Pressable onPress={goToCalendar} style={{ marginRight: 14 }}>
           <Image
             source={require("../assets/iconos/calendar-organizador.png")}
@@ -321,10 +346,9 @@ export default function Organizer() {
           />
         </Pressable>
 
-        {/* === ICONO NOTIFICACIONES === */}
         <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
           <Image
-            source={require("../assets/iconos/bell.png")}
+            source={require("../assets/iconos/bell3.png")}
             style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
           />
         </Pressable>
@@ -334,7 +358,7 @@ export default function Organizer() {
             source={
               Platform.OS === "web" && menuVisible
                 ? require("../assets/iconos/close-organizador.png")
-                : require("../assets/iconos/menu-usuario.png")
+                : require("../assets/iconos/menu-organizador.png")
             }
             style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
           />
@@ -401,6 +425,163 @@ export default function Organizer() {
         </>
       )}
 
+      {/* === MENÚ MÓVIL === */}
+      {Platform.OS !== "web" && menuVisible && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "#fff",
+            zIndex: 20,
+            justifyContent: "space-between",
+          }}
+        >
+          {/* CABECERA DEL MENÚ MÓVIL */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingHorizontal: 20,
+              paddingTop: 50,
+              paddingBottom: 20,
+            }}
+          >
+            <Pressable onPress={toggleMenu}>
+              <Image
+                source={require("../assets/iconos/back-organizador.png")}
+                style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+              />
+            </Pressable>
+            <Text
+              style={{ fontSize: 18, fontWeight: "bold", color: "#F3B23F" }}
+            >
+              Menú
+            </Text>
+            <View style={{ width: 24 }} />
+          </View>
+
+          {/* OPCIONES DEL MENÚ MÓVIL */}
+          <View
+            style={{
+              flex: 1,
+              paddingHorizontal: 40,
+              justifyContent: "flex-start",
+              gap: 30,
+            }}
+          >
+            {[
+              {
+                label: "Sobre nosotros",
+                icon: require("../assets/iconos/info-usuario.png"),
+                action: goToAbout,
+              },
+              {
+                label: "Cultura e Historia",
+                icon: require("../assets/iconos/museo-usuario.png"),
+                action: goToCulturaHistoria,
+              },
+              {
+                label: "Contacto",
+                icon: require("../assets/iconos/phone-usuario.png"),
+                action: goToContact,
+              },
+            ].map((item, i) => (
+              <Pressable
+                key={i}
+                onPress={() => {
+                  toggleMenu();
+                  item.action();
+                }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Image
+                    source={item.icon}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      tintColor: "#014869",
+                      marginRight: 12,
+                    }}
+                  />
+                  <Text
+                    style={{
+                      color: "#014869",
+                      fontSize: 16,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                </View>
+                <Image
+                  source={require("../assets/iconos/siguiente.png")}
+                  style={{ width: 16, height: 16, tintColor: "#F3B23F" }}
+                />
+              </Pressable>
+            ))}
+          </View>
+
+          {/* FOOTER INFERIOR DEL MENÚ MÓVIL */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-around",
+              alignItems: "center",
+              paddingVertical: 10,
+              borderTopWidth: 1,
+              borderColor: "#F3B23F",
+              backgroundColor: "#fff",
+            }}
+          >
+            {/* 🏠 ICONO HOME EN LUGAR DE SEARCH */}
+            <Pressable
+              onPress={() => {
+                const currentRoute =
+                  navigation.getState().routes.slice(-1)[0].name || "Organizer";
+
+                if (currentRoute === "Organizer") {
+                  // Si ya está en Organizer, recargamos forzando desmontar/remontar el componente
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: "Organizer" }],
+                  });
+                } else {
+                  navigation.navigate("Organizer");
+                }
+              }}
+            >
+              <Image
+                source={require("../assets/iconos/home-organizador.png")}
+                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+              />
+            </Pressable>
+
+            <Pressable onPress={goToCalendar}>
+              <Image
+                source={require("../assets/iconos/calendar-organizador.png")}
+                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+              />
+            </Pressable>
+
+            <Pressable onPress={goToProfile}>
+              <Image
+                source={require("../assets/iconos/user.png")}
+                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+              />
+            </Pressable>
+          </View>
+        </View>
+      )}
+
       {/* === CONTENIDO PRINCIPAL === */}
       <View
         style={{
@@ -410,7 +591,6 @@ export default function Organizer() {
           paddingHorizontal: 24,
           paddingTop: 20,
           paddingBottom: 40,
-          overflow: "hidden",
         }}
       >
         {/* === Lista de eventos === */}
@@ -425,12 +605,7 @@ export default function Organizer() {
           <Text style={{ fontWeight: "bold", marginBottom: 8 }}>
             Tus eventos
           </Text>
-
-          <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 10 }}
-            showsVerticalScrollIndicator
-          >
+          <ScrollView>
             {filteredEvents.length === 0 ? (
               <Text style={{ color: "#777", fontStyle: "italic" }}>
                 No se encontraron eventos.
@@ -467,18 +642,13 @@ export default function Organizer() {
           </ScrollView>
         </View>
 
-        {/* === Formulario (scrollable) === */}
+        {/* === FORMULARIO === */}
         <ScrollView
           style={{
             flex: 1,
             paddingHorizontal: 16,
-            overflow: "visible",
           }}
-          contentContainerStyle={{
-            paddingBottom: 120, // deja espacio extra para el footer
-            flexGrow: 1,
-          }}
-          showsVerticalScrollIndicator
+          contentContainerStyle={{ paddingBottom: 120 }}
         >
           <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
             {form._id ? "Editar evento" : "Crear evento"}
@@ -503,7 +673,6 @@ export default function Organizer() {
                   marginBottom: 10,
                 }}
               />
-
               <Text style={{ fontWeight: "600", marginBottom: 4 }}>
                 Fecha (DD/MM/YYYY):
               </Text>
@@ -520,7 +689,6 @@ export default function Organizer() {
                   marginBottom: 10,
                 }}
               />
-
               <Text style={{ fontWeight: "600", marginBottom: 4 }}>
                 Hora (HH:MM):
               </Text>
@@ -545,7 +713,6 @@ export default function Organizer() {
                 flex: 1,
                 minWidth: "45%",
                 position: "relative",
-                overflow: "visible",
                 zIndex: open ? 9999 : 1,
               }}
             >
@@ -567,7 +734,6 @@ export default function Organizer() {
                   textAlignVertical: "top",
                 }}
               />
-
               <Text style={{ fontWeight: "600", marginBottom: 4 }}>Lugar:</Text>
               <TextInput
                 value={form.location}
@@ -582,7 +748,6 @@ export default function Organizer() {
                   marginBottom: 10,
                 }}
               />
-
               <Text style={{ fontWeight: "600", marginBottom: 4 }}>
                 Categoría:
               </Text>
@@ -608,13 +773,10 @@ export default function Organizer() {
                   borderRadius: 20,
                   height: 40,
                   marginBottom: 10,
-                  zIndex: 9999,
                 }}
                 dropDownContainerStyle={{
                   borderColor: "#ddd",
-                  zIndex: 9999,
                   elevation: 20,
-                  overflow: "visible",
                   position: "absolute",
                 }}
               />
@@ -645,7 +807,6 @@ export default function Organizer() {
             ) : (
               <Text style={{ color: "#666" }}>Sin imagen seleccionada</Text>
             )}
-
             <Pressable onPress={pickImage} style={{ marginTop: 8 }}>
               <Text style={{ color: "#014869" }}>🖼️ Añadir imagen</Text>
             </Pressable>
@@ -685,7 +846,7 @@ export default function Organizer() {
         </ScrollView>
       </View>
 
-      {/* === FOOTER FIJO === */}
+      {/* === FOOTER === */}
       {Platform.OS === "web" && (
         <View
           style={{
@@ -693,7 +854,6 @@ export default function Organizer() {
             bottom: 0,
             left: 0,
             right: 0,
-            zIndex: 100,
             backgroundColor: "#fff",
           }}
         >
@@ -703,6 +863,39 @@ export default function Organizer() {
             onConditionsPress={goToConditions}
           />
         </View>
+      )}
+
+      {/* === BANNER VISUAL === */}
+      {bannerMessage !== "" && (
+        <Animated.View
+          style={{
+            opacity: bannerOpacity,
+            position: "fixed",
+            bottom: 30,
+            left: "50%",
+            transform: [{ translateX: -150 }],
+            width: 300,
+            backgroundColor: bannerColor,
+            paddingVertical: 14,
+            alignItems: "center",
+            borderRadius: 25,
+            shadowColor: "#000",
+            shadowOpacity: 0.3,
+            shadowRadius: 5,
+            elevation: 10,
+            zIndex: 200,
+          }}
+        >
+          <Text
+            style={{
+              color: "#fff",
+              fontWeight: "700",
+              textAlign: "center",
+            }}
+          >
+            {bannerMessage}
+          </Text>
+        </Animated.View>
       )}
     </View>
   );

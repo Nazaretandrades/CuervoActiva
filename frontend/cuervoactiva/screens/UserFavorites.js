@@ -58,7 +58,7 @@ export default function UserFavorites() {
         session = JSON.parse(localStorage.getItem("USER_SESSION"));
       } else {
         const sessionString = await AsyncStorage.getItem("USER_SESSION");
-        const session = sessionString ? JSON.parse(sessionString) : null;
+        session = sessionString ? JSON.parse(sessionString) : null;
       }
 
       if (session?.user?.name) setUserName(session.user.name);
@@ -125,6 +125,7 @@ export default function UserFavorites() {
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
   const goToContact = () => navigation.navigate("Contacto");
   const goToSearch = () => navigation.navigate("UserHome");
+  const goToHome = () => navigation.navigate("User");
 
   /** === Menú lateral === */
   const toggleMenu = () => {
@@ -199,10 +200,11 @@ export default function UserFavorites() {
           ))}
         </View>
 
+        {/* 🔹 Barra inferior con iconos actualizados */}
         <View style={styles.bottomBarBlue}>
-          <Pressable onPress={goToSearch}>
+          <Pressable onPress={goToHome}>
             <Image
-              source={require("../assets/iconos/search.png")}
+              source={require("../assets/iconos/home-usuario.png")}
               style={styles.bottomIconBlue}
             />
           </Pressable>
@@ -284,7 +286,10 @@ export default function UserFavorites() {
             {[
               { label: "Perfil", action: goToProfile },
               { label: "Cultura e Historia", action: goToCulturaHistoria },
-              { label: "Ver favoritos", action: () => navigation.navigate("UserFavorites") },
+              {
+                label: "Ver favoritos",
+                action: () => navigation.navigate("UserFavorites"),
+              },
               { label: "Contacto", action: goToContact },
             ].map((item, i) => (
               <Pressable
@@ -295,7 +300,13 @@ export default function UserFavorites() {
                 }}
                 style={{ marginBottom: 25 }}
               >
-                <Text style={{ color: "#014869", fontSize: 16, fontWeight: "600" }}>
+                <Text
+                  style={{
+                    color: "#014869",
+                    fontSize: 16,
+                    fontWeight: "600",
+                  }}
+                >
                   {item.label}
                 </Text>
               </Pressable>
@@ -414,8 +425,17 @@ const styles = StyleSheet.create({
   headerTitleBlue: { fontSize: 18, fontWeight: "bold", color: "#014869" },
   backIconBlue: { width: 22, height: 22, tintColor: "#014869" },
   menuOptionsBlue: { flex: 1, paddingHorizontal: 40, gap: 30 },
-  optionBlue: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  optionIconBlue: { width: 28, height: 28, tintColor: "#014869", marginRight: 12 },
+  optionBlue: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  optionIconBlue: {
+    width: 28,
+    height: 28,
+    tintColor: "#014869",
+    marginRight: 12,
+  },
   optionTextBlue: { color: "#014869", fontSize: 16, fontWeight: "600" },
   arrowIconBlue: { width: 16, height: 16, tintColor: "#014869" },
   bottomBarBlue: {

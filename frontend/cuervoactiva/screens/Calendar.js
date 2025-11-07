@@ -216,6 +216,18 @@ export default function Calendar() {
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToCalendar = () => navigation.navigate("Calendar");
 
+  // ✅ NUEVO: función ir al Home Organizer (solo móvil)
+  const goToOrganizerHome = () => {
+    if (Platform.OS !== "web" && role === "organizer") {
+      const currentRoute = navigation.getState().routes.slice(-1)[0].name;
+      if (currentRoute === "Organizer") {
+        navigation.reset({ index: 0, routes: [{ name: "Organizer" }] });
+      } else {
+        navigation.navigate("Organizer");
+      }
+    }
+  };
+
   // === Toggle menú lateral ===
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
@@ -352,7 +364,7 @@ export default function Calendar() {
       {/* === Menú móvil === */}
       {!isWeb && menuVisible && (
         role === "organizer" ? (
-          <OrganizerMenu onClose={toggleMenu} />
+          <OrganizerMenu onClose={toggleMenu} onHomePress={goToOrganizerHome} />
         ) : (
           <UserMenu onClose={toggleMenu} />
         )

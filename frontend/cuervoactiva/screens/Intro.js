@@ -46,22 +46,6 @@ export default function Intro() {
           </View>
         </ScrollView>
       </View>
-
-      {/* FOOTER FIJO ABAJO */}
-      {Platform.OS === "web" && (
-        <View
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            width: "100%",
-            zIndex: 50,
-            backgroundColor: "#ffffff",
-          }}
-        >
-          <Footer />
-        </View>
-      )}
     </View>
   );
 }

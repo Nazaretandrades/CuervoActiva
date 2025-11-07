@@ -1,3 +1,4 @@
+// frontend/src/screens/Login.js
 import React, { useState } from "react";
 import {
   View,
@@ -6,16 +7,16 @@ import {
   Pressable,
   ScrollView,
   Image,
-  Alert,
   Platform,
   Dimensions,
   StatusBar,
+  Animated,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { loginUser } from "../services/auth";
-import { saveSession } from "../services/sessionManager"; // ✅ Import correcto
+import { saveSession } from "../services/sessionManager";
 
 export default function Login() {
   const navigation = useNavigation();
@@ -25,18 +26,35 @@ export default function Login() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // ✅ Estado para mensaje visual (toast)
+  const [toast, setToast] = useState({ visible: false, type: "", message: "" });
+  const fadeAnim = useState(new Animated.Value(0))[0];
+
   const { width } = Dimensions.get("window");
   const isMobile = width < 768;
 
-  const showAlert = (title, message) => {
-    if (Platform.OS === "web") window.alert(`${title}\n\n${message}`);
-    else Alert.alert(title, message);
+  /** === Función para mostrar mensajes visuales === */
+  const showToast = (type, message) => {
+    setToast({ visible: true, type, message });
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    setTimeout(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setToast({ visible: false, type: "", message: "" }));
+    }, 3000);
   };
 
   // === LOGIN ===
   async function onSubmit() {
     if (!emailOrUsername.trim() || !password.trim()) {
-      showAlert("Campos obligatorios", "Por favor, completa todos los campos.");
+      showToast("error", "Por favor, completa todos los campos obligatorios.");
       return;
     }
 
@@ -50,7 +68,7 @@ export default function Login() {
       const role = data.user?.role || data.role;
 
       if (!role) {
-        showAlert("Error", "No se pudo identificar el rol del usuario.");
+        showToast("error", "No se pudo identificar el rol del usuario.");
         return;
       }
 
@@ -59,40 +77,48 @@ export default function Login() {
 
       // 🔹 Redirección según rol
       if (role === "organizer") {
-        showAlert("✅ Éxito", "Inicio de sesión exitoso como Organizador.");
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "Organizer" }],
-        });
-      } else if (role === "admin") {
-        if (Platform.OS === "web") {
-          showAlert("✅ Éxito", "Inicio de sesión exitoso como Administrador.");
+        showToast("success", "Inicio de sesión exitoso como Organizador.");
+        setTimeout(() => {
           navigation.reset({
             index: 0,
-            routes: [{ name: "Admin" }],
+            routes: [{ name: "Organizer" }],
           });
+        }, 1200);
+      } else if (role === "admin") {
+        if (Platform.OS === "web") {
+          showToast("success", "Inicio de sesión exitoso como Administrador.");
+          setTimeout(() => {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "Admin" }],
+            });
+          }, 1200);
         } else {
-          showAlert(
-            "Acceso restringido",
+          showToast(
+            "error",
             "El panel de administrador solo está disponible en la versión web."
           );
           return;
         }
       } else if (role === "user") {
-        showAlert("✅ Éxito", "Inicio de sesión exitoso como Usuario.");
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "User" }],
-        });
+        showToast("success", "Inicio de sesión exitoso como Usuario.");
+        setTimeout(() => {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "User" }],
+          });
+        }, 1200);
       } else {
-        showAlert("✅ Éxito", "Inicio de sesión exitoso.");
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "Intro" }],
-        });
+        showToast("success", "Inicio de sesión exitoso.");
+        setTimeout(() => {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Intro" }],
+          });
+        }, 1200);
       }
     } catch (e) {
-      showAlert("Error", e.message || "Intenta de nuevo.");
+      showToast("error", e.message || "❌ Error. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -266,6 +292,7 @@ export default function Login() {
                 paddingHorizontal: 28,
                 alignItems: "center",
                 justifyContent: "center",
+                opacity: loading ? 0.7 : 1,
               }}
             >
               <Text
@@ -282,8 +309,39 @@ export default function Login() {
         </View>
       </ScrollView>
 
-      {/* FOOTER solo en web */}
-      {Platform.OS === "web" && <Footer />}
+      {/* 🔸 TOAST (mensaje visual animado) */}
+      {toast.visible && (
+        <Animated.View
+          style={{
+            position: "absolute",
+            bottom: 60,
+            left: "5%",
+            right: "5%",
+            backgroundColor:
+              toast.type === "success" ? "#4CAF50" : "#E74C3C",
+            paddingVertical: 14,
+            paddingHorizontal: 18,
+            borderRadius: 12,
+            shadowColor: "#000",
+            shadowOpacity: 0.3,
+            shadowRadius: 6,
+            elevation: 5,
+            opacity: fadeAnim,
+          }}
+        >
+          <Text
+            style={{
+              color: "#fff",
+              fontWeight: "700",
+              textAlign: "center",
+              fontSize: 15,
+            }}
+          >
+            {toast.message}
+          </Text>
+        </Animated.View>
+      )}
+
     </View>
   );
 }

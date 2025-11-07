@@ -20,7 +20,7 @@ export default function UserMenu() {
   const goToContact = () => navigation.navigate("Contacto");
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToProfile = () => navigation.navigate("UserProfile");
-  const goToSearch = () => navigation.navigate("User");
+  const goToHome = () => navigation.navigate("User");
 
   return (
     <View style={styles.container}>
@@ -98,9 +98,9 @@ export default function UserMenu() {
       {/* === BARRA INFERIOR === */}
       {Platform.OS !== "web" && (
         <View style={styles.bottomBar}>
-          <Pressable onPress={goToSearch}>
+          <Pressable onPress={goToHome}>
             <Image
-              source={require("../assets/iconos/search.png")}
+              source={require("../assets/iconos/home-usuario.png")}
               style={styles.bottomIcon}
             />
           </Pressable>
@@ -114,7 +114,7 @@ export default function UserMenu() {
 
           <Pressable onPress={goToProfile}>
             <Image
-              source={require("../assets/iconos/user.png")}
+              source={require("../assets/iconos/usuario.png")}
               style={styles.bottomIcon}
             />
           </Pressable>

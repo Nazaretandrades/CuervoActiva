@@ -1,13 +1,13 @@
-//APP.JS
-//1) Importaciones necesarias
+// APP.JS
+// 1) Importaciones necesarias
 import React from "react";
-import { NavigationContainer } from "@react-navigation/native"; //Contenedor principal de navegación
-import { createStackNavigator } from "@react-navigation/stack"; //Sistema de navegación tipo "stack"
+import { NavigationContainer } from "@react-navigation/native"; // Contenedor principal de navegación
+import { createStackNavigator } from "@react-navigation/stack"; // Sistema de navegación tipo "stack"
 
-//2) Importamos las pantallas principales
-import Intro from "./screens/Intro"; //Pantalla de presentación / portada
-import Register from "./screens/Register"; //Pantalla de registro de usuario
-import Login from "./screens/Login"; //Pantalla de inicio de sesión
+// 2) Importamos las pantallas principales
+import Intro from "./screens/Intro"; // Pantalla de presentación / portada
+import Register from "./screens/Register"; // Pantalla de registro de usuario
+import Login from "./screens/Login"; // Pantalla de inicio de sesión
 import Organizer from "./screens/Organizer";
 import Admin from "./screens/Admin";
 import User from "./screens/User";
@@ -31,21 +31,54 @@ import Calendar from "./screens/Calendar";
 import OrganizerMenu from "./screens/OrganizerMenu";
 import UserMenu from "./screens/UserMenu";
 
-//3) Creamos el Stack Navigator
-//Este componente permite navegar entre pantallas de forma apilada
+// 3) Creamos el Stack Navigator
 const Stack = createStackNavigator();
 
-//4) Componente principal de la aplicación
+// 🟢 4) Configuración de linking (para que el navegador recuerde las rutas)
+const linking = {
+  prefixes: ["http://localhost:19006", "https://tusitio.com"],
+  config: {
+    screens: {
+      Intro: "intro",
+      Register: "register",
+      Login: "login",
+      Organizer: "organizer",
+      Admin: "admin",
+      User: "user",
+      UserEventDetail: "user-event/:eventId",
+      OrganizerEventDetail: "organizer-event/:eventId",
+      AdminEventDetail: "admin-event/:eventId",
+      OrganizerNotifications: "organizer-notifications",
+      AdminNotifications: "admin-notifications",
+      UserNotifications: "user-notifications",
+      UserFavorites: "user-favorites",
+      AdminUsers: "admin-users",
+      SobreNosotros: "sobre-nosotros",
+      UserProfile: "user-profile",
+      OrganizerProfile: "organizer-profile",
+      AdminProfile: "admin-profile",
+      PoliticaPrivacidad: "politica-privacidad",
+      Condiciones: "condiciones",
+      Contacto: "contacto",
+      CulturaHistoria: "cultura-historia",
+      Calendar: "calendar",
+      OrganizerMenu: "organizer-menu",
+      UserMenu: "user-menu",
+    },
+  },
+};
+
+// 5) Componente principal de la aplicación
 export default function App() {
   return (
-    //NavigationContainer: envuelve toda la app y gestiona el estado de la navegación
-    <NavigationContainer>
+    // NavigationContainer: envuelve toda la app y gestiona el estado de la navegación
+    <NavigationContainer linking={linking}>
       {/* 
         Stack.Navigator: define las pantallas disponibles
         y la forma en que se muestran (sin encabezado nativo)
       */}
       <Stack.Navigator initialRouteName="Intro">
-        {/*Pantalla inicial — Intro */}
+        {/* Pantalla inicial — Intro */}
         <Stack.Screen
           name="Intro"
           component={Intro}
@@ -55,14 +88,14 @@ export default function App() {
           }}
         />
 
-        {/*Pantalla de registro */}
+        {/* Pantalla de registro */}
         <Stack.Screen
           name="Register"
           component={Register}
-          options={{ headerShown: false, title: "Registro" }} //Oculta el encabezado por diseño personalizado
+          options={{ headerShown: false, title: "Registro" }}
         />
 
-        {/*Pantalla de inicio de sesión */}
+        {/* Pantalla de inicio de sesión */}
         <Stack.Screen
           name="Login"
           component={Login}
@@ -138,7 +171,7 @@ export default function App() {
         <Stack.Screen
           name="UserFavorites"
           component={UserFavorites}
-          options={{ headerShown: false, title: "Notificaciones - Usuario" }}
+          options={{ headerShown: false, title: "Favoritos - Usuario" }}
         />
 
         <Stack.Screen

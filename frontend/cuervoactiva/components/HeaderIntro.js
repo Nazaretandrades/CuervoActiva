@@ -9,12 +9,15 @@ import {
   StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 
 export default function Header({
   onLogin,
   onRegister,
   hideAuthButtons = false,
 }) {
+  const navigation = useNavigation();
   const { width } = useWindowDimensions();
   const isMobile = width < 768; // breakpoint para pantallas pequeñas
 
@@ -32,14 +35,14 @@ export default function Header({
       width: isMobile ? 38 : 50,
       height: isMobile ? 38 : 50,
       marginRight: isMobile ? 6 : 10,
-      borderRadius: 10, // redondeo más suave
-      overflow: "hidden", // 🔹 esto recorta la imagen dentro del borde
-      backgroundColor: "#fff", // por si el logo tiene transparencia
+      borderRadius: 10,
+      overflow: "hidden",
+      backgroundColor: "#fff",
     },
     logo: {
       width: "100%",
       height: "100%",
-      resizeMode: "cover", // asegura que llene el contenedor sin distorsión
+      resizeMode: "cover",
     },
     title: {
       color: "#fff",
@@ -75,13 +78,42 @@ export default function Header({
     },
   };
 
-  console.log(
-    "Tipo de hideAuthButtons:",
-    typeof hideAuthButtons,
-    hideAuthButtons
-  );
+  // === 🔹 Función para redirigir según el rol (solo web) ===
+  const handleLogoPress = async () => {
+    try {
+      let session;
 
-  // ✅ Versión móvil
+      if (Platform.OS === "web") {
+        session = JSON.parse(localStorage.getItem("USER_SESSION"));
+      } else {
+        const sessionString = await AsyncStorage.getItem("USER_SESSION");
+        session = sessionString ? JSON.parse(sessionString) : null;
+      }
+
+      // Si no hay sesión, ir a Intro
+      if (!session || !session.token) {
+        navigation.navigate("Intro");
+        return;
+      }
+
+      // Determinar rol y redirigir
+      const role =
+        session.user?.role || session.role || session.userType || "user";
+
+      if (role === "admin") {
+        navigation.navigate("Admin");
+      } else if (role === "organizer" || role === "organizador") {
+        navigation.navigate("Organizer");
+      } else {
+        navigation.navigate("User");
+      }
+    } catch (err) {
+      console.error("Error leyendo sesión:", err);
+      navigation.navigate("Intro");
+    }
+  };
+
+  // ✅ Versión móvil — SIN click en el logo
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
       <SafeAreaView
@@ -124,17 +156,20 @@ export default function Header({
     );
   }
 
-  // 💻 Versión web
+  // 💻 Versión web — CON click en el logo
   return (
     <>
       <View style={styles.container}>
         {/* IZQUIERDA */}
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Pressable
+          onPress={handleLogoPress}
+          style={{ flexDirection: "row", alignItems: "center", cursor: "pointer" }}
+        >
           <View style={styles.logoContainer}>
             <Image source={require("../assets/logo.png")} style={styles.logo} />
           </View>
           <Text style={styles.title}>CUERVO ACTIVA</Text>
-        </View>
+        </Pressable>
 
         {/* DERECHA */}
         {!hideAuthButtons && (

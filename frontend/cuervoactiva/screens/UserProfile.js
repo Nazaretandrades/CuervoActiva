@@ -131,6 +131,7 @@ export default function UserProfile() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToSearch = () => navigation.navigate("User");
+  const goToHome = () => navigation.navigate("User");
 
   /** === Menú lateral === */
   const toggleMenu = () => {
@@ -206,10 +207,11 @@ export default function UserProfile() {
           ))}
         </View>
 
+        {/* 🔹 Barra inferior actualizada */}
         <View style={styles.bottomBarBlue}>
-          <Pressable onPress={goToSearch}>
+          <Pressable onPress={goToHome}>
             <Image
-              source={require("../assets/iconos/search.png")}
+              source={require("../assets/iconos/home-usuario.png")}
               style={styles.bottomIconBlue}
             />
           </Pressable>

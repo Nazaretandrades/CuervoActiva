@@ -25,6 +25,21 @@ export default function UserNotifications({ navigation }) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
+  // === TOAST VISUAL ===
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "info",
+  });
+
+  const showToast = (message, type = "info") => {
+    setToast({ visible: true, message, type });
+    setTimeout(
+      () => setToast({ visible: false, message: "", type: "info" }),
+      2500
+    );
+  };
+
   // === Obtener usuario logueado ===
   useEffect(() => {
     const loadUser = async () => {
@@ -59,9 +74,12 @@ export default function UserNotifications({ navigation }) {
         if (res.ok) {
           const data = await res.json();
           setNotifications(data);
+        } else {
+          showToast("❌ Error al cargar notificaciones.", "error");
         }
       } catch (err) {
         console.error("Error al cargar notificaciones:", err);
+        showToast("⚠️ No se pudieron obtener las notificaciones.", "error");
       }
     };
     loadNotifications();
@@ -87,18 +105,10 @@ export default function UserNotifications({ navigation }) {
         prev.map((n) => (n._id === id ? { ...n, read: true } : n))
       );
 
-      if (Platform.OS === "web") {
-        alert("✅ Notificación marcada como leída");
-      } else {
-        Alert.alert("✅ Hecho", "La notificación se ha marcado como leída.");
-      }
+      showToast("✅ Notificación marcada como leída.", "success");
     } catch (err) {
       console.error("Error al marcar notificación como leída:", err);
-      if (Platform.OS === "web") {
-        alert("❌ Error al marcar notificación como leída");
-      } else {
-        Alert.alert("Error", "No se pudo marcar como leída.");
-      }
+      showToast("❌ No se pudo marcar la notificación.", "error");
     }
   };
 
@@ -136,6 +146,9 @@ export default function UserNotifications({ navigation }) {
   };
   const goToNotifications = () => {
     navigation.navigate("UserNotifications");
+  };
+  const goToHome = () => {
+    navigation.navigate("User");
   };
 
   // === Menú lateral ===
@@ -190,11 +203,11 @@ export default function UserNotifications({ navigation }) {
             />
           </Pressable>
 
-          {/* 🔔 Icono Notificaciones (ya estás aquí, inactivo visualmente) */}
-          <Pressable>
+          {/* 🔔 Icono Notificaciones (redirige también) */}
+          <Pressable onPress={goToNotifications}>
             <Image
               source={require("../assets/iconos/bell.png")}
-              style={{ width: 26, height: 26}}
+              style={{ width: 26, height: 26 }}
             />
           </Pressable>
 
@@ -386,18 +399,24 @@ export default function UserNotifications({ navigation }) {
                 paddingVertical: 14,
               }}
             >
-              <Image
-                source={require("../assets/iconos/search.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
-              />
-              <Image
-                source={require("../assets/iconos/calendar.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
-              />
-              <Image
-                source={require("../assets/iconos/user.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
-              />
+              <Pressable onPress={goToHome}>
+                <Image
+                  source={require("../assets/iconos/home-usuario.png")}
+                  style={{ width: 22, height: 22, tintColor: "#014869" }}
+                />
+              </Pressable>
+              <Pressable onPress={goToCalendar}>
+                <Image
+                  source={require("../assets/iconos/calendar.png")}
+                  style={{ width: 22, height: 22, tintColor: "#014869" }}
+                />
+              </Pressable>
+              <Pressable onPress={goToProfile}>
+                <Image
+                  source={require("../assets/iconos/user.png")}
+                  style={{ width: 22, height: 22, tintColor: "#014869" }}
+                />
+              </Pressable>
             </View>
           </View>
         )
@@ -458,6 +477,42 @@ export default function UserNotifications({ navigation }) {
           )}
         </ScrollView>
       </View>
+
+      {/* === TOAST VISUAL === */}
+      {toast.visible && (
+        <Animated.View
+          style={{
+            position: "absolute",
+            bottom: 30,
+            alignSelf: "center",
+            backgroundColor:
+              toast.type === "success"
+                ? "#4BB543"
+                : toast.type === "error"
+                ? "#D9534F"
+                : toast.type === "warning"
+                ? "#F0AD4E"
+                : "#014869",
+            paddingVertical: 12,
+            paddingHorizontal: 25,
+            borderRadius: 25,
+            shadowColor: "#000",
+            shadowOpacity: 0.3,
+            shadowRadius: 5,
+            elevation: 6,
+          }}
+        >
+          <Text
+            style={{
+              color: "#fff",
+              fontWeight: "bold",
+              textAlign: "center",
+            }}
+          >
+            {toast.message}
+          </Text>
+        </Animated.View>
+      )}
 
       {Platform.OS === "web" && (
         <Footer

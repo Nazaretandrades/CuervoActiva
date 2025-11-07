@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+// frontend/src/screens/AdminUsers.js
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -8,7 +9,6 @@ import {
   Animated,
   TouchableWithoutFeedback,
   Platform,
-  Alert,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -28,7 +28,44 @@ export default function AdminUsers() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  // === Obtener sesión ===
+  // === TOAST (diseño igual al del Login) ===
+  const [toast, setToast] = useState({ visible: false, type: "", message: "" });
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  const showToast = (type, message) => {
+    setToast({ visible: true, type, message });
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
+    setTimeout(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() =>
+        setToast({ visible: false, type: "", message: "" })
+      );
+    }, 3000);
+  };
+
+  // === MODAL DE CONFIRMACIÓN ===
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
+  const openConfirmModal = (userId) => {
+    setUserToDelete(userId);
+    setConfirmVisible(true);
+  };
+
+  const closeConfirmModal = () => {
+    setUserToDelete(null);
+    setConfirmVisible(false);
+  };
+
+  // === OBTENER SESIÓN ===
   const getSession = async () => {
     try {
       if (Platform.OS === "web") {
@@ -42,7 +79,7 @@ export default function AdminUsers() {
     }
   };
 
-  // === Cargar usuarios ===
+  // === CARGAR USUARIOS ===
   const loadUsers = async () => {
     try {
       const session = await getSession();
@@ -56,11 +93,11 @@ export default function AdminUsers() {
         },
       });
 
-      if (!res.ok) throw new Error("Error al cargar usuarios");
+      if (!res.ok) throw new Error("Error al cargar los usuarios");
       const data = await res.json();
       setUsers(data);
     } catch (err) {
-      Alert.alert("Error", err.message);
+      showToast("error", "⚠️ No se pudieron cargar los usuarios");
     }
   };
 
@@ -68,7 +105,7 @@ export default function AdminUsers() {
     loadUsers();
   }, []);
 
-  // === Navegaciones ===
+  // === NAVEGACIONES ===
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -76,18 +113,16 @@ export default function AdminUsers() {
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToContact = () => navigation.navigate("Contacto");
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
-  const goToCalendar = () => navigation.navigate("Calendar"); // ✅ NUEVA FUNCIÓN
+  const goToCalendar = () => navigation.navigate("Calendar");
 
-  // === Eliminar usuario ===
-  const handleDelete = async (id) => {
-    const confirm = window.confirm("¿Seguro que deseas eliminar este usuario?");
-    if (!confirm) return;
-
+  // === ELIMINAR USUARIO ===
+  const handleDelete = async () => {
+    if (!userToDelete) return;
     try {
       const session = await getSession();
       const token = session?.token;
 
-      const res = await fetch(`${API_URL}/${id}`, {
+      const res = await fetch(`${API_URL}/${userToDelete}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -95,14 +130,16 @@ export default function AdminUsers() {
       });
 
       if (!res.ok) throw new Error("Error al eliminar usuario");
-      setUsers((prev) => prev.filter((u) => u._id !== id));
-      Alert.alert("✅", "Usuario eliminado correctamente");
+      setUsers((prev) => prev.filter((u) => u._id !== userToDelete));
+      closeConfirmModal();
+      showToast("success", "🗑️ Usuario eliminado correctamente");
     } catch (err) {
-      Alert.alert("Error", err.message);
+      closeConfirmModal();
+      showToast("error", "❌ Error al eliminar el usuario");
     }
   };
 
-  // === Menú lateral ===
+  // === MENÚ LATERAL ===
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -124,6 +161,80 @@ export default function AdminUsers() {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
+      {/* === MODAL PERSONALIZADO DE CONFIRMACIÓN === */}
+      {confirmVisible && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 200,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#fff",
+              padding: 25,
+              borderRadius: 15,
+              width: 320,
+              alignItems: "center",
+              shadowColor: "#000",
+              shadowOpacity: 0.25,
+              shadowRadius: 6,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "600",
+                color: "#014869",
+                textAlign: "center",
+                marginBottom: 20,
+              }}
+            >
+              ¿Seguro que deseas eliminar este usuario?
+            </Text>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                width: "80%",
+              }}
+            >
+              <Pressable
+                onPress={closeConfirmModal}
+                style={{
+                  backgroundColor: "#ccc",
+                  paddingVertical: 8,
+                  paddingHorizontal: 20,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ color: "#333", fontWeight: "bold" }}>Cancelar</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleDelete}
+                style={{
+                  backgroundColor: "#e74c3c",
+                  paddingVertical: 8,
+                  paddingHorizontal: 20,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Eliminar</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
+
       {/* === BARRA SUPERIOR === */}
       <View
         style={{
@@ -135,15 +246,12 @@ export default function AdminUsers() {
           borderColor: "#eee",
         }}
       >
-        {/* 👑 Admin */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Text style={{ marginRight: 6 }}>👑</Text>
           <Text>Admin. {adminName}</Text>
         </View>
 
-        {/* ICONOS DE CALENDARIO, NOTIFICACIONES Y MENÚ */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          {/* ✅ ICONO DE CALENDARIO */}
           <Pressable onPress={goToCalendar} style={{ marginRight: 6 }}>
             <Image
               source={require("../assets/iconos/calendar-admin.png")}
@@ -151,7 +259,6 @@ export default function AdminUsers() {
             />
           </Pressable>
 
-          {/* 🔔 NOTIFICACIONES */}
           <Pressable onPress={goToNotifications} style={{ marginRight: 6 }}>
             <Image
               source={require("../assets/iconos/bell2.png")}
@@ -159,7 +266,6 @@ export default function AdminUsers() {
             />
           </Pressable>
 
-          {/* ☰ MENÚ */}
           <Pressable onPress={toggleMenu}>
             <Image
               source={
@@ -237,6 +343,7 @@ export default function AdminUsers() {
         contentContainerStyle={{
           padding: 20,
           alignItems: "center",
+          paddingBottom: 100,
         }}
       >
         <Text
@@ -264,13 +371,14 @@ export default function AdminUsers() {
                 paddingHorizontal: 20,
                 borderRadius: 30,
                 marginBottom: 15,
+                shadowColor: "#000",
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                {u.name}
-              </Text>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>{u.name}</Text>
 
-              <Pressable onPress={() => handleDelete(u._id)}>
+              <Pressable onPress={() => openConfirmModal(u._id)}>
                 <Image
                   source={require("../assets/iconos/papelera.png")}
                   style={{ width: 22, height: 22, tintColor: "#fff" }}
@@ -284,6 +392,39 @@ export default function AdminUsers() {
           </Text>
         )}
       </ScrollView>
+
+      {/* === TOAST (DISEÑO IGUAL AL LOGIN) === */}
+      {toast.visible && (
+        <Animated.View
+          style={{
+            position: "absolute",
+            bottom: 40,
+            left: "5%",
+            right: "5%",
+            backgroundColor:
+              toast.type === "success" ? "#4CAF50" : "#E74C3C",
+            paddingVertical: 14,
+            paddingHorizontal: 18,
+            borderRadius: 12,
+            shadowColor: "#000",
+            shadowOpacity: 0.3,
+            shadowRadius: 6,
+            elevation: 5,
+            opacity: fadeAnim,
+          }}
+        >
+          <Text
+            style={{
+              color: "#fff",
+              fontWeight: "700",
+              textAlign: "center",
+              fontSize: 15,
+            }}
+          >
+            {toast.message}
+          </Text>
+        </Animated.View>
+      )}
 
       {/* === FOOTER === */}
       {Platform.OS === "web" && (
