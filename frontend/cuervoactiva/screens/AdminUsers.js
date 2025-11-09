@@ -9,6 +9,7 @@ import {
   Animated,
   TouchableWithoutFeedback,
   Platform,
+  StyleSheet,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -28,7 +29,7 @@ export default function AdminUsers() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  // === TOAST (diseño igual al del Login) ===
+  // === TOAST (igual al login) ===
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -45,9 +46,7 @@ export default function AdminUsers() {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
-      }).start(() =>
-        setToast({ visible: false, type: "", message: "" })
-      );
+      }).start(() => setToast({ visible: false, type: "", message: "" }));
     }, 3000);
   };
 
@@ -65,14 +64,14 @@ export default function AdminUsers() {
     setConfirmVisible(false);
   };
 
-  // === OBTENER SESIÓN ===
+  // === SESIÓN ===
   const getSession = async () => {
     try {
       if (Platform.OS === "web") {
         return JSON.parse(localStorage.getItem("USER_SESSION"));
       } else {
-        const sessionString = await AsyncStorage.getItem("USER_SESSION");
-        return sessionString ? JSON.parse(sessionString) : null;
+        const s = await AsyncStorage.getItem("USER_SESSION");
+        return s ? JSON.parse(s) : null;
       }
     } catch {
       return null;
@@ -93,10 +92,10 @@ export default function AdminUsers() {
         },
       });
 
-      if (!res.ok) throw new Error("Error al cargar los usuarios");
+      if (!res.ok) throw new Error("Error al cargar usuarios");
       const data = await res.json();
       setUsers(data);
-    } catch (err) {
+    } catch {
       showToast("error", "⚠️ No se pudieron cargar los usuarios");
     }
   };
@@ -124,16 +123,14 @@ export default function AdminUsers() {
 
       const res = await fetch(`${API_URL}/${userToDelete}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.ok) throw new Error("Error al eliminar usuario");
       setUsers((prev) => prev.filter((u) => u._id !== userToDelete));
       closeConfirmModal();
       showToast("success", "🗑️ Usuario eliminado correctamente");
-    } catch (err) {
+    } catch {
       closeConfirmModal();
       showToast("error", "❌ Error al eliminar el usuario");
     }
@@ -157,276 +154,167 @@ export default function AdminUsers() {
     }
   };
 
+  // === CABECERA ADMIN IGUAL QUE CULTURA ===
+  const renderAdminTopBar = () => (
+    <View style={styles.topBar}>
+      {/* Perfil Admin */}
+      <View style={styles.adminInfo}>
+        <View style={styles.adminIconContainer}>
+          <Image
+            source={require("../assets/iconos/user.png")}
+            style={styles.userIcon}
+          />
+          <Image
+            source={require("../assets/iconos/corona.png")}
+            style={styles.crownIcon}
+          />
+        </View>
+        <View>
+          <Text style={styles.adminTitle}>Admin.</Text>
+          <Text style={styles.adminName}>{adminName}</Text>
+        </View>
+      </View>
+
+      {/* Iconos derecha */}
+      <View style={styles.iconRow}>
+        <Pressable onPress={goToNotifications} style={styles.iconButton}>
+          <Image
+            source={require("../assets/iconos/bell2.png")}
+            style={styles.topIcon}
+          />
+        </Pressable>
+        <Pressable onPress={goToCalendar} style={styles.iconButton}>
+          <Image
+            source={require("../assets/iconos/calendar-admin.png")}
+            style={styles.topIcon}
+          />
+        </Pressable>
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={
+              menuVisible
+                ? require("../assets/iconos/close-admin.png")
+                : require("../assets/iconos/menu-admin.png")
+            }
+            style={styles.topIcon}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  // === MENÚ LATERAL ===
+  const renderAdminMenu = () =>
+    Platform.OS === "web" &&
+    menuVisible && (
+      <>
+        <TouchableWithoutFeedback onPress={toggleMenu}>
+          <View style={styles.overlay} />
+        </TouchableWithoutFeedback>
+        <Animated.View
+          style={[
+            styles.sideMenu,
+            { transform: [{ translateX: menuAnim }] },
+          ]}
+        >
+          {[
+            { label: "Perfil", action: goToProfile },
+            { label: "Cultura e Historia", action: goToCulturaHistoria },
+            { label: "Ver usuarios", action: () => {} },
+            { label: "Contacto", action: goToContact },
+          ].map((item, i) => (
+            <Pressable
+              key={i}
+              onPress={() => {
+                toggleMenu();
+                item.action();
+              }}
+              style={{ marginBottom: 25 }}
+            >
+              <Text style={styles.menuItem}>{item.label}</Text>
+            </Pressable>
+          ))}
+        </Animated.View>
+      </>
+    );
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
+      {renderAdminTopBar()}
+      {renderAdminMenu()}
 
-      {/* === MODAL PERSONALIZADO DE CONFIRMACIÓN === */}
+      {/* === CONTENIDO === */}
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          alignItems: "center",
+          justifyContent: "flex-start",
+          paddingVertical: 40,
+        }}
+      >
+        <Text style={styles.title}>Usuarios</Text>
+
+        <View style={styles.userContainer}>
+          <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator>
+            {users.length > 0 ? (
+              users.map((u) => (
+                <View key={u._id} style={styles.userCard}>
+                  <Text style={styles.userName}>{u.name}</Text>
+                  <Pressable onPress={() => openConfirmModal(u._id)}>
+                    <Image
+                      source={require("../assets/iconos/papelera.png")}
+                      style={styles.trashIcon}
+                    />
+                  </Pressable>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noUsers}>No hay usuarios registrados.</Text>
+            )}
+          </ScrollView>
+        </View>
+      </ScrollView>
+
+      {/* === MODAL DE CONFIRMACIÓN === */}
       {confirmVisible && (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 200,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: "#fff",
-              padding: 25,
-              borderRadius: 15,
-              width: 320,
-              alignItems: "center",
-              shadowColor: "#000",
-              shadowOpacity: 0.25,
-              shadowRadius: 6,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "600",
-                color: "#014869",
-                textAlign: "center",
-                marginBottom: 20,
-              }}
-            >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalText}>
               ¿Seguro que deseas eliminar este usuario?
             </Text>
-
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                width: "80%",
-              }}
-            >
-              <Pressable
-                onPress={closeConfirmModal}
-                style={{
-                  backgroundColor: "#ccc",
-                  paddingVertical: 8,
-                  paddingHorizontal: 20,
-                  borderRadius: 8,
-                }}
-              >
-                <Text style={{ color: "#333", fontWeight: "bold" }}>Cancelar</Text>
+            <View style={styles.modalButtons}>
+              <Pressable onPress={closeConfirmModal} style={styles.cancelButton}>
+                <Text style={{ color: "#333", fontWeight: "bold" }}>
+                  Cancelar
+                </Text>
               </Pressable>
-
-              <Pressable
-                onPress={handleDelete}
-                style={{
-                  backgroundColor: "#e74c3c",
-                  paddingVertical: 8,
-                  paddingHorizontal: 20,
-                  borderRadius: 8,
-                }}
-              >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>Eliminar</Text>
+              <Pressable onPress={handleDelete} style={styles.deleteButton}>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  Eliminar
+                </Text>
               </Pressable>
             </View>
           </View>
         </View>
       )}
 
-      {/* === BARRA SUPERIOR === */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: 16,
-          borderBottomWidth: 1,
-          borderColor: "#eee",
-        }}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ marginRight: 6 }}>👑</Text>
-          <Text>Admin. {adminName}</Text>
-        </View>
-
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <Pressable onPress={goToCalendar} style={{ marginRight: 6 }}>
-            <Image
-              source={require("../assets/iconos/calendar-admin.png")}
-              style={{ width: 26, height: 26 }}
-            />
-          </Pressable>
-
-          <Pressable onPress={goToNotifications} style={{ marginRight: 6 }}>
-            <Image
-              source={require("../assets/iconos/bell2.png")}
-              style={{ width: 24, height: 24 }}
-            />
-          </Pressable>
-
-          <Pressable onPress={toggleMenu}>
-            <Image
-              source={
-                menuVisible
-                  ? require("../assets/iconos/close-admin.png")
-                  : require("../assets/iconos/menu-admin.png")
-              }
-              style={{ width: 26, height: 26 }}
-            />
-          </Pressable>
-        </View>
-      </View>
-
-      {/* === MENÚ LATERAL WEB === */}
-      {Platform.OS === "web" && menuVisible && (
-        <>
-          <TouchableWithoutFeedback onPress={toggleMenu}>
-            <View
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                zIndex: 9,
-              }}
-            />
-          </TouchableWithoutFeedback>
-
-          <Animated.View
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: 250,
-              height: "100%",
-              backgroundColor: "#f8f8f8",
-              padding: 20,
-              zIndex: 10,
-              transform: [{ translateX: menuAnim }],
-            }}
-          >
-            {[
-              { label: "Perfil", action: goToProfile },
-              { label: "Cultura e Historia", action: goToCulturaHistoria },
-              { label: "Ver usuarios", route: "AdminUsers" },
-              { label: "Contacto", action: goToContact },
-            ].map((item, i) => (
-              <Pressable
-                key={i}
-                onPress={() => {
-                  toggleMenu();
-                  if (item.action) item.action();
-                  else if (item.route) navigation.navigate(item.route);
-                }}
-                style={{ marginBottom: 25 }}
-              >
-                <Text
-                  style={{
-                    color: "#014869",
-                    fontSize: 18,
-                    fontWeight: "700",
-                  }}
-                >
-                  {item.label}
-                </Text>
-              </Pressable>
-            ))}
-          </Animated.View>
-        </>
-      )}
-
-      {/* === LISTADO DE USUARIOS === */}
-      <ScrollView
-        contentContainerStyle={{
-          padding: 20,
-          alignItems: "center",
-          paddingBottom: 100,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 22,
-            fontWeight: "bold",
-            color: "#014869",
-            marginBottom: 20,
-          }}
-        >
-          Usuarios
-        </Text>
-
-        {users.length > 0 ? (
-          users.map((u) => (
-            <View
-              key={u._id}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                width: "60%",
-                backgroundColor: "#014869",
-                paddingVertical: 10,
-                paddingHorizontal: 20,
-                borderRadius: 30,
-                marginBottom: 15,
-                shadowColor: "#000",
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-              }}
-            >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>{u.name}</Text>
-
-              <Pressable onPress={() => openConfirmModal(u._id)}>
-                <Image
-                  source={require("../assets/iconos/papelera.png")}
-                  style={{ width: 22, height: 22, tintColor: "#fff" }}
-                />
-              </Pressable>
-            </View>
-          ))
-        ) : (
-          <Text style={{ color: "#777", marginTop: 40 }}>
-            No hay usuarios registrados.
-          </Text>
-        )}
-      </ScrollView>
-
-      {/* === TOAST (DISEÑO IGUAL AL LOGIN) === */}
+      {/* === TOAST === */}
       {toast.visible && (
         <Animated.View
-          style={{
-            position: "absolute",
-            bottom: 40,
-            left: "5%",
-            right: "5%",
-            backgroundColor:
-              toast.type === "success" ? "#4CAF50" : "#E74C3C",
-            paddingVertical: 14,
-            paddingHorizontal: 18,
-            borderRadius: 12,
-            shadowColor: "#000",
-            shadowOpacity: 0.3,
-            shadowRadius: 6,
-            elevation: 5,
-            opacity: fadeAnim,
-          }}
+          style={[
+            styles.toast,
+            {
+              backgroundColor:
+                toast.type === "success" ? "#4CAF50" : "#E74C3C",
+              opacity: fadeAnim,
+            },
+          ]}
         >
-          <Text
-            style={{
-              color: "#fff",
-              fontWeight: "700",
-              textAlign: "center",
-              fontSize: 15,
-            }}
-          >
-            {toast.message}
-          </Text>
+          <Text style={styles.toastText}>{toast.message}</Text>
         </Animated.View>
       )}
 
-      {/* === FOOTER === */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAboutUs}
@@ -437,3 +325,167 @@ export default function AdminUsers() {
     </View>
   );
 }
+
+// === ESTILOS ===
+const styles = StyleSheet.create({
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
+  },
+  adminInfo: { flexDirection: "row", alignItems: "center" },
+  adminIconContainer: {
+    position: "relative",
+    marginRight: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#0094A2",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  userIcon: { width: 24, height: 24, tintColor: "#fff" },
+  crownIcon: {
+    position: "absolute",
+    top: -12,
+    left: -6,
+    width: 22,
+    height: 22,
+    resizeMode: "contain",
+  },
+  adminTitle: { color: "#014869", fontWeight: "700", fontSize: 14 },
+  adminName: { color: "#6c757d", fontSize: 13 },
+  iconRow: { flexDirection: "row", alignItems: "center" },
+  iconButton: { marginRight: 20 },
+  topIcon: { width: 22, height: 22, tintColor: "#0094A2" },
+
+  // Contenedor principal de usuarios
+  userContainer: {
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+    padding: 20,
+    width: "90%",
+    maxWidth: 1300,
+    alignSelf: "center",
+    boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+    marginTop: 20
+  },
+  userCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#014869",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    marginBottom: 12,
+  },
+  userName: { color: "#fff", fontWeight: "bold", fontSize: 15 },
+  trashIcon: { width: 22, height: 22, tintColor: "#fff" },
+  noUsers: { color: "#666", textAlign: "center", marginTop: 20 },
+
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#014869",
+  },
+
+  // Menú lateral
+  sideMenu: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: 250,
+    height: "100%",
+    backgroundColor: "#f8f8f8",
+    padding: 20,
+    zIndex: 10,
+  },
+  menuItem: { color: "#014869", fontSize: 18, fontWeight: "700" },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    zIndex: 9,
+  },
+
+  // Modal
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 200,
+  },
+  modalBox: {
+    backgroundColor: "#fff",
+    padding: 25,
+    borderRadius: 15,
+    width: 320,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+  },
+  modalText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#014869",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "80%",
+  },
+  cancelButton: {
+    backgroundColor: "#ccc",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  deleteButton: {
+    backgroundColor: "#e74c3c",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+
+  // Toast
+    // Toast
+  toast: {
+    position: "absolute",
+    bottom: 100, // 🔼 antes 40 → ahora más arriba para no tapar el footer
+    left: "5%",
+    right: "5%",
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  toastText: {
+    color: "#fff",
+    fontWeight: "700",
+    textAlign: "center",
+    fontSize: 15,
+  },
+  toastText: {
+    color: "#fff",
+    fontWeight: "700",
+    textAlign: "center",
+    fontSize: 15,
+  },
+});

@@ -1,3 +1,4 @@
+// frontend/src/screens/AdminProfile.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -9,6 +10,7 @@ import {
   Platform,
   Animated,
   TouchableWithoutFeedback,
+  ScrollView,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -25,7 +27,7 @@ export default function AdminProfile() {
   const [form, setForm] = useState({ name: "", email: "" });
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
-  const [adminName, setAdminName] = useState("Administrador");
+  const [adminName, setAdminName] = useState("Admin");
 
   // === Cargar usuario logueado ===
   useEffect(() => {
@@ -76,7 +78,10 @@ export default function AdminProfile() {
         })
       );
 
-      Alert.alert("✅ Guardado", "Tu perfil ha sido actualizado correctamente.");
+      Alert.alert(
+        "✅ Guardado",
+        "Tu perfil ha sido actualizado correctamente."
+      );
       setEditing(false);
       setAdminName(updatedUser.name);
     } catch (err) {
@@ -84,11 +89,22 @@ export default function AdminProfile() {
       Alert.alert("Error", err.message);
     }
   };
-
   // === Cerrar sesión ===
-  const handleLogout = () => {
-    localStorage.removeItem("USER_SESSION");
-    navigation.navigate("Intro");
+  const handleLogout = async () => {
+    try {
+      // 🔹 Eliminar datos de sesión y flag del intro
+      localStorage.removeItem("USER_SESSION");
+      localStorage.removeItem("SEEN_INTRO");
+
+      // 🔹 Reiniciar navegación completamente (sin volver atrás)
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Intro" }],
+      });
+    } catch (err) {
+      console.error("Error cerrando sesión:", err);
+      Alert.alert("Error", "No se pudo cerrar sesión correctamente.");
+    }
   };
 
   // === Navegaciones ===
@@ -124,52 +140,99 @@ export default function AdminProfile() {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* === Barra superior (como en Admin.js) === */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
-          padding: 16,
+          paddingHorizontal: 24,
+          paddingVertical: 14,
           justifyContent: "space-between",
-          borderBottomWidth: 1,
-          borderColor: "#eee",
+          backgroundColor: "#fff",
         }}
       >
+        {/* Usuario */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ marginRight: 6 }}>👑</Text>
-          <Text>Admin. {adminName}</Text>
+          <View
+            style={{
+              position: "relative",
+              marginRight: 12,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: "#0094A2",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/user.png")}
+              style={{ width: 24, height: 24, tintColor: "#fff" }}
+            />
+            <Image
+              source={require("../assets/iconos/corona.png")}
+              style={{
+                position: "absolute",
+                top: -12,
+                left: -6,
+                width: 22,
+                height: 22,
+                resizeMode: "contain",
+              }}
+            />
+          </View>
+          <View>
+            <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+              Admin.
+            </Text>
+            <Text style={{ color: "#6c757d", fontSize: 13 }}>{adminName}</Text>
+          </View>
         </View>
 
-        {/* === Iconos de la derecha === */}
+        {/* Iconos derecha */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {/* 📅 CALENDARIO */}
-          <Pressable onPress={goToCalendar} style={{ marginRight: 10 }}>
+          <Pressable
+            onPress={goToNotifications}
+            style={{
+              marginRight: 20,
+              ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+            }}
+          >
             <Image
-              source={require("../assets/iconos/calendar-admin.png")}
-              style={{ width: 26, height: 26 }}
+              source={require("../assets/iconos/bell2.png")}
+              style={{ width: 22, height: 22, tintColor: "#0094A2" }}
             />
           </Pressable>
 
-          {/* 🔔 NOTIFICACIONES */}
-          <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
-            <Image source={require("../assets/iconos/bell2.png")} />
+          <Pressable
+            onPress={goToCalendar}
+            style={{
+              marginRight: 20,
+              ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/calendar-admin.png")}
+              style={{ width: 22, height: 22, tintColor: "#0094A2" }}
+            />
           </Pressable>
 
-          {/* ☰ MENÚ */}
-          <Pressable onPress={toggleMenu}>
+          <Pressable
+            onPress={toggleMenu}
+            style={Platform.OS === "web" ? { cursor: "pointer" } : {}}
+          >
             <Image
               source={
                 menuVisible
                   ? require("../assets/iconos/close-admin.png")
                   : require("../assets/iconos/menu-admin.png")
               }
-              style={{ width: 26, height: 26 }}
+              style={{ width: 24, height: 24, tintColor: "#0094A2" }}
             />
           </Pressable>
         </View>
       </View>
 
-      {/* === Menú lateral === */}
+      {/* === MENÚ LATERAL === */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -227,86 +290,153 @@ export default function AdminProfile() {
         </>
       )}
 
-      {/* === Contenido principal === */}
-      <View style={{ flex: 1, alignItems: "center", paddingTop: 30 }}>
-        <Text style={{ fontSize: 22, fontWeight: "bold", marginBottom: 20 }}>
-          Perfil
-        </Text>
-
-        <Image
-          source={require("../assets/iconos/user.png")}
+      {/* === CONTENIDO PERFIL === */}
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          alignItems: "center",
+          justifyContent: "flex-start", // 🔹 sube el contenido
+          paddingVertical: 65, // 🔹 menos espacio arriba y abajo
+          backgroundColor: "#fff",
+        }}
+      >
+        <View
           style={{
-            width: 60,
-            height: 60,
-            tintColor: "#014869",
-            marginBottom: 20,
+            backgroundColor: "#f5f5f5",
+            borderRadius: 8,
+            width: "90%",
+            maxWidth: 420,
+            paddingVertical: 20, // 🔹 menos alto el recuadro
+            alignItems: "center",
+            shadowColor: "#000",
+            shadowOpacity: 0.1,
+            shadowRadius: 5,
+            marginTop: 30, // 🔹 un poco más cerca del encabezado
           }}
-        />
-
-        <View style={{ width: "80%", maxWidth: 400 }}>
-          <Text>Username:</Text>
-          <TextInput
-            editable={editing}
-            value={form.name}
-            onChangeText={(t) => setForm({ ...form, name: t })}
+        >
+          {/* 🔹 TÍTULO PERFIL ENCIMA DEL ICONO */}
+          <Text
             style={{
-              borderWidth: 1,
-              borderColor: "#ccc",
-              borderRadius: 10,
-              padding: 8,
+              fontSize: 20,
+              fontWeight: "bold",
+              color: "#014869",
               marginBottom: 15,
             }}
-          />
+          >
+            Perfil
+          </Text>
 
-          <Text>Email:</Text>
-          <TextInput
-            editable={editing}
-            value={form.email}
-            onChangeText={(t) => setForm({ ...form, email: t })}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ccc",
-              borderRadius: 10,
-              padding: 8,
-              marginBottom: 25,
-            }}
-          />
-
+          {/* ICONO DE USUARIO CON CORONA */}
           <View
             style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
+              position: "relative",
+              width: 70,
+              height: 70,
+              borderRadius: 35,
+              backgroundColor: "#0094A2",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 20,
             }}
           >
-            <Pressable
-              onPress={() => (editing ? handleSave() : setEditing(true))}
+            <Image
+              source={require("../assets/iconos/user.png")}
+              style={{ width: 36, height: 36, tintColor: "#fff" }}
+            />
+            <Image
+              source={require("../assets/iconos/corona.png")}
               style={{
-                backgroundColor: "#014869",
-                paddingVertical: 10,
-                paddingHorizontal: 20,
-                borderRadius: 20,
+                position: "absolute",
+                top: -14,
+                left: -4,
+                width: 26,
+                height: 26,
+                resizeMode: "contain",
               }}
-            >
-              <Text style={{ color: "#fff" }}>
-                {editing ? "Guardar" : "Editar"}
-              </Text>
-            </Pressable>
+            />
+          </View>
 
-            <Pressable
-              onPress={handleLogout}
+          <View style={{ width: "80%" }}>
+            <Text
+              style={{ fontWeight: "bold", color: "#014869", marginBottom: 5 }}
+            >
+              Username:
+            </Text>
+            <TextInput
+              editable={editing}
+              value={form.name}
+              onChangeText={(t) => setForm({ ...form, name: t })}
               style={{
-                backgroundColor: "#444",
-                paddingVertical: 10,
-                paddingHorizontal: 20,
+                backgroundColor: "#fff",
                 borderRadius: 20,
+                paddingVertical: 8,
+                paddingHorizontal: 14,
+                marginBottom: 15,
+                borderWidth: 1,
+                borderColor: "#ddd",
+              }}
+            />
+
+            <Text
+              style={{ fontWeight: "bold", color: "#014869", marginBottom: 5 }}
+            >
+              Email:
+            </Text>
+            <TextInput
+              editable={editing}
+              value={form.email}
+              onChangeText={(t) => setForm({ ...form, email: t })}
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: 20,
+                paddingVertical: 8,
+                paddingHorizontal: 14,
+                marginBottom: 25,
+                borderWidth: 1,
+                borderColor: "#ddd",
+              }}
+            />
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-around",
+                marginTop: 10,
               }}
             >
-              <Text style={{ color: "#fff" }}>Cerrar Sesión</Text>
-            </Pressable>
+              <Pressable
+                onPress={() => (editing ? handleSave() : setEditing(true))}
+                style={{
+                  backgroundColor: "#014869",
+                  paddingVertical: 10,
+                  paddingHorizontal: 25,
+                  borderRadius: 30,
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  {editing ? "Guardar" : "Editar"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleLogout}
+                style={{
+                  backgroundColor: "#014869",
+                  paddingVertical: 10,
+                  paddingHorizontal: 25,
+                  borderRadius: 30,
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  Cerrar Sesión
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
 
+      {/* === FOOTER === */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAboutUs}

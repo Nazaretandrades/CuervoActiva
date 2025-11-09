@@ -9,6 +9,7 @@ import {
   Animated,
   TouchableWithoutFeedback,
   Pressable,
+  StyleSheet,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -69,7 +70,10 @@ export default function Condiciones({ navigation }) {
 
   /** === Alternar menú lateral === */
   const toggleMenu = () => {
-    if (Platform.OS !== "web") return;
+    if (Platform.OS !== "web") {
+      setMenuVisible(!menuVisible);
+      return;
+    }
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
@@ -86,203 +90,225 @@ export default function Condiciones({ navigation }) {
     }
   };
 
-  /** === Cabecera superior === */
-  const renderTopBar = () => {
-    // === ADMIN ===
-    if (Platform.OS === "web" && role === "admin") {
-      return (
+  /** === CABECERA USUARIO NORMAL === */
+  const renderUserTopBar = () => (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 24,
+        paddingVertical: 14,
+        justifyContent: "space-between",
+        backgroundColor: "#fff",
+      }}
+    >
+      {/* Perfil Usuario */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
-            flexDirection: "row",
+            position: "relative",
+            marginRight: 12,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: "#014869",
             alignItems: "center",
-            justifyContent: "space-between",
-            padding: 16,
-            borderBottomWidth: 1,
-            borderColor: "#eee",
+            justifyContent: "center",
           }}
         >
-          <Text>👑 Admin. {userName}</Text>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-            <Pressable onPress={goToCalendar}>
-              <Image
-                source={require("../assets/iconos/calendar-admin.png")}
-                style={{ width: 26, height: 26 }}
-              />
-            </Pressable>
-            <Pressable onPress={goToNotifications}>
-              <Image
-                source={require("../assets/iconos/bell2.png")}
-                style={{ width: 24, height: 24 }}
-              />
-            </Pressable>
-            <Pressable onPress={toggleMenu}>
-              <Image
-                source={
-                  menuVisible
-                    ? require("../assets/iconos/close-admin.png")
-                    : require("../assets/iconos/menu-admin.png")
-                }
-                style={{ width: 26, height: 26 }}
-              />
-            </Pressable>
-          </View>
+          <Image
+            source={require("../assets/iconos/user.png")}
+            style={{ width: 24, height: 24, tintColor: "#fff" }}
+          />
         </View>
-      );
-    }
-
-    // === ORGANIZADOR ===
-    if (Platform.OS === "web" && role === "organizer") {
-      return (
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            paddingHorizontal: 24,
-            paddingVertical: 14,
-            borderBottomWidth: 1,
-            borderColor: "#eee",
-          }}
-        >
-          <Text style={{ fontWeight: "600", color: "#014869" }}>
-            👤 {userName}
+        <View>
+          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+            Usuario
           </Text>
-
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-            <Pressable onPress={goToCalendar}>
-              <Image
-                source={require("../assets/iconos/calendar-organizador.png")}
-                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
-              />
-            </Pressable>
-            <Pressable onPress={goToNotifications}>
-              <Image
-                source={require("../assets/iconos/bell.png")}
-                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
-              />
-            </Pressable>
-            <Pressable onPress={toggleMenu}>
-              <Image
-                source={
-                  menuVisible
-                    ? require("../assets/iconos/close-organizador.png")
-                    : require("../assets/iconos/menu-usuario.png")
-                }
-                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
-              />
-            </Pressable>
-          </View>
+          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
         </View>
-      );
-    }
+      </View>
 
-    // === USUARIO NORMAL ===
-    return (
+      {/* Iconos derecha */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+          <Image
+            source={require("../assets/iconos/bell.png")}
+            style={{ width: 22, height: 22, tintColor: "#014869" }}
+          />
+        </Pressable>
+
+        {Platform.OS === "web" && (
+          <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+            <Image
+              source={require("../assets/iconos/calendar.png")}
+              style={{ width: 22, height: 22, tintColor: "#014869" }}
+            />
+          </Pressable>
+        )}
+
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={
+              menuVisible
+                ? require("../assets/iconos/close.png")
+                : require("../assets/iconos/menu-usuario.png")
+            }
+            style={{ width: 24, height: 24, tintColor: "#014869" }}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  /** === CABECERA ADMIN IGUAL A CONTACTO === */
+  const renderAdminTopBar = () => (
+    <View style={styles.topBar}>
+      <View style={styles.adminInfo}>
+        <View style={styles.adminIconContainer}>
+          <Image
+            source={require("../assets/iconos/user.png")}
+            style={styles.userIcon}
+          />
+          <Image
+            source={require("../assets/iconos/corona.png")}
+            style={styles.crownIcon}
+          />
+        </View>
+        <View>
+          <Text style={styles.adminTitle}>Admin.</Text>
+          <Text style={styles.adminName}>{userName}</Text>
+        </View>
+      </View>
+
+      <View style={styles.iconRow}>
+        <Pressable onPress={goToNotifications} style={styles.iconButton}>
+          <Image
+            source={require("../assets/iconos/bell2.png")}
+            style={styles.topIcon}
+          />
+        </Pressable>
+        <Pressable onPress={goToCalendar} style={styles.iconButton}>
+          <Image
+            source={require("../assets/iconos/calendar-admin.png")}
+            style={styles.topIcon}
+          />
+        </Pressable>
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={
+              menuVisible
+                ? require("../assets/iconos/close-admin.png")
+                : require("../assets/iconos/menu-admin.png")
+            }
+            style={styles.topIcon}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  /** === CABECERA ORGANIZADOR IGUAL A CULTURAHISTORIA === */
+  const renderOrganizerTopBar = () =>
+    role === "organizer" && (
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
           paddingHorizontal: 24,
           paddingVertical: 14,
-          borderBottomWidth: 1,
-          borderColor: "#eee",
+          justifyContent: "space-between",
+          backgroundColor: "#fff",
         }}
       >
-        <Text style={{ fontWeight: "600", color: "#014869" }}>
-          👤 {userName}
-        </Text>
-
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-          {/* CALENDARIO */}
-          <Pressable onPress={goToCalendar}>
+        {/* Perfil organizador */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View
+            style={{
+              position: "relative",
+              marginRight: 12,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: "#F3B23F",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <Image
-              source={require("../assets/iconos/calendar.png")}
-              style={{ width: 26, height: 26, tintColor: "#014869" }}
+              source={require("../assets/iconos/user.png")}
+              style={{ width: 24, height: 24, tintColor: "#fff" }}
+            />
+            <Image
+              source={require("../assets/iconos/lapiz.png")}
+              style={{
+                position: "absolute",
+                top: -4,
+                left: -4,
+                width: 22,
+                height: 22,
+                resizeMode: "contain",
+                transform: [{ rotate: "-25deg" }],
+              }}
+            />
+          </View>
+          <View>
+            <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+              Organiz.
+            </Text>
+            <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+          </View>
+        </View>
+
+        {/* Iconos derecha */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+            <Image
+              source={require("../assets/iconos/bell3.png")}
+              style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
             />
           </Pressable>
 
-          {/* NOTIFICACIONES */}
-          <Pressable onPress={goToNotifications}>
-            <Image
-              source={require("../assets/iconos/bell.png")}
-              style={{ width: 26, height: 26, tintColor: "#014869" }}
-            />
-          </Pressable>
+          {Platform.OS === "web" && (
+            <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+              <Image
+                source={require("../assets/iconos/calendar-organizador.png")}
+                style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+              />
+            </Pressable>
+          )}
 
-          {/* MENÚ */}
           <Pressable onPress={toggleMenu}>
             <Image
               source={
                 menuVisible
-                  ? require("../assets/iconos/close.png")
-                  : require("../assets/iconos/menu-usuario.png")
+                  ? require("../assets/iconos/close-organizador.png")
+                  : require("../assets/iconos/menu-organizador.png")
               }
-              style={{ width: 26, height: 26, tintColor: "#014869" }}
+              style={{ width: 24, height: 24, tintColor: "#F3B23F" }}
             />
           </Pressable>
         </View>
       </View>
     );
-  };
 
-  /** === Menú lateral === */
-  const renderMenu = () => {
-    if (!menuVisible || Platform.OS !== "web") return null;
-
-    let items = [];
-
-    if (role === "admin") {
-      items = [
-        { label: "Perfil", action: goToProfile },
-        { label: "Cultura e Historia", action: goToCulturaHistoria },
-        { label: "Ver usuarios", action: goToUsers },
-        { label: "Contacto", action: goToContact },
-      ];
-    } else if (role === "organizer") {
-      items = [
-        { label: "Perfil", action: goToProfile },
-        { label: "Cultura e Historia", action: goToCulturaHistoria },
-        { label: "Contacto", action: goToContact },
-      ];
-    } else {
-      items = [
-        { label: "Perfil", action: goToProfile },
-        { label: "Cultura e Historia", action: goToCulturaHistoria },
-        { label: "Ver favoritos", action: () => navigation.navigate("UserFavorites") },
-        { label: "Contacto", action: goToContact },
-      ];
-    }
-
-    return (
+  /** === MENÚ ADMIN IGUAL A CONTACTO === */
+  const renderAdminMenu = () =>
+    Platform.OS === "web" &&
+    menuVisible && (
       <>
         <TouchableWithoutFeedback onPress={toggleMenu}>
-          <View
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              zIndex: 9,
-            }}
-          />
+          <View style={styles.overlay} />
         </TouchableWithoutFeedback>
-
         <Animated.View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: 250,
-            height: "100%",
-            backgroundColor: "#f8f8f8",
-            padding: 20,
-            zIndex: 10,
-            transform: [{ translateX: menuAnim }],
-          }}
+          style={[styles.sideMenu, { transform: [{ translateX: menuAnim }] }]}
         >
-          {items.map((item, i) => (
+          {[
+            { label: "Perfil", action: goToProfile },
+            { label: "Cultura e Historia", action: goToCulturaHistoria },
+            { label: "Ver usuarios", action: goToUsers },
+            { label: "Contacto", action: goToContact },
+          ].map((item, i) => (
             <Pressable
               key={i}
               onPress={() => {
@@ -291,30 +317,127 @@ export default function Condiciones({ navigation }) {
               }}
               style={{ marginBottom: 25 }}
             >
-              <Text
-                style={{
-                  color: "#014869",
-                  fontSize: 16,
-                  fontWeight: "600",
-                }}
-              >
-                {item.label}
-              </Text>
+              <Text style={styles.menuItem}>{item.label}</Text>
             </Pressable>
           ))}
         </Animated.View>
       </>
     );
-  };
 
-  /** === Render principal === */
+  /** === MENÚ ORGANIZADOR IGUAL A CONTACTO === */
+  const renderOrganizerMenuWeb = () =>
+    role === "organizer" &&
+    Platform.OS === "web" &&
+    menuVisible && (
+      <Animated.View
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: 250,
+          height: "100%",
+          backgroundColor: "#f8f8f8",
+          padding: 20,
+          zIndex: 10,
+          transform: [{ translateX: menuAnim }],
+          boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
+        }}
+      >
+        {[
+          { label: "Perfil", action: goToProfile },
+          { label: "Cultura e Historia", action: goToCulturaHistoria },
+          { label: "Contacto", action: goToContact },
+        ].map((item, i) => (
+          <Pressable
+            key={i}
+            onPress={() => {
+              toggleMenu();
+              item.action();
+            }}
+            style={{ marginBottom: 25 }}
+          >
+            <Text
+              style={{
+                color: "#014869",
+                fontSize: 18,
+                fontWeight: "700",
+                cursor: "pointer",
+              }}
+            >
+              {item.label}
+            </Text>
+          </Pressable>
+        ))}
+      </Animated.View>
+    );
+
+  /** === MENÚ USUARIO WEB === */
+  const renderUserMenuWeb = () =>
+    role === "user" &&
+    Platform.OS === "web" &&
+    menuVisible && (
+      <Animated.View
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: 250,
+          height: "100%",
+          backgroundColor: "#f8f8f8",
+          padding: 20,
+          zIndex: 10,
+          transform: [{ translateX: menuAnim }],
+          boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
+        }}
+      >
+        {[
+          { label: "Perfil", action: goToProfile },
+          { label: "Cultura e Historia", action: goToCulturaHistoria },
+          {
+            label: "Ver favoritos",
+            action: () => navigation.navigate("UserFavorites"),
+          },
+          { label: "Contacto", action: goToContact },
+        ].map((item, i) => (
+          <Pressable
+            key={i}
+            onPress={() => {
+              toggleMenu();
+              item.action();
+            }}
+            style={{ marginBottom: 25 }}
+          >
+            <Text
+              style={{
+                color: "#014869",
+                fontSize: 18,
+                fontWeight: "700",
+                cursor: "pointer",
+              }}
+            >
+              {item.label}
+            </Text>
+          </Pressable>
+        ))}
+      </Animated.View>
+    );
+
+  /** === CONTENIDO === */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
-      {renderTopBar()}
-      {renderMenu()}
+      {role === "admin"
+        ? renderAdminTopBar()
+        : role === "organizer"
+        ? renderOrganizerTopBar()
+        : renderUserTopBar()}
 
-      {/* === CONTENIDO PRINCIPAL === */}
+      {role === "admin"
+        ? renderAdminMenu()
+        : role === "organizer"
+        ? renderOrganizerMenuWeb()
+        : renderUserMenuWeb()}
+
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -323,6 +446,7 @@ export default function Condiciones({ navigation }) {
           backgroundColor: "#f9f9f9",
           flexGrow: 1,
           paddingBottom: 120,
+          marginTop: 60,
         }}
       >
         <Text
@@ -453,3 +577,59 @@ export default function Condiciones({ navigation }) {
     </View>
   );
 }
+
+// === ESTILOS ===
+const styles = StyleSheet.create({
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
+  },
+  adminInfo: { flexDirection: "row", alignItems: "center" },
+  adminIconContainer: {
+    position: "relative",
+    marginRight: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#0094A2",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  userIcon: { width: 24, height: 24, tintColor: "#fff" },
+  crownIcon: {
+    position: "absolute",
+    top: -12,
+    left: -6,
+    width: 22,
+    height: 22,
+    resizeMode: "contain",
+  },
+  adminTitle: { color: "#014869", fontWeight: "700", fontSize: 14 },
+  adminName: { color: "#6c757d", fontSize: 13 },
+  iconRow: { flexDirection: "row", alignItems: "center" },
+  iconButton: { marginRight: 20 },
+  topIcon: { width: 22, height: 22, tintColor: "#0094A2" },
+  sideMenu: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: 250,
+    height: "100%",
+    backgroundColor: "#f8f8f8",
+    padding: 20,
+    zIndex: 10,
+  },
+  menuItem: { color: "#014869", fontSize: 18, fontWeight: "700" },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    zIndex: 9,
+  },
+});

@@ -34,8 +34,9 @@ export default function User() {
   const [favorites, setFavorites] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
+  const [hoveredCategory, setHoveredCategory] = useState(null);
 
-  // === Obtener token multiplataforma ===
+  /** === Sesión === */
   const getSessionToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -46,66 +47,51 @@ export default function User() {
         const session = sessionString ? JSON.parse(sessionString) : null;
         return session?.token || null;
       }
-    } catch (err) {
-      console.error("Error leyendo sesión:", err);
+    } catch {
       return null;
     }
   };
 
-  // === Navegaciones ===
+  /** === Navegaciones === */
   const goToProfile = () => {
-    toggleMenu();
+    if (Platform.OS !== "web") toggleMenu();
     navigation.navigate("UserProfile");
   };
-
   const goToAboutUs = () => {
-    toggleMenu();
+    if (Platform.OS !== "web") toggleMenu();
     navigation.navigate("SobreNosotros");
   };
-
   const goToPrivacy = () => {
-    toggleMenu();
+    if (Platform.OS !== "web") toggleMenu();
     navigation.navigate("PoliticaPrivacidad");
   };
-
   const goToConditions = () => {
-    toggleMenu();
+    if (Platform.OS !== "web") toggleMenu();
     navigation.navigate("Condiciones");
   };
-
-  // ✅ MODIFICADA PARA FUNCIONAR CORRECTAMENTE EN MÓVIL
   const goToHome = () => {
-    toggleMenu();
+    if (Platform.OS !== "web") toggleMenu();
     navigation.reset({
       index: 0,
       routes: [{ name: "User" }],
     });
   };
-
   const goToCulturaHistoria = () => {
-    toggleMenu();
+    if (Platform.OS !== "web") toggleMenu();
     navigation.navigate("CulturaHistoria");
   };
-
   const goToContact = () => {
-    toggleMenu();
+    if (Platform.OS !== "web") toggleMenu();
     navigation.navigate("Contacto");
   };
-
   const goToFavorites = () => {
-    toggleMenu();
+    if (Platform.OS !== "web") toggleMenu();
     navigation.navigate("UserFavorites");
   };
+  const goToNotifications = () => navigation.navigate("UserNotifications");
+  const goToCalendar = () => navigation.navigate("Calendar");
 
-  const goToNotifications = () => {
-    navigation.navigate("UserNotifications");
-  };
-
-  const goToCalendar = () => {
-    navigation.navigate("Calendar");
-  };
-
-  // === Obtener nombre del usuario logueado ===
+  /** === Usuario === */
   const getUserName = async () => {
     try {
       let session;
@@ -124,13 +110,12 @@ export default function User() {
         setUserName(session.user.email.split("@")[0]);
       else if (session?.email) setUserName(session.email.split("@")[0]);
       else setUserName("Invitado");
-    } catch (err) {
-      console.error("Error obteniendo usuario:", err);
+    } catch {
       setUserName("Invitado");
     }
   };
 
-  // === Cargar eventos y favoritos ===
+  /** === Cargar datos === */
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -153,7 +138,6 @@ export default function User() {
           }
         }
       } catch (err) {
-        console.error("Error cargando datos:", err);
         if (Platform.OS === "web")
           alert("❌ No se pudieron cargar los eventos o favoritos.");
         else Alert.alert("Error", "No se pudieron cargar los eventos.");
@@ -162,7 +146,7 @@ export default function User() {
     loadData();
   }, []);
 
-  // === Filtro ===
+  /** === Filtro === */
   useEffect(() => {
     let data = events;
     if (selectedCategory !== "all") {
@@ -180,7 +164,7 @@ export default function User() {
     setFiltered(data);
   }, [search, selectedCategory, events]);
 
-  // === Alternar menú lateral ===
+  /** === Menú === */
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -198,12 +182,7 @@ export default function User() {
     }
   };
 
-  // === Navegar al detalle del evento ===
-  const goToEventDetail = (eventId) => {
-    navigation.navigate("UserEventDetail", { eventId });
-  };
-
-  // === Alternar favorito ===
+  /** === Favoritos === */
   const toggleFavorite = async (eventId) => {
     try {
       const token = await getSessionToken();
@@ -214,392 +193,766 @@ export default function User() {
         );
         return;
       }
-
       const isFav = favorites.includes(eventId);
       const method = isFav ? "DELETE" : "POST";
-
       const res = await fetch(`${FAVORITES_URL}/${eventId}`, {
         method,
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (!res.ok) throw new Error("Error al actualizar favoritos");
-
       setFavorites((prev) =>
         isFav ? prev.filter((id) => id !== eventId) : [...prev, eventId]
       );
-    } catch (err) {
-      console.error("Error al cambiar favorito:", err);
+    } catch {
       Alert.alert("Error", "No se pudo actualizar el favorito.");
     }
   };
 
-  return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <Header hideAuthButtons={true} />
+  /** === Cabecera WEB (sin cambios) === */
+  const renderTopBarWeb = () => (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 24,
+        paddingVertical: 14,
+        justifyContent: "space-between",
+        backgroundColor: "#fff",
+      }}
+    >
+      {/* Perfil Usuario */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View
+          style={{
+            position: "relative",
+            marginRight: 12,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: "#014869",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            source={require("../assets/iconos/user.png")}
+            style={{ width: 24, height: 24, tintColor: "#fff" }}
+          />
+        </View>
+        <View>
+          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+            Usuario
+          </Text>
+          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+        </View>
+      </View>
 
-      {/* ====== Barra superior ====== */}
+      {/* Buscador */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
-          padding: 16,
-          justifyContent: "space-between",
+          borderWidth: 1,
+          borderColor: "#014869",
+          borderRadius: 3,
+          paddingHorizontal: 10,
+          backgroundColor: "#fff",
+          width: 700,
+          height: 36,
+          marginHorizontal: 16,
         }}
       >
-        <Text>👤 {userName}</Text>
-
         <TextInput
           placeholder="Buscar eventos..."
           value={search}
           onChangeText={setSearch}
+          placeholderTextColor="#6b6f72"
           style={{
             flex: 1,
-            marginHorizontal: 16,
-            borderWidth: 1,
-            borderColor: "#ccc",
-            paddingHorizontal: 8,
-            height: 36,
-            borderRadius: 6,
+            color: "#014869",
+            fontSize: 14,
+            paddingVertical: 0,
           }}
         />
+        <Image
+          source={require("../assets/iconos/search.png")}
+          style={{ width: 16, height: 16, tintColor: "#014869" }}
+        />
+      </View>
 
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {/* NUEVO: icono calendario a la izquierda */}
-          <Pressable onPress={goToCalendar} style={{ marginHorizontal: 8 }}>
-            <Image
-              source={require("../assets/iconos/calendar.png")}
-              style={{ width: 26, height: 26 }}
-            />
-          </Pressable>
+      {/* Iconos derecha */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+          <Image
+            source={require("../assets/iconos/bell.png")}
+            style={{ width: 22, height: 22, tintColor: "#014869" }}
+          />
+        </Pressable>
 
-          <Pressable
-            onPress={goToNotifications}
-            style={{ marginHorizontal: 8 }}
-          >
-            <Image source={require("../assets/iconos/bell.png")} />
-          </Pressable>
+        <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+          <Image
+            source={require("../assets/iconos/calendar.png")}
+            style={{ width: 22, height: 22, tintColor: "#014869" }}
+          />
+        </Pressable>
 
-          <Pressable onPress={toggleMenu}>
-            <Image
-              source={
-                Platform.OS === "web" && menuVisible
-                  ? require("../assets/iconos/close.png")
-                  : require("../assets/iconos/menu-usuario.png")
-              }
-              style={{ width: 26, height: 26 }}
-            />
-          </Pressable>
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={
+              menuVisible
+                ? require("../assets/iconos/close.png")
+                : require("../assets/iconos/menu-usuario.png")
+            }
+            style={{ width: 24, height: 24, tintColor: "#014869" }}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+  /** === Cabecera MÓVIL — igual que en web: icono, Usuario, nombre, notificaciones y menú === */
+  const renderTopBarMobile = () => (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderColor: "#eee",
+        backgroundColor: "#fff",
+      }}
+    >
+      {/* Perfil Usuario */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View
+          style={{
+            position: "relative",
+            marginRight: 10,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: "#014869",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            source={require("../assets/iconos/user.png")}
+            style={{ width: 24, height: 24, tintColor: "#fff" }}
+          />
+        </View>
+        <View>
+          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+            Usuario
+          </Text>
+          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
         </View>
       </View>
 
-      {/* ====== MENÚ WEB ====== */}
-      {Platform.OS === "web" ? (
-        <>
-          {menuVisible && (
-            <TouchableWithoutFeedback onPress={toggleMenu}>
-              <View
+      {/* Iconos derecha */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        {/* 🔔 Notificaciones */}
+        <Pressable onPress={goToNotifications} style={{ marginRight: 16 }}>
+          <Image
+            source={require("../assets/iconos/bell.png")}
+            style={{ width: 24, height: 24, tintColor: "#014869" }}
+          />
+        </Pressable>
+
+        {/* ☰ Menú */}
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={
+              menuVisible
+                ? require("../assets/iconos/close.png")
+                : require("../assets/iconos/menu-usuario.png")
+            }
+            style={{ width: 26, height: 26, tintColor: "#014869" }}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  /** === Menú lateral web === */
+  /** === Menú lateral web (igual que Organizer.js) === */
+  const renderWebMenu = () =>
+    Platform.OS === "web" &&
+    menuVisible && (
+      <>
+        <Animated.View
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: 250,
+            height: "100%",
+            backgroundColor: "#f8f8f8",
+            padding: 20,
+            zIndex: 10,
+            transform: [{ translateX: menuAnim }],
+            boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
+          }}
+        >
+          {[
+            { label: "Perfil", action: goToProfile },
+            { label: "Cultura e Historia", action: goToCulturaHistoria },
+            { label: "Ver favoritos", action: goToFavorites },
+            { label: "Contacto", action: goToContact },
+          ].map((item, i) => (
+            <Pressable
+              key={i}
+              onPress={() => {
+                toggleMenu();
+                item.action();
+              }}
+              style={{ marginBottom: 25 }}
+            >
+              <Text
                 style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  zIndex: 9,
+                  color: "#014869",
+                  fontSize: 18,
+                  fontWeight: "700",
+                  cursor: "pointer",
                 }}
-              />
-            </TouchableWithoutFeedback>
-          )}
-          <Animated.View
+              >
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+        </Animated.View>
+      </>
+    );
+
+  /** === Menú móvil (idéntico a tu ejemplo) === */
+  const renderMobileMenu = () =>
+    Platform.OS !== "web" &&
+    menuVisible && (
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "#f4f6f7",
+          zIndex: 20,
+          paddingHorizontal: 24,
+          paddingTop: 50,
+        }}
+      >
+        {/* 🔙 Header */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 30,
+          }}
+        >
+          <Pressable onPress={toggleMenu} style={{ marginRight: 15 }}>
+            <Image
+              source={require("../assets/iconos/back-usuario.png")}
+              style={{ width: 22, height: 22, tintColor: "#014869" }}
+            />
+          </Pressable>
+          <Text
             style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: 250,
-              height: "100%",
-              backgroundColor: "#f8f8f8",
-              padding: 20,
-              zIndex: 10,
-              transform: [{ translateX: menuAnim }],
-              elevation: 6,
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
+              fontSize: 18,
+              fontWeight: "bold",
+              color: "#014869",
+              textAlign: "center",
+              flex: 1,
+              marginRight: 37,
             }}
           >
-            {[{ label: "Perfil", action: goToProfile },
-              { label: "Cultura e Historia", action: goToCulturaHistoria },
-              { label: "Ver favoritos", action: goToFavorites },
-              { label: "Contacto", action: goToContact },
-            ].map((item, i) => (
-              <Pressable
-                key={i}
-                onPress={item.action}
-                style={{ marginBottom: 25 }}
-              >
+            Menú
+          </Text>
+        </View>
+
+        {/* Opciones */}
+        <View style={{ flex: 1 }}>
+          {[
+            {
+              label: "Cultura e Historia",
+              icon: require("../assets/iconos/museo-usuario.png"),
+              action: goToCulturaHistoria,
+            },
+            {
+              label: "Sobre nosotros",
+              icon: require("../assets/iconos/info-usuario.png"),
+              action: goToAboutUs,
+            },
+            {
+              label: "Ver favoritos",
+              icon: require("../assets/iconos/favs-usuario.png"),
+              action: goToFavorites,
+            },
+            {
+              label: "Contacto",
+              icon: require("../assets/iconos/phone-usuario.png"),
+              action: goToContact,
+            },
+          ].map((item, index) => (
+            <Pressable
+              key={index}
+              onPress={item.action}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 25,
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Image
+                  source={item.icon}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    tintColor: "#014869",
+                    marginRight: 14,
+                  }}
+                />
                 <Text
-                  style={{ color: "#014869", fontSize: 16, fontWeight: "600" }}
+                  style={{
+                    color: "#014869",
+                    fontSize: 16,
+                    fontWeight: "600",
+                  }}
                 >
                   {item.label}
                 </Text>
-              </Pressable>
-            ))}
-          </Animated.View>
-        </>
-      ) : (
-        menuVisible && (
-          <View
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "#f4f6f7",
-              zIndex: 20,
-              paddingHorizontal: 24,
-              paddingTop: 50,
-            }}
-          >
-            {/* 🔙 Header */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 30,
-              }}
-            >
-              <Pressable onPress={toggleMenu} style={{ marginRight: 15 }}>
-                <Image
-                  source={require("../assets/iconos/back-usuario.png")}
-                  style={{ width: 22, height: 22, tintColor: "#014869" }}
-                />
-              </Pressable>
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: "bold",
-                  color: "#014869",
-                  textAlign: "center",
-                  flex: 1,
-                  marginRight: 37,
-                }}
-              >
-                Menú
-              </Text>
-            </View>
+              </View>
 
-            {/* 🔹 Opciones */}
-            <View style={{ flex: 1 }}>
-              {[{
-                  label: "Cultura e Historia",
-                  icon: require("../assets/iconos/museo-usuario.png"),
-                  action: goToCulturaHistoria,
-                },
-                {
-                  label: "Sobre nosotros",
-                  icon: require("../assets/iconos/info-usuario.png"),
-                  action: goToAboutUs,
-                },
-                {
-                  label: "Ver favoritos",
-                  icon: require("../assets/iconos/favs-usuario.png"),
-                  action: goToFavorites,
-                },
-                {
-                  label: "Contacto",
-                  icon: require("../assets/iconos/phone-usuario.png"),
-                  action: goToContact,
-                },
-              ].map((item, index) => (
-                <Pressable
-                  key={index}
-                  onPress={item.action}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 25,
-                  }}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <Image
-                      source={item.icon}
-                      style={{
-                        width: 22,
-                        height: 22,
-                        tintColor: "#014869",
-                        marginRight: 14,
-                      }}
-                    />
-                    <Text
-                      style={{
-                        color: "#014869",
-                        fontSize: 16,
-                        fontWeight: "600",
-                      }}
-                    >
-                      {item.label}
-                    </Text>
-                  </View>
-
-                  <Image
-                    source={require("../assets/iconos/siguiente.png")}
-                    style={{ width: 18, height: 18, tintColor: "#014869" }}
-                  />
-                </Pressable>
-              ))}
-            </View>
-
-            {/* 🔸 Barra inferior */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-around",
-                alignItems: "center",
-                borderTopWidth: 1,
-                borderTopColor: "#01486933",
-                paddingVertical: 14,
-              }}
-            >
-              <Pressable onPress={goToHome}>
-                <Image
-                  source={require("../assets/iconos/home-usuario.png")}
-                  style={{ width: 22, height: 22, tintColor: "#014869" }}
-                />
-              </Pressable>
-              <Pressable onPress={goToCalendar}>
-                <Image
-                  source={require("../assets/iconos/calendar.png")}
-                  style={{ width: 22, height: 22, tintColor: "#014869" }}
-                />
-              </Pressable>
-              {/* ✅ NUEVO: icono perfil que lleva a UserProfile */}
-              <Pressable onPress={goToProfile}>
-                <Image
-                  source={require("../assets/iconos/user.png")}
-                  style={{ width: 22, height: 22, tintColor: "#014869" }}
-                />
-              </Pressable>
-            </View>
-          </View>
-        )
-      )}
-
-      {/* ====== Contenido principal ====== */}
-      {/* ... resto igual sin tocar */}
-      <View
-        style={{
-          flex: 1,
-          flexDirection: "row",
-          paddingHorizontal: 16,
-          gap: 16,
-        }}
-      >
-        {/* Categorías */}
-        <View style={{ width: "25%" }}>
-          <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
-            Categorías
-          </Text>
-
-          {[{ label: "Todos", value: "all", color: "#014869" },
-            { label: "Deporte", value: "deporte", color: "#F3B23F" },
-            { label: "Concurso y taller", value: "concurso", color: "#FFD43B" },
-            { label: "Cultura e Historia", value: "cultura", color: "#784BA0" },
-            { label: "Arte y Música", value: "arte", color: "#2BBBAD" },
-            { label: "Fiestas y Tradiciones", value: "fiestas", color: "#E67E22" },
-          ].map((cat, i) => (
-            <Pressable
-              key={i}
-              onPress={() => setSelectedCategory(cat.value)}
-              style={{
-                backgroundColor:
-                  selectedCategory === cat.value ? cat.color : `${cat.color}33`,
-                paddingVertical: 10,
-                borderRadius: 8,
-                marginBottom: 10,
-                alignItems: "center",
-              }}
-            >
-              <Text
-                style={{
-                  color: selectedCategory === cat.value ? "#fff" : "#014869",
-                  fontWeight: "bold",
-                }}
-              >
-                {cat.label}
-              </Text>
+              <Image
+                source={require("../assets/iconos/siguiente.png")}
+                style={{ width: 18, height: 18, tintColor: "#014869" }}
+              />
             </Pressable>
           ))}
         </View>
 
-        {/* Eventos */}
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
-            Listado de eventos
-          </Text>
+        {/* Barra inferior */}
+        <View
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            flexDirection: "row",
+            justifyContent: "space-around",
+            alignItems: "center",
+            borderTopWidth: 2, // ← antes era 1
+            borderTopColor: "#01486999", // un poco más visible
+            paddingVertical: 14,
+            backgroundColor: "#fff",
+          }}
+        >
+          <Pressable onPress={goToHome}>
+            <Image
+              source={require("../assets/iconos/home-usuario.png")}
+              style={{ width: 22, height: 22, tintColor: "#014869" }}
+            />
+          </Pressable>
+          <Pressable onPress={goToCalendar}>
+            <Image
+              source={require("../assets/iconos/calendar.png")}
+              style={{ width: 22, height: 22, tintColor: "#014869" }}
+            />
+          </Pressable>
+          <Pressable onPress={goToProfile}>
+            <Image
+              source={require("../assets/iconos/user.png")}
+              style={{ width: 22, height: 22, tintColor: "#014869" }}
+            />
+          </Pressable>
+        </View>
+      </View>
+    );
 
-          <ScrollView>
+  /** === Render === */
+  return (
+    <View style={{ flex: 1, backgroundColor: "#fff", position: "relative" }}>
+      <Header hideAuthButtons />
+      {Platform.OS === "web" ? renderTopBarWeb() : renderTopBarMobile()}
+      {renderWebMenu()}
+      {renderMobileMenu()}
+
+      {/* === CONTENIDO === */}
+      {Platform.OS === "web" ? (
+        /* ====================== WEB (SIN CAMBIOS) ====================== */
+        <View
+          style={{
+            flex: 1,
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 30,
+            paddingVertical: 40,
+            backgroundColor: "#f4f6f7",
+            minHeight: "calc(100vh - 200px)",
+          }}
+        >
+          {/* === CATEGORÍAS === */}
+          <View
+            style={{
+              backgroundColor: "#f4f6f7",
+              padding: 20,
+              borderRadius: 10,
+              width: 300,
+            }}
+          >
+            <Text
+              style={{
+                fontWeight: "bold",
+                marginBottom: 20,
+                color: "#014869",
+                fontSize: 16,
+              }}
+            >
+              Categorías
+            </Text>
+
+            {[
+              { label: "Todos", value: "all", color: "#b0bec5" },
+              {
+                label: "Deporte",
+                value: "deporte",
+                color: "#E67E22",
+                icon: require("../assets/iconos/deporte.png"),
+              },
+              {
+                label: "Concurso y taller",
+                value: "concurso",
+                color: "#F3B23F",
+                icon: require("../assets/iconos/taller.png"),
+              },
+              {
+                label: "Cultura e Historia",
+                value: "cultura",
+                color: "#784BA0",
+                icon: require("../assets/iconos/museo-usuario.png"),
+              },
+              {
+                label: "Arte y Música",
+                value: "arte",
+                color: "#2BBBAD",
+                icon: require("../assets/iconos/arte.png"),
+              },
+            ].map((cat, i) => (
+              <Pressable
+                key={i}
+                onPress={() => setSelectedCategory(cat.value)}
+                onHoverIn={() => setHoveredCategory(cat.value)}
+                onHoverOut={() => setHoveredCategory(null)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  backgroundColor:
+                    hoveredCategory === cat.value
+                      ? cat.color + "cc"
+                      : cat.color,
+                  paddingVertical: 12,
+                  paddingHorizontal: 14,
+                  borderRadius: 8,
+                  marginBottom: 15,
+                  transform:
+                    hoveredCategory === cat.value
+                      ? [{ scale: 1.05 }]
+                      : [{ scale: 1 }],
+                  shadowColor:
+                    hoveredCategory === cat.value ? cat.color : "transparent",
+                  shadowOpacity: hoveredCategory === cat.value ? 0.4 : 0,
+                  shadowRadius: hoveredCategory === cat.value ? 8 : 0,
+                  transitionDuration: "200ms",
+                  elevation: hoveredCategory === cat.value ? 4 : 0,
+                }}
+              >
+                {cat.icon && (
+                  <Image
+                    source={cat.icon}
+                    style={{
+                      width: 20,
+                      height: 20,
+                      tintColor: "#fff",
+                      marginRight: 10,
+                    }}
+                  />
+                )}
+                <Text
+                  style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}
+                >
+                  {cat.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* === LISTADO DE EVENTOS === */}
+          <View
+            style={{
+              backgroundColor: "#f4f6f7",
+              padding: 20,
+              borderRadius: 10,
+              width: 650,
+              flex: 1,
+            }}
+          >
+            <Text
+              style={{
+                fontWeight: "bold",
+                marginBottom: 20,
+                color: "#014869",
+                fontSize: 16,
+              }}
+            >
+              Listado de eventos
+            </Text>
+
+            <ScrollView
+              style={{ maxHeight: 600 }}
+              showsVerticalScrollIndicator={true}
+            >
+              {filtered.length > 0 ? (
+                filtered.map((ev) => {
+                  const isFav = favorites.includes(ev._id);
+                  const bgColor = isFav ? "#2BBBAD" : "#014869";
+                  const iconColor = isFav ? "#2BBBAD" : "#014869";
+                  return (
+                    <View
+                      key={ev._id}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 14,
+                      }}
+                    >
+                      <Pressable
+                        onPress={() =>
+                          navigation.navigate("UserEventDetail", {
+                            eventId: ev._id,
+                          })
+                        }
+                        style={{
+                          flex: 1,
+                          backgroundColor: bgColor,
+                          paddingVertical: 14,
+                          paddingHorizontal: 18,
+                          borderRadius: 6,
+                          marginRight: 10,
+                        }}
+                      >
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            color: "#fff",
+                            fontWeight: "600",
+                            fontSize: 15,
+                          }}
+                        >
+                          {ev.title}
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => toggleFavorite(ev._id)}
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 6,
+                          backgroundColor: iconColor,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Image
+                          source={require("../assets/iconos/marcador.png")}
+                          style={{ width: 18, height: 18, tintColor: "#fff" }}
+                        />
+                      </Pressable>
+                    </View>
+                  );
+                })
+              ) : (
+                <Text
+                  style={{
+                    textAlign: "center",
+                    marginTop: 40,
+                    color: "#777",
+                    fontStyle: "italic",
+                  }}
+                >
+                  {search.trim()
+                    ? "🔍 No se encontraron eventos."
+                    : "📭 No hay eventos disponibles."}
+                </Text>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      ) : (
+        /* ====================== MÓVIL (APP) ====================== */
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingBottom: 30,
+            backgroundColor: "#f4f6f7",
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Categorías */}
+          <View style={{ paddingTop: 16, paddingBottom: 10 }}>
+            <Text
+              style={{
+                fontWeight: "bold",
+                marginBottom: 14,
+                color: "#014869",
+                fontSize: 16,
+              }}
+            >
+              Categorías
+            </Text>
+
+            {[
+              { label: "Todos", value: "all", color: "#b0bec5" },
+              {
+                label: "Deporte",
+                value: "deporte",
+                color: "#E67E22",
+                icon: require("../assets/iconos/deporte.png"),
+              },
+              {
+                label: "Concurso y taller",
+                value: "concurso",
+                color: "#F3B23F",
+                icon: require("../assets/iconos/taller.png"),
+              },
+              {
+                label: "Cultura e Historia",
+                value: "cultura",
+                color: "#784BA0",
+                icon: require("../assets/iconos/museo-usuario.png"),
+              },
+              {
+                label: "Arte y Música",
+                value: "arte",
+                color: "#2BBBAD",
+                icon: require("../assets/iconos/arte.png"),
+              },
+            ].map((cat, i) => (
+              <Pressable
+                key={i}
+                onPress={() => setSelectedCategory(cat.value)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  backgroundColor: cat.color,
+                  paddingVertical: 12,
+                  paddingHorizontal: 14,
+                  borderRadius: 8,
+                  marginBottom: 10,
+                }}
+              >
+                {cat.icon && (
+                  <Image
+                    source={cat.icon}
+                    style={{
+                      width: 20,
+                      height: 20,
+                      tintColor: "#fff",
+                      marginRight: 10,
+                    }}
+                  />
+                )}
+                <Text
+                  style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}
+                >
+                  {cat.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Listado de eventos */}
+          <View style={{ paddingTop: 6 }}>
+            <Text
+              style={{
+                fontWeight: "bold",
+                marginBottom: 14,
+                color: "#014869",
+                fontSize: 16,
+              }}
+            >
+              Listado de eventos
+            </Text>
+
             {filtered.length > 0 ? (
               filtered.map((ev) => {
                 const isFav = favorites.includes(ev._id);
+                const bgColor = isFav ? "#2BBBAD" : "#014869";
+                const iconColor = isFav ? "#2BBBAD" : "#014869";
                 return (
-                  <Pressable
+                  <View
                     key={ev._id}
-                    onPress={() => goToEventDetail(ev._id)}
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      marginBottom: 10,
-                      padding: 10,
-                      backgroundColor: "#f9f9f9",
-                      borderRadius: 8,
-                      borderWidth: 1,
-                      borderColor: isFav ? "#014869" : "#ddd",
+                      marginBottom: 12,
                     }}
                   >
-                    <Text
-                      numberOfLines={1}
+                    <Pressable
+                      onPress={() =>
+                        navigation.navigate("UserEventDetail", {
+                          eventId: ev._id,
+                        })
+                      }
                       style={{
                         flex: 1,
-                        color: isFav ? "#014869" : "#333",
-                        fontWeight: isFav ? "bold" : "500",
-                      }}
-                    >
-                      {ev.title}
-                    </Text>
-
-                    {/* Botón favorito */}
-                    <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(ev._id);
-                      }}
-                      style={{
-                        marginLeft: 10,
-                        paddingHorizontal: 10,
-                        paddingVertical: 6,
-                        borderRadius: 8,
-                        backgroundColor: isFav ? "#014869" : "#E0E0E0",
+                        backgroundColor: bgColor,
+                        paddingVertical: 14,
+                        paddingHorizontal: 18,
+                        borderRadius: 6,
+                        marginRight: 10,
                       }}
                     >
                       <Text
+                        numberOfLines={1}
                         style={{
-                          color: isFav ? "#fff" : "#555",
-                          fontSize: 16,
+                          color: "#fff",
+                          fontWeight: "600",
+                          fontSize: 15,
                         }}
                       >
-                        {isFav ? "★" : "☆"}
+                        {ev.title}
                       </Text>
                     </Pressable>
-                  </Pressable>
+
+                    <Pressable
+                      onPress={() => toggleFavorite(ev._id)}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 6,
+                        backgroundColor: iconColor,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Image
+                        source={require("../assets/iconos/marcador.png")}
+                        style={{ width: 18, height: 18, tintColor: "#fff" }}
+                      />
+                    </Pressable>
+                  </View>
                 );
               })
             ) : (
               <Text
                 style={{
                   textAlign: "center",
-                  marginTop: 40,
+                  marginTop: 20,
+                  marginBottom: 40,
                   color: "#777",
                   fontStyle: "italic",
                 }}
@@ -609,16 +962,28 @@ export default function User() {
                   : "📭 No hay eventos disponibles."}
               </Text>
             )}
-          </ScrollView>
-        </View>
-      </View>
+          </View>
+        </ScrollView>
+      )}
 
+      {/* === FOOTER FIJO EN WEB === */}
       {Platform.OS === "web" && (
-        <Footer
-          onAboutPress={goToAboutUs}
-          onPrivacyPress={goToPrivacy}
-          onConditionsPress={goToConditions}
-        />
+        <View
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: "#fff",
+            zIndex: 100,
+          }}
+        >
+          <Footer
+            onAboutPress={goToAboutUs}
+            onPrivacyPress={goToPrivacy}
+            onConditionsPress={goToConditions}
+          />
+        </View>
       )}
     </View>
   );

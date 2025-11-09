@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, Pressable, Image, Linking } from "react-native";
+import React, { useState } from "react";
+import { View, Text, Pressable, Image, Platform, Linking } from "react-native";
 
 export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress }) {
   // 🌐 Abrir enlaces externos
@@ -11,18 +11,22 @@ export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress
     }
   };
 
+  // Estados de hover (solo web)
+  const [hoveredLink, setHoveredLink] = useState(null);
+  const [hoveredIcon, setHoveredIcon] = useState(null);
+
   return (
     <View
       style={{
         width: "100%",
-        backgroundColor: "#f5f5f5", // Fondo gris suave
+        backgroundColor: "#f5f5f5",
         borderTopWidth: 1,
         borderTopColor: "#ddd",
         paddingVertical: 12,
         paddingHorizontal: 28,
       }}
     >
-      {/* Contenedor principal horizontal */}
+      {/* Contenedor principal */}
       <View
         style={{
           flexDirection: "row",
@@ -43,55 +47,63 @@ export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress
             © 2025 CuervoActiva, Inc.
           </Text>
 
-          {/* ✅ ENLACE ACTIVO A "Privacidad" */}
+          {/* PRIVACIDAD */}
           <Pressable
-            style={{ marginHorizontal: 6 }}
-            onPress={() => {
-              if (onPrivacyPress) {
-                onPrivacyPress(); // Usa la navegación recibida desde el componente padre
-              } else {
-                console.warn(
-                  "⚠️ No se pasó la función onPrivacyPress al Footer. Añádela en el componente padre."
-                );
-              }
-            }}
-          >
-            <Text style={{ color: "#555", fontSize: 12 }}>Privacidad</Text>
-          </Pressable>
-
-          {/* ✅ ENLACE ACTIVO A "Condiciones" */}
-          <Pressable
-            style={{ marginHorizontal: 6 }}
-            onPress={() => {
-              if (onConditionsPress) {
-                onConditionsPress(); // Redirige usando la función pasada desde el padre
-              } else {
-                console.warn(
-                  "⚠️ No se pasó la función onConditionsPress al Footer. Añádela en el componente padre."
-                );
-              }
-            }}
-          >
-            <Text style={{ color: "#555", fontSize: 12 }}>Condiciones</Text>
-          </Pressable>
-
-          {/* ✅ ENLACE ACTIVO A "Sobre Nosotros" */}
-          <Pressable
-            style={{ marginHorizontal: 6 }}
-            onPress={() => {
-              if (onAboutPress) {
-                onAboutPress(); // Usa la navegación recibida desde el componente padre
-              } else {
-                console.warn(
-                  "⚠️ No se pasó la función onAboutPress al Footer. Añádela en el componente padre."
-                );
-              }
-            }}
+            onPress={onPrivacyPress}
+            onHoverIn={() => setHoveredLink("privacidad")}
+            onHoverOut={() => setHoveredLink(null)}
+            style={{ marginHorizontal: 6, cursor: "pointer" }}
           >
             <Text
               style={{
-                color: "#555",
+                color: hoveredLink === "privacidad" ? "#222" : "#555",
                 fontSize: 12,
+                textDecorationLine:
+                  hoveredLink === "privacidad" ? "underline" : "none",
+                textDecorationColor: "#222",
+                transition: "all 0.2s ease-in-out",
+              }}
+            >
+              Privacidad
+            </Text>
+          </Pressable>
+
+          {/* CONDICIONES */}
+          <Pressable
+            onPress={onConditionsPress}
+            onHoverIn={() => setHoveredLink("condiciones")}
+            onHoverOut={() => setHoveredLink(null)}
+            style={{ marginHorizontal: 6, cursor: "pointer" }}
+          >
+            <Text
+              style={{
+                color: hoveredLink === "condiciones" ? "#222" : "#555",
+                fontSize: 12,
+                textDecorationLine:
+                  hoveredLink === "condiciones" ? "underline" : "none",
+                textDecorationColor: "#222",
+                transition: "all 0.2s ease-in-out",
+              }}
+            >
+              Condiciones
+            </Text>
+          </Pressable>
+
+          {/* SOBRE NOSOTROS */}
+          <Pressable
+            onPress={onAboutPress}
+            onHoverIn={() => setHoveredLink("sobre")}
+            onHoverOut={() => setHoveredLink(null)}
+            style={{ marginHorizontal: 6, cursor: "pointer" }}
+          >
+            <Text
+              style={{
+                color: hoveredLink === "sobre" ? "#222" : "#555",
+                fontSize: 12,
+                textDecorationLine:
+                  hoveredLink === "sobre" ? "underline" : "none",
+                textDecorationColor: "#222",
+                transition: "all 0.2s ease-in-out",
               }}
             >
               Sobre Nosotros
@@ -100,12 +112,7 @@ export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress
         </View>
 
         {/* DERECHA — idioma + redes sociales */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-        >
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
           {/* Idioma */}
           <View
             style={{
@@ -126,51 +133,48 @@ export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress
             <Text style={{ color: "#555", fontSize: 12 }}>Español (ES)</Text>
           </View>
 
-          {/* Redes sociales */}
-          <Pressable
-            style={{ marginHorizontal: 6 }}
-            onPress={() => openLink("https://www.facebook.com/cuervoactiva")}
-          >
-            <Image
-              source={require("../assets/iconos/facebook.png")}
+          {/* Redes sociales con hover */}
+          {[
+            {
+              id: "facebook",
+              icon: require("../assets/iconos/facebook.png"),
+              url: "https://www.facebook.com/cuervoactiva",
+            },
+            {
+              id: "twitter",
+              icon: require("../assets/iconos/twitter.png"),
+              url: "https://x.com/cuervoactiva",
+            },
+            {
+              id: "instagram",
+              icon: require("../assets/iconos/instagram.png"),
+              url: "https://www.instagram.com/cuervoactiva",
+            },
+          ].map((item) => (
+            <Pressable
+              key={item.id}
+              onPress={() => openLink(item.url)}
+              onHoverIn={() => setHoveredIcon(item.id)}
+              onHoverOut={() => setHoveredIcon(null)}
               style={{
-                width: 18,
-                height: 18,
-                tintColor: "#444",
-                opacity: 0.8,
+                marginHorizontal: 6,
+                cursor: "pointer",
+                transform:
+                  hoveredIcon === item.id ? [{ scale: 1.15 }] : [{ scale: 1 }],
+                transition: "all 0.2s ease-in-out",
               }}
-            />
-          </Pressable>
-
-          <Pressable
-            style={{ marginHorizontal: 6 }}
-            onPress={() => openLink("https://x.com/cuervoactiva")}
-          >
-            <Image
-              source={require("../assets/iconos/twitter.png")}
-              style={{
-                width: 18,
-                height: 18,
-                tintColor: "#444",
-                opacity: 0.8,
-              }}
-            />
-          </Pressable>
-
-          <Pressable
-            style={{ marginLeft: 6 }}
-            onPress={() => openLink("https://www.instagram.com/cuervoactiva")}
-          >
-            <Image
-              source={require("../assets/iconos/instagram.png")}
-              style={{
-                width: 18,
-                height: 18,
-                tintColor: "#444",
-                opacity: 0.8,
-              }}
-            />
-          </Pressable>
+            >
+              <Image
+                source={item.icon}
+                style={{
+                  width: 18,
+                  height: 18,
+                  tintColor: hoveredIcon === item.id ? "#000" : "#444",
+                  opacity: hoveredIcon === item.id ? 1 : 0.8,
+                }}
+              />
+            </Pressable>
+          ))}
         </View>
       </View>
     </View>

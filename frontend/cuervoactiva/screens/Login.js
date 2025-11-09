@@ -1,4 +1,3 @@
-// frontend/src/screens/Login.js
 import React, { useState } from "react";
 import {
   View,
@@ -14,7 +13,6 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/HeaderIntro";
-import Footer from "../components/Footer";
 import { loginUser } from "../services/auth";
 import { saveSession } from "../services/sessionManager";
 
@@ -26,14 +24,13 @@ export default function Login() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Estado para mensaje visual (toast)
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
   const fadeAnim = useState(new Animated.Value(0))[0];
 
   const { width } = Dimensions.get("window");
   const isMobile = width < 768;
 
-  /** === Función para mostrar mensajes visuales === */
+  /** === Mostrar mensajes visuales === */
   const showToast = (type, message) => {
     setToast({ visible: true, type, message });
     Animated.timing(fadeAnim, {
@@ -51,7 +48,7 @@ export default function Login() {
     }, 3000);
   };
 
-  // === LOGIN ===
+  /** === LOGIN === */
   async function onSubmit() {
     if (!emailOrUsername.trim() || !password.trim()) {
       showToast("error", "Por favor, completa todos los campos obligatorios.");
@@ -60,11 +57,7 @@ export default function Login() {
 
     try {
       setLoading(true);
-
-      // 🔹 Petición al backend
       const data = await loginUser({ emailOrUsername, password });
-
-      // ✅ Extraer rol correctamente del backend
       const role = data.user?.role || data.role;
 
       if (!role) {
@@ -72,49 +65,34 @@ export default function Login() {
         return;
       }
 
-      // 🔹 Guardar sesión multiplataforma
       await saveSession(data);
 
-      // 🔹 Redirección según rol
       if (role === "organizer") {
         showToast("success", "Inicio de sesión exitoso como Organizador.");
         setTimeout(() => {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "Organizer" }],
-          });
+          navigation.reset({ index: 0, routes: [{ name: "Organizer" }] });
         }, 1200);
       } else if (role === "admin") {
         if (Platform.OS === "web") {
           showToast("success", "Inicio de sesión exitoso como Administrador.");
           setTimeout(() => {
-            navigation.reset({
-              index: 0,
-              routes: [{ name: "Admin" }],
-            });
+            navigation.reset({ index: 0, routes: [{ name: "Admin" }] });
           }, 1200);
         } else {
           showToast(
             "error",
             "El panel de administrador solo está disponible en la versión web."
           );
-          return;
         }
       } else if (role === "user") {
         showToast("success", "Inicio de sesión exitoso como Usuario.");
         setTimeout(() => {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "User" }],
-          });
+          navigation.reset({ index: 0, routes: [{ name: "User" }] });
         }, 1200);
       } else {
         showToast("success", "Inicio de sesión exitoso.");
         setTimeout(() => {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "Intro" }],
-          });
+          navigation.reset({ index: 0, routes: [{ name: "Intro" }] });
         }, 1200);
       }
     } catch (e) {
@@ -166,16 +144,16 @@ export default function Login() {
           flexGrow: 1,
           justifyContent: "center",
           alignItems: "center",
-          paddingVertical: isMobile ? 30 : 50,
+          paddingVertical: isMobile ? 10 : 50,
         }}
       >
         {/* 🔸 Título */}
         <Text
           style={{
-            fontSize: isMobile ? 24 : 30,
+            fontSize: isMobile ? 24 : 28,
             fontWeight: "bold",
             color: "#014869",
-            marginBottom: isMobile ? 20 : 30,
+            marginBottom: 25,
             textAlign: "center",
           }}
         >
@@ -185,13 +163,17 @@ export default function Login() {
         {/* 🔸 FORMULARIO */}
         <View
           style={{
-            width: isMobile ? "90%" : "80%",
-            maxWidth: 760,
-            backgroundColor: "#F4F4F4",
-            borderRadius: 20,
-            paddingVertical: isMobile ? 30 : 40,
-            paddingHorizontal: isMobile ? 25 : 50,
-            zIndex: 1,
+            width: isMobile ? "85%" : "60%",
+            maxWidth: 400,
+            backgroundColor: "#F9F9F9",
+            borderRadius: 15,
+            paddingVertical: 30,
+            paddingHorizontal: 25,
+            shadowColor: "#000",
+            shadowOpacity: 0.1,
+            shadowRadius: 10,
+            elevation: 3,
+            alignItems: "center",
           }}
         >
           {/* Email o Usuario */}
@@ -200,16 +182,17 @@ export default function Login() {
               flexDirection: "row",
               alignItems: "center",
               backgroundColor: "#fff",
-              borderRadius: 50,
+              borderRadius: 25,
               borderWidth: 1,
               borderColor: "#ddd",
-              paddingHorizontal: 14,
-              height: 50,
-              marginBottom: 20,
+              paddingHorizontal: 12,
+              height: 42,
+              width: "100%",
+              marginBottom: 15,
             }}
           >
             <Image
-              source={require("../assets/iconos/usuario.png")}
+              source={require("../assets/iconos/email.png")}
               style={{
                 width: 20,
                 height: 20,
@@ -225,7 +208,7 @@ export default function Login() {
               style={{
                 flex: 1,
                 color: "#014869",
-                fontSize: 15,
+                fontSize: 14,
               }}
               autoCapitalize="none"
               keyboardType="email-address"
@@ -238,11 +221,12 @@ export default function Login() {
               flexDirection: "row",
               alignItems: "center",
               backgroundColor: "#fff",
-              borderRadius: 50,
+              borderRadius: 25,
               borderWidth: 1,
               borderColor: "#ddd",
-              paddingHorizontal: 14,
-              height: 50,
+              paddingHorizontal: 12,
+              height: 42,
+              width: "100%",
               marginBottom: 25,
             }}
           >
@@ -264,15 +248,15 @@ export default function Login() {
               style={{
                 flex: 1,
                 color: "#014869",
-                fontSize: 15,
+                fontSize: 14,
               }}
             />
             <Pressable onPress={() => setShowPass(!showPass)}>
               <Image
                 source={require("../assets/iconos/invisible.png")}
                 style={{
-                  width: 20,
-                  height: 20,
+                  width: 18,
+                  height: 18,
                   tintColor: showPass ? "#F3B23F" : "#014869",
                 }}
               />
@@ -280,36 +264,38 @@ export default function Login() {
           </View>
 
           {/* Botón */}
-          <View style={{ alignItems: "center", marginTop: 10 }}>
-            <Pressable
-              onPress={onSubmit}
-              disabled={loading}
-              android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+          <Pressable
+            onPress={onSubmit}
+            disabled={loading}
+            android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+            style={{
+              backgroundColor: "#F3B23F",
+              borderRadius: 8,
+              paddingVertical: 10,
+              paddingHorizontal: 40,
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: loading ? 0.7 : 1,
+              shadowColor: "#000",
+              shadowOpacity: 0.2,
+              shadowRadius: 3,
+              elevation: 4,
+            }}
+          >
+            <Text
               style={{
-                backgroundColor: "#F3B23F",
-                borderRadius: 25,
-                paddingVertical: 10,
-                paddingHorizontal: 28,
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: loading ? 0.7 : 1,
+                color: "#fff",
+                fontWeight: "700",
+                fontSize: 15,
               }}
             >
-              <Text
-                style={{
-                  color: "#fff",
-                  fontWeight: "700",
-                  fontSize: 15,
-                }}
-              >
-                {loading ? "Iniciando..." : "Iniciar Sesión"}
-              </Text>
-            </Pressable>
-          </View>
+              {loading ? "Iniciando..." : "Iniciar Sesión"}
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
 
-      {/* 🔸 TOAST (mensaje visual animado) */}
+      {/* 🔸 TOAST */}
       {toast.visible && (
         <Animated.View
           style={{
@@ -341,7 +327,6 @@ export default function Login() {
           </Text>
         </Animated.View>
       )}
-
     </View>
   );
 }

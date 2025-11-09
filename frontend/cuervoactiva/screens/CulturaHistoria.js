@@ -1,3 +1,4 @@
+// frontend/src/screens/CulturaHistoria.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -14,6 +15,8 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import OrganizerMenu from "./OrganizerMenu";
+import UserMenu from "./UserMenu";
 
 export default function CulturaHistoria() {
   const [role, setRole] = useState("user");
@@ -43,7 +46,7 @@ export default function CulturaHistoria() {
     loadSession();
   }, []);
 
-  // === Funciones de navegación ===
+  // === Navegaciones ===
   const goToProfile = () =>
     role === "admin"
       ? nav.navigate("AdminProfile")
@@ -62,129 +65,333 @@ export default function CulturaHistoria() {
   const goToContact = () => nav.navigate("Contacto");
   const goToCulturaHistoria = () => nav.navigate("CulturaHistoria");
   const goToCalendar = () => nav.navigate("Calendar");
-  const goToUsers = () => nav.navigate("AdminUsers");
-  const goToHome = () =>
-    role === "organizer"
-      ? nav.navigate("Organizer")
-      : role === "admin"
-      ? nav.navigate("Admin")
-      : nav.navigate("User");
-  const goToFavorites = () => nav.navigate("UserFavorites");
+  const goToHomeUser = () => nav.navigate("User");
 
-  // === Animación del menú ===
+  // === Menú lateral ===
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
       return;
     }
 
-    if (menuVisible) {
-      Animated.timing(menuAnim, {
-        toValue: -250,
-        duration: 300,
-        useNativeDriver: true,
-      }).start(() => setMenuVisible(false));
-    } else {
+    if (!menuVisible) {
       setMenuVisible(true);
       Animated.timing(menuAnim, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }).start();
+    } else {
+      Animated.timing(menuAnim, {
+        toValue: -250,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setMenuVisible(false));
     }
   };
 
-  // === Barra superior ===
-  const renderTopBar = () => {
-    let color = "#014869";
-    let calendarIcon = require("../assets/iconos/calendar.png");
-    let bellIcon = require("../assets/iconos/bell.png");
-    let menuIcon = require("../assets/iconos/menu-usuario.png");
-    let closeIcon = require("../assets/iconos/close.png");
-
-    if (role === "organizer") {
-      color = "#F3B23F";
-      calendarIcon = require("../assets/iconos/calendar-organizador.png");
-      bellIcon = require("../assets/iconos/bell3.png");
-      menuIcon = require("../assets/iconos/menu-organizador.png");
-      closeIcon = require("../assets/iconos/close-organizador.png");
-    } else if (role === "admin") {
-      color = "#33ADB5";
-      calendarIcon = require("../assets/iconos/calendar-admin.png");
-      bellIcon = require("../assets/iconos/bell2.png");
-      menuIcon = require("../assets/iconos/menu-admin.png");
-      closeIcon = require("../assets/iconos/close-admin.png");
-    }
-
-    return (
-      <View style={styles.topBar}>
-        <Text>
-          {role === "admin"
-            ? `👑 Admin. ${userName}`
-            : role === "organizer"
-            ? `👤  ${userName}`
-            : `👤 ${userName}`}
-        </Text>
-
-        <View style={styles.topBarIcons}>
-          <Pressable onPress={goToCalendar}>
-            <Image
-              source={calendarIcon}
-              style={{ width: 26, height: 26, tintColor: color }}
-            />
-          </Pressable>
-
-          <Pressable onPress={goToNotifications}>
-            <Image
-              source={bellIcon}
-              style={{
-                width: 24,
-                height: 24,
-                marginHorizontal: 10,
-                tintColor: color,
-              }}
-            />
-          </Pressable>
-
-          <Pressable onPress={toggleMenu}>
-            <Image
-              source={menuVisible ? closeIcon : menuIcon}
-              style={{ width: 26, height: 26, tintColor: color }}
-            />
-          </Pressable>
+  /** === CABECERA USER === */
+  const renderUserTopBar = () => (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 24,
+        paddingVertical: 14,
+        justifyContent: "space-between",
+        backgroundColor: "#fff",
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View
+          style={{
+            marginRight: 12,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: "#014869",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            source={require("../assets/iconos/user.png")}
+            style={{ width: 24, height: 24, tintColor: "#fff" }}
+          />
+        </View>
+        <View>
+          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+            Usuario
+          </Text>
+          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
         </View>
       </View>
-    );
-  };
 
-  // === Menú lateral WEB ===
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+          <Image
+            source={require("../assets/iconos/bell.png")}
+            style={{ width: 22, height: 22, tintColor: "#014869" }}
+          />
+        </Pressable>
+
+        {Platform.OS === "web" && (
+          <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+            <Image
+              source={require("../assets/iconos/calendar.png")}
+              style={{ width: 22, height: 22, tintColor: "#014869" }}
+            />
+          </Pressable>
+        )}
+
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={
+              menuVisible
+                ? require("../assets/iconos/close.png")
+                : require("../assets/iconos/menu-usuario.png")
+            }
+            style={{ width: 24, height: 24, tintColor: "#014869" }}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  /** === CABECERA ORGANIZER === */
+  const renderOrganizerTopBar = () => (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 24,
+        paddingVertical: 14,
+        justifyContent: "space-between",
+        backgroundColor: "#fff",
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View
+          style={{
+            position: "relative",
+            marginRight: 12,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: "#F3B23F",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            source={require("../assets/iconos/user.png")}
+            style={{ width: 24, height: 24, tintColor: "#fff" }}
+          />
+          {/* 🔸 Icono del lápiz encima */}
+          <Image
+            source={require("../assets/iconos/lapiz.png")}
+            style={{
+              position: "absolute",
+              top: -4,
+              left: -4,
+              width: 22,
+              height: 22,
+              resizeMode: "contain",
+              transform: [{ rotate: "-25deg" }],
+            }}
+          />
+        </View>
+
+        <View>
+          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+            Organizador
+          </Text>
+          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+        </View>
+      </View>
+
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+          <Image
+            source={require("../assets/iconos/bell3.png")}
+            style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+          />
+        </Pressable>
+
+        {Platform.OS === "web" && (
+          <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+            <Image
+              source={require("../assets/iconos/calendar-organizador.png")}
+              style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+            />
+          </Pressable>
+        )}
+
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={
+              menuVisible
+                ? require("../assets/iconos/close-organizador.png")
+                : require("../assets/iconos/menu-organizador.png")
+            }
+            style={{ width: 24, height: 24, tintColor: "#F3B23F" }}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  /** === CABECERA ADMIN === */
+  const renderAdminTopBar = () => (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 24,
+        paddingVertical: 14,
+        justifyContent: "space-between",
+        backgroundColor: "#fff",
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View
+          style={{
+            position: "relative",
+            marginRight: 12,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: "#0094A2",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            source={require("../assets/iconos/user.png")}
+            style={{ width: 24, height: 24, tintColor: "#fff" }}
+          />
+          <Image
+            source={require("../assets/iconos/corona.png")}
+            style={{
+              position: "absolute",
+              top: -12,
+              left: -6,
+              width: 22,
+              height: 22,
+              resizeMode: "contain",
+            }}
+          />
+        </View>
+        <View>
+          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+            Admin.
+          </Text>
+          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+        </View>
+      </View>
+
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Pressable
+          onPress={goToNotifications}
+          style={{
+            marginRight: 20,
+            ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+          }}
+        >
+          <Image
+            source={require("../assets/iconos/bell2.png")}
+            style={{ width: 22, height: 22, tintColor: "#0094A2" }}
+          />
+        </Pressable>
+
+        <Pressable
+          onPress={goToCalendar}
+          style={{
+            marginRight: 20,
+            ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+          }}
+        >
+          <Image
+            source={require("../assets/iconos/calendar-admin.png")}
+            style={{ width: 22, height: 22, tintColor: "#0094A2" }}
+          />
+        </Pressable>
+
+        <Pressable
+          onPress={toggleMenu}
+          style={Platform.OS === "web" ? { cursor: "pointer" } : {}}
+        >
+          <Image
+            source={
+              menuVisible
+                ? require("../assets/iconos/close-admin.png")
+                : require("../assets/iconos/menu-admin.png")
+            }
+            style={{ width: 24, height: 24, tintColor: "#0094A2" }}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  /** === MENÚ LATERAL WEB === */
   const renderWebMenu = () => {
     if (!menuVisible || Platform.OS !== "web") return null;
 
-    const items =
-      role === "admin"
-        ? [
-            { label: "Perfil", action: goToProfile },
-            { label: "Cultura e Historia", action: goToCulturaHistoria },
-            { label: "Ver usuarios", action: goToUsers },
-            { label: "Contacto", action: goToContact },
-          ]
-        : [
-            { label: "Perfil", action: goToProfile },
-            { label: "Cultura e Historia", action: goToCulturaHistoria },
-            { label: "Contacto", action: goToContact },
-          ];
+    let menuItems = [];
+
+    if (role === "user") {
+      menuItems = [
+        { label: "Perfil", action: () => nav.navigate("UserProfile") },
+        { label: "Cultura e Historia", action: goToCulturaHistoria },
+        { label: "Ver favoritos", action: () => nav.navigate("UserFavorites") },
+        { label: "Contacto", action: goToContact },
+      ];
+    } else if (role === "organizer") {
+      menuItems = [
+        { label: "Perfil", action: () => nav.navigate("OrganizerProfile") },
+        { label: "Cultura e Historia", action: goToCulturaHistoria },
+        { label: "Contacto", action: goToContact },
+      ];
+    } else if (role === "admin") {
+      menuItems = [
+        { label: "Perfil", action: () => nav.navigate("AdminProfile") },
+        { label: "Cultura e Historia", action: goToCulturaHistoria },
+        { label: "Ver usuarios", action: () => nav.navigate("AdminUsers") },
+        { label: "Contacto", action: goToContact },
+      ];
+    }
 
     return (
       <>
         <TouchableWithoutFeedback onPress={toggleMenu}>
-          <View style={styles.overlay} />
+          <View
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              zIndex: 9,
+            }}
+          />
         </TouchableWithoutFeedback>
 
         <Animated.View
-          style={[styles.sideMenu, { transform: [{ translateX: menuAnim }] }]}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: 250,
+            height: "100%",
+            backgroundColor: "#f8f8f8",
+            padding: 20,
+            zIndex: 10,
+            transform: [{ translateX: menuAnim }],
+            boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
+          }}
         >
-          {items.map((item, i) => (
+          {menuItems.map((item, i) => (
             <Pressable
               key={i}
               onPress={() => {
@@ -193,7 +400,16 @@ export default function CulturaHistoria() {
               }}
               style={{ marginBottom: 25 }}
             >
-              <Text style={styles.menuItem}>{item.label}</Text>
+              <Text
+                style={{
+                  color: "#014869",
+                  fontSize: 18,
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                {item.label}
+              </Text>
             </Pressable>
           ))}
         </Animated.View>
@@ -201,178 +417,25 @@ export default function CulturaHistoria() {
     );
   };
 
-  // === Menú móvil azul (user) ===
-  const renderMobileMenuUser = () =>
-    menuVisible &&
-    role === "user" && (
-      <View style={styles.mobileMenuContainer}>
-        <View style={styles.headerBlue}>
-          <Pressable onPress={toggleMenu}>
-            <Image
-              source={require("../assets/iconos/back-usuario.png")}
-              style={styles.backIconBlue}
-            />
-          </Pressable>
-          <Text style={styles.headerTitleBlue}>Menú</Text>
-          <View style={{ width: 24 }} />
-        </View>
-
-        <View style={styles.menuOptionsBlue}>
-          {[
-            {
-              label: "Cultura e Historia",
-              icon: require("../assets/iconos/museo-usuario.png"),
-              action: goToCulturaHistoria,
-            },
-            {
-              label: "Sobre nosotros",
-              icon: require("../assets/iconos/info-usuario.png"),
-              action: goToAboutUs,
-            },
-            {
-              label: "Ver favoritos",
-              icon: require("../assets/iconos/favs-usuario.png"),
-              action: goToFavorites,
-            },
-            {
-              label: "Contacto",
-              icon: require("../assets/iconos/phone-usuario.png"),
-              action: goToContact,
-            },
-          ].map((item, index) => (
-            <Pressable
-              key={index}
-              onPress={item.action}
-              style={styles.optionBlue}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Image source={item.icon} style={styles.optionIconBlue} />
-                <Text style={styles.optionTextBlue}>{item.label}</Text>
-              </View>
-              <Image
-                source={require("../assets/iconos/siguiente.png")}
-                style={styles.arrowIconBlue}
-              />
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.bottomBarBlue}>
-          <Pressable onPress={goToHome}>
-            <Image
-              source={require("../assets/iconos/home-usuario.png")}
-              style={styles.bottomIconBlue}
-            />
-          </Pressable>
-          <Pressable onPress={goToCalendar}>
-            <Image
-              source={require("../assets/iconos/calendar.png")}
-              style={styles.bottomIconBlue}
-            />
-          </Pressable>
-          <Pressable onPress={goToProfile}>
-            <Image
-              source={require("../assets/iconos/user.png")}
-              style={styles.bottomIconBlue}
-            />
-          </Pressable>
-        </View>
-      </View>
-    );
-
-  // === Menú móvil naranja (organizer) ===
-  const renderMobileMenuOrganizer = () =>
-    menuVisible &&
-    role === "organizer" && (
-      <View style={styles.mobileMenuContainer}>
-        <View style={styles.header}>
-          <Pressable onPress={toggleMenu}>
-            <Image
-              source={require("../assets/iconos/back-organizador.png")}
-              style={styles.backIcon}
-            />
-          </Pressable>
-          <Text style={styles.headerTitle}>Menú</Text>
-          <View style={{ width: 24 }} />
-        </View>
-
-        <View style={styles.menuOptions}>
-          <Pressable style={styles.option} onPress={goToAboutUs}>
-            <View style={styles.optionLeft}>
-              <Image
-                source={require("../assets/iconos/info-usuario.png")}
-                style={styles.optionIcon}
-              />
-              <Text style={styles.optionText}>Sobre nosotros</Text>
-            </View>
-            <Image
-              source={require("../assets/iconos/siguiente.png")}
-              style={styles.arrowIcon}
-            />
-          </Pressable>
-
-          <Pressable style={styles.option} onPress={goToCulturaHistoria}>
-            <View style={styles.optionLeft}>
-              <Image
-                source={require("../assets/iconos/museo-usuario.png")}
-                style={styles.optionIcon}
-              />
-              <Text style={styles.optionText}>Cultura e Historia</Text>
-            </View>
-            <Image
-              source={require("../assets/iconos/siguiente.png")}
-              style={styles.arrowIcon}
-            />
-          </Pressable>
-
-          <Pressable style={styles.option} onPress={goToContact}>
-            <View style={styles.optionLeft}>
-              <Image
-                source={require("../assets/iconos/phone-usuario.png")}
-                style={styles.optionIcon}
-              />
-              <Text style={styles.optionText}>Contacto</Text>
-            </View>
-            <Image
-              source={require("../assets/iconos/siguiente.png")}
-              style={styles.arrowIcon}
-            />
-          </Pressable>
-        </View>
-
-        <View style={styles.bottomBar}>
-          <Pressable onPress={goToHome}>
-            <Image
-              source={require("../assets/iconos/home-organizador.png")}
-              style={styles.bottomIcon}
-            />
-          </Pressable>
-          <Pressable onPress={goToCalendar}>
-            <Image
-              source={require("../assets/iconos/calendar-organizador.png")}
-              style={styles.bottomIcon}
-            />
-          </Pressable>
-          <Pressable onPress={goToProfile}>
-            <Image
-              source={require("../assets/iconos/user.png")}
-              style={styles.bottomIcon}
-            />
-          </Pressable>
-        </View>
-      </View>
-    );
-
-  // === Render principal ===
+  // === CONTENIDO ===
   return (
     <View style={styles.pageContainer}>
       <Header hideAuthButtons />
-      {renderTopBar()}
+
+      {role === "user" && renderUserTopBar()}
+      {role === "organizer" && renderOrganizerTopBar()}
+      {role === "admin" && renderAdminTopBar()}
+
       {renderWebMenu()}
-      {Platform.OS !== "web" && role === "user" && renderMobileMenuUser()}
+
+      {/* === MENÚ MÓVIL (igual que en Contacto.js) === */}
       {Platform.OS !== "web" &&
-        role === "organizer" &&
-        renderMobileMenuOrganizer()}
+        menuVisible &&
+        (role === "organizer" ? (
+          <OrganizerMenu onClose={toggleMenu} />
+        ) : role === "user" ? (
+          <UserMenu onClose={toggleMenu} />
+        ) : null)}
 
       <ScrollView
         style={{ flex: 1 }}
@@ -388,23 +451,48 @@ export default function CulturaHistoria() {
         <Text style={styles.paragraph}>
           El Cuervo de Sevilla, situado en la comarca del Bajo Guadalquivir, fue
           parte de Lebrija hasta finales del siglo XX. Su independencia se
-          alcanzó el 19 de diciembre de 1992 tras un movimiento popular.{" "}
-          {"\n\n"}
+          alcanzó el 19 de diciembre de 1992 tras un movimiento popular que
+          marcó un antes y un después en la historia local.{"\n\n"}
           Sus orígenes modernos se remontan al siglo XVIII, gracias a su
           ubicación junto a la antigua calzada romana Vía Augusta —hoy la N-4—,
           donde existía una Casa de Postas que servía de punto de descanso entre
-          Cádiz y Sevilla.
+          Cádiz y Sevilla.{"\n\n"}
         </Text>
 
-        {events.map((evt, i) => (
-          <View key={i} style={styles.eventCard}>
-            <Image source={evt.image} style={styles.eventImage} />
-            <View style={styles.eventTextContainer}>
-              <Text style={styles.eventTitle}>{evt.title}</Text>
-              <Text style={styles.eventText}>{evt.description}</Text>
-            </View>
-          </View>
-        ))}
+        <View
+          style={[
+            styles.eventContainer,
+            Platform.OS !== "web" && styles.eventContainerMobile,
+          ]}
+        >
+          {Platform.OS === "web" ? (
+            <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator>
+              {events.map((evt, i) => (
+                <View key={i}>
+                  <View style={styles.eventCard}>
+                    <Image source={evt.image} style={styles.eventImage} />
+                    <View style={styles.eventTextContainer}>
+                      <Text style={styles.eventTitle}>{evt.title}</Text>
+                      <Text style={styles.eventText}>{evt.description}</Text>
+                    </View>
+                  </View>
+                  {i !== events.length - 1 && <View style={styles.separator} />}
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            events.map((evt, i) => (
+              <View key={i}>
+                <View style={styles.eventCardMobile}>
+                  <Image source={evt.image} style={styles.eventImageMobile} />
+                  <Text style={styles.eventTitle}>{evt.title}</Text>
+                  <Text style={styles.eventText}>{evt.description}</Text>
+                </View>
+                {i !== events.length - 1 && <View style={styles.separator} />}
+              </View>
+            ))
+          )}
+        </View>
       </ScrollView>
 
       {Platform.OS === "web" && (
@@ -418,36 +506,40 @@ export default function CulturaHistoria() {
   );
 }
 
-// === Eventos ===
+// === Eventos con texto ampliado ===
 const events = [
   {
-    title: "Feria del Cuervo",
+    title: "Feria de El Cuervo de Sevilla",
     image: require("../assets/feria.jpg"),
     description:
-      "Celebradas en honor a la Virgen del Rosario, patrona del municipio, durante la primera semana de octubre. Es la fiesta más esperada por los vecinos, llena de alegría, música, baile y tradición.",
+      "La Feria de El Cuervo de Sevilla se celebra cada año en honor a la Virgen del Rosario, patrona del municipio. Durante varios días, las calles se llenan de farolillos, risas y música, mientras las casetas acogen a familias y amigos que disfrutan de comidas típicas, vino fino y sevillanas hasta altas horas de la noche. Es una fiesta que combina tradición, color y hospitalidad. Los vecinos visten trajes de flamenca y de corto, y los caballos desfilan elegantes por el recinto ferial. Las noches culminan con espectáculos musicales, concursos y fuegos artificiales, convirtiendo la feria en el evento social y cultural más esperado del año por todos los cuerveños y visitantes.",
   },
   {
-    title: "Semana Santa de El Cuervo",
+    title: "Semana Santa",
     image: require("../assets/semana_santa.jpg"),
     description:
-      "La Semana Santa se caracteriza por su recogimiento, la participación de hermandades locales y el fervor popular en sus procesiones.",
+      "La Semana Santa de El Cuervo de Sevilla es un periodo de intensa emoción y espiritualidad. Las hermandades procesionan por las calles acompañadas por el sonido solemne de los tambores y las saetas que brotan del alma del pueblo. Las imágenes, talladas con esmero y devoción, reflejan la profunda fe de generaciones. Las procesiones nocturnas, iluminadas por el resplandor de los cirios, recorren el corazón del municipio mientras el silencio de los asistentes solo se rompe por el paso rítmico de los costaleros. Esta semana no solo representa un evento religioso, sino también una manifestación cultural y artística que une a los vecinos en torno a la tradición, el respeto y la identidad local.",
   },
   {
-    title: "Romería de El Cuervo",
+    title: "Romería de la Virgen del Rosario",
     image: require("../assets/romeria.jpg"),
     description:
-      "La Romería es una jornada de convivencia, devoción y tradición andaluza, donde los vecinos acompañan a su Virgen en un ambiente festivo y familiar.",
+      "La Romería en honor a la Virgen del Rosario es uno de los acontecimientos más entrañables de El Cuervo. En esta jornada, los devotos acompañan a la patrona en su recorrido hacia el campo, entre cánticos, palmas y flores. Carretas decoradas con mimo, caballos engalanados y peregrinos vestidos con trajes típicos crean una estampa de alegría y devoción. Familias y amigos comparten comidas campestres, cantan sevillanas y viven un ambiente de fraternidad difícil de igualar. Es un día en el que la fe y la tradición se dan la mano, fortaleciendo los lazos de unión y el orgullo por las raíces cuerveñas.",
   },
   {
     title: "Día del Pan",
     image: require("../assets/dia_pan.jpg"),
     description:
-      "Celebración gastronómica que homenajea el oficio tradicional de panadero, con degustaciones, actividades y talleres para toda la familia.",
+      "El Día del Pan es una celebración única en El Cuervo que rinde homenaje a uno de los símbolos más representativos del municipio: su pan artesanal, conocido por su sabor y calidad excepcionales. Durante esta jornada, los panaderos locales abren las puertas de sus obradores para mostrar el proceso tradicional de elaboración, desde el amasado hasta el horneado. Los visitantes pueden degustar diferentes variedades de pan y dulces típicos, participar en talleres y conocer la historia de una tradición que ha pasado de generación en generación. Además, la fiesta incluye actuaciones musicales, actividades para niños, muestras gastronómicas y exposiciones sobre el oficio panadero, destacando la importancia cultural y económica de este producto para el pueblo.",
+  },
+  {
+    title: "Fiestas Patronales de la Virgen del Rosario",
+    image: require("../assets/patrona_feria.jpg"),
+    description:
+      "Las Fiestas Patronales en honor a la Virgen del Rosario son el broche de oro del calendario festivo de El Cuervo. Durante varios días, el municipio se llena de alegría, fe y tradición. Las calles se adornan con flores y banderines, y los vecinos participan en misas, procesiones y actos religiosos en los que la patrona recorre el pueblo entre aplausos y vítores. Junto a las actividades religiosas, el programa incluye conciertos, pasacalles, competiciones deportivas y actividades culturales para todas las edades. Es un tiempo de reencuentros, en el que muchos cuerveños que viven fuera regresan para celebrar junto a familiares y amigos. Las fiestas patronales son un reflejo del amor y la devoción del pueblo por su Virgen, símbolo de esperanza, unión y orgullo local.",
   },
 ];
 
-
-// === Estilos ===
 const styles = StyleSheet.create({
   pageContainer: {
     flex: 1,
@@ -455,15 +547,6 @@ const styles = StyleSheet.create({
     minHeight: "100vh",
     justifyContent: "space-between",
   },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
-  },
-  topBarIcons: { flexDirection: "row", alignItems: "center" },
   title: {
     fontSize: 24,
     fontWeight: "bold",
@@ -478,125 +561,63 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "justify",
   },
+  eventContainer: {
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+    padding: 20,
+    width: "200%",
+    maxWidth: 1500,
+    alignSelf: "center",
+    boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+    marginTop: 25,
+  },
+  eventContainerMobile: {
+    width: "100%",
+    maxWidth: "100%",
+    padding: 16,
+    boxShadow: undefined,
+  },
   eventCard: {
     flexDirection: "row",
     backgroundColor: "#f5f5f5",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 20,
+    paddingVertical: 10,
+    alignItems: "flex-start",
+  },
+  eventCardMobile: {
+    backgroundColor: "#f5f5f5",
+    paddingVertical: 10,
+    alignItems: "center",
   },
   eventImage: {
-    width: 120,
-    height: 90,
+    width: 140,
+    height: 100,
     borderRadius: 8,
-    marginRight: 10,
+    marginRight: 18,
+    resizeMode: "cover",
+  },
+  eventImageMobile: {
+    width: "100%",
+    height: 180,
+    borderRadius: 8,
+    marginBottom: 10,
+    resizeMode: "cover",
   },
   eventTextContainer: { flex: 1 },
-  eventTitle: { fontSize: 16, fontWeight: "bold", color: "#014869" },
-  eventText: { fontSize: 14, color: "#444", marginTop: 4 },
-  mobileMenuContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "#fff",
-    zIndex: 100,
-  },
-  headerBlue: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 20,
-  },
-  headerTitleBlue: {
-    fontSize: 18,
+  eventTitle: {
+    fontSize: 17,
     fontWeight: "bold",
     color: "#014869",
+    marginBottom: 6,
   },
-  backIconBlue: { width: 22, height: 22, tintColor: "#014869" },
-  menuOptionsBlue: {
-    flex: 1,
-    paddingHorizontal: 40,
-    justifyContent: "flex-start",
-    gap: 30,
+  eventText: {
+    fontSize: 14,
+    color: "#444",
+    lineHeight: 20,
+    textAlign: "justify",
   },
-  optionBlue: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  optionIconBlue: {
-    width: 28,
-    height: 28,
-    tintColor: "#014869",
-    marginRight: 12,
-  },
-  optionTextBlue: { color: "#014869", fontSize: 16, fontWeight: "600" },
-  arrowIconBlue: { width: 16, height: 16, tintColor: "#014869" },
-  bottomBarBlue: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderColor: "#014869",
-  },
-  bottomIconBlue: { width: 26, height: 26, tintColor: "#014869" },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 20,
-  },
-  headerTitle: { fontSize: 18, fontWeight: "bold", color: "#F3B23F" },
-  backIcon: { width: 22, height: 22, tintColor: "#F3B23F" },
-  menuOptions: {
-    flex: 1,
-    paddingHorizontal: 40,
-    justifyContent: "flex-start",
-    gap: 30,
-  },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  optionLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
-  optionIcon: { width: 28, height: 28, tintColor: "#014869" },
-  optionText: { color: "#014869", fontSize: 16, fontWeight: "600" },
-  arrowIcon: { width: 16, height: 16, tintColor: "#F3B23F" },
-  bottomBar: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderColor: "#F3B23F",
-    backgroundColor: "#fff",
-  },
-  bottomIcon: { width: 26, height: 26, tintColor: "#F3B23F" },
-  sideMenu: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: 250,
-    height: "100%",
-    backgroundColor: "#f8f8f8",
-    padding: 20,
-    zIndex: 10,
-  },
-  menuItem: { color: "#014869", fontSize: 18, fontWeight: "700" },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    zIndex: 9,
+  separator: {
+    height: 1,
+    backgroundColor: "#ddd",
+    marginVertical: 10,
   },
 });

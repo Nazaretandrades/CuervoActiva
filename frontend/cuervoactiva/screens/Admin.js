@@ -48,17 +48,24 @@ export default function Admin() {
   const [modalVisible, setModalVisible] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
 
-  // === Mensajes visuales (Toast personalizado) ===
-  const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
+  // Toast
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "info",
+  });
 
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
-    setTimeout(() => setToast({ visible: false, message: "", type: "info" }), 2500);
+    setTimeout(
+      () => setToast({ visible: false, message: "", type: "info" }),
+      2500
+    );
   };
 
   const navigation = useNavigation();
 
-  // === Cargar eventos y usuario ===
+  // Cargar eventos
   useEffect(() => {
     const loadData = async () => {
       const session = await getSession();
@@ -84,7 +91,7 @@ export default function Admin() {
     loadData();
   }, []);
 
-  // === Filtro de búsqueda ===
+  // Filtro búsqueda
   useEffect(() => {
     if (!search.trim()) setFiltered(events);
     else {
@@ -100,7 +107,7 @@ export default function Admin() {
     }
   }, [search, events]);
 
-  // === Edición de evento ===
+  // Editar
   const handleEdit = (ev) => {
     setForm({
       _id: ev._id,
@@ -129,7 +136,7 @@ export default function Admin() {
     });
   };
 
-  // === Guardar cambios de evento ===
+  // Guardar
   const handleSave = async () => {
     if (!form.title || !form.description || !form.location)
       return showToast("⚠️ Completa todos los campos requeridos.", "warning");
@@ -164,7 +171,7 @@ export default function Admin() {
     }
   };
 
-  // === Confirmar eliminación (modal visual) ===
+  // Eliminar
   const confirmDelete = (id) => {
     setEventToDelete(id);
     setModalVisible(true);
@@ -198,7 +205,7 @@ export default function Admin() {
     }
   };
 
-  // === Navegaciones ===
+  // Navegación
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -208,7 +215,7 @@ export default function Admin() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
 
-  // === Menú lateral ===
+  // Menú
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -226,65 +233,136 @@ export default function Admin() {
     }
   };
 
+  const [hoveredId, setHoveredId] = useState(null);
+  const bottomSafeArea = Platform.OS === "web" ? 110 : 0;
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* === Barra superior === */}
+      {/* Barra superior */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
-          padding: 16,
+          paddingHorizontal: 24,
+          paddingVertical: 14,
           justifyContent: "space-between",
-          borderBottomWidth: 1,
-          borderColor: "#eee",
+          backgroundColor: "#fff",
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ marginRight: 6 }}>👑</Text>
-          <Text>Admin. {adminName}</Text>
+          <View
+            style={{
+              position: "relative",
+              marginRight: 12,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: "#0094A2",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/user.png")}
+              style={{ width: 24, height: 24, tintColor: "#fff" }}
+            />
+            <Image
+              source={require("../assets/iconos/corona.png")}
+              style={{
+                position: "absolute",
+                top: -6,
+                left: -6,
+                width: 20,
+                height: 20,
+                resizeMode: "contain",
+              }}
+            />
+          </View>
+          <View>
+            <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+              Admin.
+            </Text>
+            <Text style={{ color: "#6c757d", fontSize: 13 }}>{adminName}</Text>
+          </View>
         </View>
 
-        <TextInput
-          placeholder="Buscar eventos..."
-          value={search}
-          onChangeText={setSearch}
+        <View
           style={{
-            flex: 1,
-            marginHorizontal: 16,
+            flexDirection: "row",
+            alignItems: "center",
             borderWidth: 1,
-            borderColor: "#ccc",
-            paddingHorizontal: 8,
+            borderColor: "#0094A2",
+            borderRadius: 3,
+            paddingHorizontal: 10,
+            backgroundColor: "#fff",
+            width: 700,
             height: 36,
-            borderRadius: 6,
+            marginHorizontal: 16,
           }}
-        />
-
-        <Pressable onPress={goToCalendar} style={{ marginRight: 10 }}>
-          <Image
-            source={require("../assets/iconos/calendar-admin.png")}
-            style={{ width: 26, height: 26 }}
+        >
+          <TextInput
+            placeholder="Buscar eventos..."
+            value={search}
+            onChangeText={setSearch}
+            placeholderTextColor="#6b6f72"
+            style={{
+              flex: 1,
+              color: "#014869",
+              fontSize: 14,
+              paddingVertical: 0,
+            }}
           />
-        </Pressable>
-
-        <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
-          <Image source={require("../assets/iconos/bell2.png")} />
-        </Pressable>
-
-        <Pressable onPress={toggleMenu}>
           <Image
-            source={
-              menuVisible
-                ? require("../assets/iconos/close-admin.png")
-                : require("../assets/iconos/menu-admin.png")
-            }
-            style={{ width: 26, height: 26 }}
+            source={require("../assets/iconos/search-admin.png")}
+            style={{ width: 16, height: 16, tintColor: "#0094A2" }}
           />
-        </Pressable>
+        </View>
+
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable
+            onPress={goToNotifications}
+            style={{
+              marginRight: 20,
+              ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/bell2.png")}
+              style={{ width: 22, height: 22, tintColor: "#0094A2" }}
+            />
+          </Pressable>
+
+          <Pressable
+            onPress={goToCalendar}
+            style={{
+              marginRight: 20,
+              ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/calendar-admin.png")}
+              style={{ width: 22, height: 22, tintColor: "#0094A2" }}
+            />
+          </Pressable>
+
+          <Pressable
+            onPress={toggleMenu}
+            style={Platform.OS === "web" ? { cursor: "pointer" } : {}}
+          >
+            <Image
+              source={
+                menuVisible
+                  ? require("../assets/iconos/close-admin.png")
+                  : require("../assets/iconos/menu-admin.png")
+              }
+              style={{ width: 24, height: 24, tintColor: "#0094A2" }}
+            />
+          </Pressable>
+        </View>
       </View>
 
-      {/* === Menú lateral (solo web) === */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -343,66 +421,136 @@ export default function Admin() {
         </>
       )}
 
-      {/* === Contenido principal === */}
-      <View style={{ flex: 1, padding: 16 }}>
+      {/* Contenido principal */}
+      <View
+        style={{
+          flex: 1,
+          padding: 16,
+          backgroundColor: "#f5f6f7",
+          marginTop: 60,
+          paddingBottom: bottomSafeArea,
+        }}
+      >
         {!editing ? (
           <>
             {filtered.length > 0 && (
-              <Text style={{ fontWeight: "bold", marginBottom: 8 }}>
+              <Text
+                style={{
+                  fontWeight: "bold",
+                  marginBottom: 12,
+                  color: "#02486b",
+                }}
+              >
                 Listado de eventos:
               </Text>
             )}
 
             <ScrollView
+              style={{ maxHeight: 500 }}
               contentContainerStyle={{
                 flexGrow: 1,
                 justifyContent: filtered.length === 0 ? "center" : "flex-start",
-                alignItems: filtered.length === 0 ? "center" : "stretch",
+                alignItems: "stretch",
               }}
             >
               {filtered.length > 0 ? (
-                filtered.map((ev) => (
-                  <Pressable
-                    key={ev._id}
-                    onPress={() =>
-                      navigation.navigate("AdminEventDetail", {
-                        eventId: ev._id,
-                      })
-                    }
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: 8,
-                      padding: 8,
-                      borderWidth: 1,
-                      borderColor: "#ccc",
-                      borderRadius: 10,
-                    }}
-                  >
-                    <Text numberOfLines={1} style={{ flex: 1 }}>
-                      {ev.title}
-                    </Text>
+                filtered.map((ev) => {
+                  const baseRowStyle = {
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 12,
+                    paddingVertical: 12,
+                    paddingLeft: 18,
+                    paddingRight: 10,
+                    backgroundColor:
+                      Platform.OS === "web" && hoveredId === ev._id
+                        ? "#34a0a4"
+                        : "#02486b",
+                    borderRadius: 3,
+                  };
+
+                  return (
                     <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        handleEdit(ev);
-                      }}
-                      style={{ margin: 4 }}
+                      key={ev._id}
+                      onPress={() =>
+                        navigation.navigate("AdminEventDetail", {
+                          eventId: ev._id,
+                        })
+                      }
+                      {...(Platform.OS === "web"
+                        ? {
+                            onMouseEnter: () => setHoveredId(ev._id),
+                            onMouseLeave: () => setHoveredId(null),
+                            style: baseRowStyle,
+                          }
+                        : {
+                            style: ({ pressed }) => ({
+                              ...baseRowStyle,
+                              opacity: pressed ? 0.9 : 1,
+                            }),
+                          })}
                     >
-                      <Text>✏️</Text>
+                      <Text
+                        numberOfLines={1}
+                        style={{
+                          flex: 1,
+                          color: "#fff",
+                          fontWeight: "700",
+                          fontSize: 15,
+                          marginRight: 12,
+                        }}
+                      >
+                        {ev.title}
+                      </Text>
+
+                      <View style={{ flexDirection: "row" }}>
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            handleEdit(ev);
+                          }}
+                          style={({ pressed }) => ({
+                            width: 42,
+                            height: 42,
+                            backgroundColor: "#02486b",
+                            borderRadius: 3,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            marginRight: 10,
+                            opacity: pressed ? 0.85 : 1,
+                          })}
+                        >
+                          <Image
+                            source={require("../assets/iconos/editar.png")}
+                            style={{ width: 20, height: 20, tintColor: "#fff" }}
+                          />
+                        </Pressable>
+
+                        <Pressable
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            confirmDelete(ev._id);
+                          }}
+                          style={({ pressed }) => ({
+                            width: 42,
+                            height: 42,
+                            backgroundColor: "#02486b",
+                            borderRadius: 3,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            opacity: pressed ? 0.85 : 1,
+                          })}
+                        >
+                          <Image
+                            source={require("../assets/iconos/borrar.png")}
+                            style={{ width: 20, height: 20, tintColor: "#fff" }}
+                          />
+                        </Pressable>
+                      </View>
                     </Pressable>
-                    <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        confirmDelete(ev._id);
-                      }}
-                      style={{ margin: 4 }}
-                    >
-                      <Text>🗑️</Text>
-                    </Pressable>
-                  </Pressable>
-                ))
+                  );
+                })
               ) : (
                 <Text
                   style={{
@@ -421,144 +569,150 @@ export default function Admin() {
           </>
         ) : (
           <>
-            {/* === FORMULARIO EDICIÓN === */}
-            <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
-              Editar evento
+            {/* === FORMULARIO EDICIÓN (rediseñado visualmente, sin tocar funcionalidad) === */}
+            <Text
+              style={{
+                fontWeight: "bold",
+                marginBottom: 14,
+                fontSize: 18,
+                color: "#02486b",
+                textAlign: "center",
+              }}
+            >
+            Editar evento
             </Text>
-            <ScrollView>
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>Título:</Text>
-              <TextInput
-                value={form.title}
-                onChangeText={(t) => setForm({ ...form, title: t })}
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 10,
-                  borderWidth: 1,
-                  borderColor: "#ccc",
-                  height: 36,
-                  paddingHorizontal: 10,
-                  marginBottom: 10,
-                }}
-              />
 
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                Descripción:
-              </Text>
-              <TextInput
-                value={form.description}
-                onChangeText={(t) => setForm({ ...form, description: t })}
-                multiline
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 10,
-                  borderWidth: 1,
-                  borderColor: "#ccc",
-                  height: 90,
-                  padding: 10,
-                  marginBottom: 10,
-                  textAlignVertical: "top",
-                }}
-              />
+            <ScrollView
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: "#e2e8f0",
+                shadowColor: "#000",
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 2,
+              }}
+              contentContainerStyle={{
+                paddingBottom: Platform.OS === "web" ? 150 : 80, // ✅ más espacio si hay footer fijo
+              }}
+            >
+              {[
+                {
+                  label: "Título",
+                  key: "title",
+                  placeholder: "Ej. Feria de verano",
+                },
+                {
+                  label: "Descripción",
+                  key: "description",
+                  placeholder: "Detalla el evento...",
+                  multiline: true,
+                },
+                {
+                  label: "Fecha (DD/MM/YYYY)",
+                  key: "date",
+                  placeholder: "31/12/2025",
+                },
+                {
+                  label: "Hora (HH:MM)",
+                  key: "hour",
+                  placeholder: "21:00",
+                },
+                {
+                  label: "Lugar",
+                  key: "location",
+                  placeholder: "Plaza Mayor",
+                },
+              ].map((f, i) => (
+                <View key={i} style={{ marginBottom: 12 }}>
+                  <Text
+                    style={{
+                      fontWeight: "600",
+                      color: "#014869",
+                      marginBottom: 6,
+                    }}
+                  >
+                    {f.label}:
+                  </Text>
+                  <TextInput
+                    value={form[f.key]}
+                    onChangeText={(t) => setForm({ ...form, [f.key]: t })}
+                    placeholder={f.placeholder}
+                    placeholderTextColor="#9aa4af"
+                    multiline={f.multiline}
+                    style={{
+                      backgroundColor: "#f9fafb",
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: "#cbd5e1",
+                      paddingHorizontal: 12,
+                      paddingVertical: f.multiline ? 10 : 8,
+                      height: f.multiline ? 90 : 40,
+                      textAlignVertical: f.multiline ? "top" : "center",
+                    }}
+                  />
+                </View>
+              ))}
 
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                Fecha (DD/MM/YYYY):
-              </Text>
-              <TextInput
-                value={form.date}
-                onChangeText={(t) => setForm({ ...form, date: t })}
+              <Text
                 style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 10,
-                  borderWidth: 1,
-                  borderColor: "#ccc",
-                  height: 36,
-                  paddingHorizontal: 10,
-                  marginBottom: 10,
+                  fontWeight: "600",
+                  color: "#014869",
+                  marginBottom: 6,
                 }}
-              />
-
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                Hora (HH:MM):
-              </Text>
-              <TextInput
-                value={form.hour}
-                onChangeText={(t) => setForm({ ...form, hour: t })}
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 10,
-                  borderWidth: 1,
-                  borderColor: "#ccc",
-                  height: 36,
-                  paddingHorizontal: 10,
-                  marginBottom: 10,
-                }}
-              />
-
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>Lugar:</Text>
-              <TextInput
-                value={form.location}
-                onChangeText={(t) => setForm({ ...form, location: t })}
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 10,
-                  borderWidth: 1,
-                  borderColor: "#ccc",
-                  height: 36,
-                  paddingHorizontal: 10,
-                  marginBottom: 10,
-                }}
-              />
-
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
+              >
                 Categoría:
               </Text>
-              <DropDownPicker
-                open={open}
-                value={form.category}
-                items={[
-                  { label: "Deporte", value: "deporte" },
-                  { label: "Concurso y Taller", value: "concurso" },
-                  { label: "Cultura e Historia", value: "cultura" },
-                  { label: "Arte y Música", value: "arte" },
-                ]}
-                setOpen={setOpen}
-                setValue={(callback) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    category: callback(prev.category),
-                  }))
-                }
-                style={{
-                  backgroundColor: "#fff",
-                  borderColor: "#ccc",
-                  borderRadius: 10,
-                  height: 40,
-                  marginBottom: 10,
-                  zIndex: 10,
-                }}
-                dropDownContainerStyle={{
-                  borderColor: "#ccc",
-                }}
-              />
+              <View style={{ zIndex: 5000, marginBottom: 16 }}>
+                <DropDownPicker
+                  open={open}
+                  value={form.category}
+                  items={[
+                    { label: "Deporte", value: "deporte" },
+                    { label: "Concurso y Taller", value: "concurso" },
+                    { label: "Cultura e Historia", value: "cultura" },
+                    { label: "Arte y Música", value: "arte" },
+                  ]}
+                  setOpen={setOpen}
+                  setValue={(callback) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      category: callback(prev.category),
+                    }))
+                  }
+                  style={{
+                    backgroundColor: "#f9fafb",
+                    borderColor: "#cbd5e1",
+                    borderRadius: 8,
+                    height: 44,
+                  }}
+                  dropDownContainerStyle={{
+                    borderColor: "#cbd5e1",
+                  }}
+                />
+              </View>
 
               <View
                 style={{
                   flexDirection: "row",
                   justifyContent: "center",
-                  marginTop: 4,
-                  gap: 16,
+                  marginTop: 8,
+                  gap: 18,
                 }}
               >
                 <Pressable
                   onPress={handleCancel}
                   style={{
-                    backgroundColor: "#ccc",
-                    borderRadius: 20,
+                    backgroundColor: "#e5e7eb",
+                    borderRadius: 25,
                     paddingVertical: 10,
                     paddingHorizontal: 30,
                   }}
                 >
-                  <Text>Cancelar</Text>
+                  <Text style={{ color: "#333", fontWeight: "600" }}>
+                    Cancelar
+                  </Text>
                 </Pressable>
 
                 <Pressable
@@ -566,7 +720,7 @@ export default function Admin() {
                   disabled={loading}
                   style={{
                     backgroundColor: "#F3B23F",
-                    borderRadius: 20,
+                    borderRadius: 25,
                     paddingVertical: 10,
                     paddingHorizontal: 30,
                     opacity: loading ? 0.7 : 1,
@@ -582,7 +736,7 @@ export default function Admin() {
         )}
       </View>
 
-      {/* === MODAL DE CONFIRMACIÓN PERSONALIZADO === */}
+      {/* Modal confirmación */}
       <Modal transparent visible={modalVisible} animationType="fade">
         <View
           style={{
@@ -666,12 +820,12 @@ export default function Admin() {
         </View>
       </Modal>
 
-      {/* === TOAST VISUAL === */}
+      {/* Toast */}
       {toast.visible && (
         <Animated.View
           style={{
             position: "absolute",
-            bottom: 30,
+            bottom: 80,
             alignSelf: "center",
             backgroundColor:
               toast.type === "success"
@@ -690,13 +844,34 @@ export default function Admin() {
             elevation: 6,
           }}
         >
-          <Text style={{ color: "#fff", fontWeight: "bold", textAlign: "center" }}>
+          <Text
+            style={{ color: "#fff", fontWeight: "bold", textAlign: "center" }}
+          >
             {toast.message}
           </Text>
         </Animated.View>
       )}
 
-      {Platform.OS === "web" && (
+      {/* Footer */}
+      {Platform.OS === "web" ? (
+        <View
+          style={{
+            position: "fixed",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: "100%",
+            zIndex: 20,
+            backgroundColor: "transparent",
+          }}
+        >
+          <Footer
+            onAboutPress={goToAboutUs}
+            onPrivacyPress={goToPrivacy}
+            onConditionsPress={goToConditions}
+          />
+        </View>
+      ) : (
         <Footer
           onAboutPress={goToAboutUs}
           onPrivacyPress={goToPrivacy}

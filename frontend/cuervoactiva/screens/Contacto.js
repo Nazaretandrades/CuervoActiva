@@ -10,11 +10,12 @@ import {
   Platform,
   Animated,
   TouchableWithoutFeedback,
+  StyleSheet,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as EmailJS from "@emailjs/browser"; // npm i @emailjs/browser
+import * as EmailJS from "@emailjs/browser";
 import { useNavigation } from "@react-navigation/native";
 import OrganizerMenu from "./OrganizerMenu";
 import UserMenu from "./UserMenu";
@@ -29,7 +30,7 @@ const EMAILJS_SERVICE_ID = "service_e2ogh6c";
 const EMAILJS_TEMPLATE_ID = "template_uisdxgb";
 const EMAILJS_PUBLIC_KEY = "tWyqaMDt1ylAxxUb1";
 
-export default function Contacto({ navigation }) {
+export default function Contacto() {
   const [form, setForm] = useState({
     name: "",
     lastname: "",
@@ -44,7 +45,6 @@ export default function Contacto({ navigation }) {
   const [sending, setSending] = useState(false);
   const nav = useNavigation();
 
-  // === TOAST visual (como login) ===
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -65,7 +65,6 @@ export default function Contacto({ navigation }) {
     }, 3000);
   };
 
-  // === Cargar sesión ===
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -76,10 +75,8 @@ export default function Contacto({ navigation }) {
           const s = await AsyncStorage.getItem("USER_SESSION");
           session = s ? JSON.parse(s) : null;
         }
-
         if (session?.user?.name) setUserName(session.user.name);
         else if (session?.name) setUserName(session.name);
-
         if (session?.user?.role) setRole(session.user.role);
         else if (session?.role) setRole(session.role);
       } catch (err) {
@@ -89,55 +86,34 @@ export default function Contacto({ navigation }) {
     loadSession();
   }, []);
 
-  // === Validar formulario ===
   const validateForm = () => {
     const { name, lastname, email, phone, message } = form;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^[0-9]{6,15}$/;
 
-    if (!name.trim()) {
-      showToast("error", "Por favor, escribe tu nombre.");
-      return false;
-    }
-    if (!lastname.trim()) {
-      showToast("error", "Por favor, escribe tus apellidos.");
-      return false;
-    }
-    if (!email.trim() || !emailRegex.test(email.trim())) {
-      showToast("error", "Correo electrónico no válido.");
-      return false;
-    }
-    if (!phone.trim() || !phoneRegex.test(phone.trim())) {
-      showToast("error", "Introduce un número de teléfono válido.");
-      return false;
-    }
-    if (!message.trim()) {
-      showToast("error", "Por favor, escribe un mensaje.");
-      return false;
-    }
+    if (!name.trim())
+      return showToast("error", "Por favor, escribe tu nombre.");
+    if (!lastname.trim())
+      return showToast("error", "Por favor, escribe tus apellidos.");
+    if (!email.trim() || !emailRegex.test(email.trim()))
+      return showToast("error", "Correo electrónico no válido.");
+    if (!phone.trim() || !phoneRegex.test(phone.trim()))
+      return showToast("error", "Introduce un número de teléfono válido.");
+    if (!message.trim())
+      return showToast("error", "Por favor, escribe un mensaje.");
     return true;
   };
 
-  // === Enviar ===
   const handleSend = async () => {
     if (!validateForm()) return;
     setSending(true);
     try {
       if (Platform.OS === "web") {
         EmailJS.init(EMAILJS_PUBLIC_KEY);
-        const templateParams = {
-          name: form.name,
-          lastname: form.lastname,
-          email: form.email,
-          phone: form.phone,
+        await EmailJS.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          ...form,
           role,
-          message: form.message,
-        };
-        await EmailJS.send(
-          EMAILJS_SERVICE_ID,
-          EMAILJS_TEMPLATE_ID,
-          templateParams
-        );
+        });
         showToast("success", "✅ Tu mensaje se ha enviado correctamente.");
       } else {
         const res = await fetch(API_URL, {
@@ -158,7 +134,6 @@ export default function Contacto({ navigation }) {
     }
   };
 
-  // === Toggle Menú ===
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -180,7 +155,6 @@ export default function Contacto({ navigation }) {
     }
   };
 
-  // === Navegaciones ===
   const goToProfile = () =>
     role === "admin"
       ? nav.navigate("AdminProfile")
@@ -200,151 +174,213 @@ export default function Contacto({ navigation }) {
   const goToPrivacy = () => nav.navigate("PoliticaPrivacidad");
   const goToConditions = () => nav.navigate("Condiciones");
   const goToFavorites = () => nav.navigate("UserFavorites");
+  const goToContact = () => nav.navigate("Contacto");
 
-  // === Barra superior ===
-  const renderTopBar = () => {
-    if (role === "admin") {
-      return (
-        <View style={styles.topBar}>
-          <Text>👑 Admin. {userName}</Text>
-          <View style={styles.topBarIcons}>
-            <Pressable onPress={goToCalendar}>
-              <Image
-                source={require("../assets/iconos/calendar-admin.png")}
-                style={{ width: 26, height: 26, marginRight: 10 }}
-              />
-            </Pressable>
-            <Pressable onPress={goToNotifications}>
-              <Image
-                source={require("../assets/iconos/bell2.png")}
-                style={{ width: 24, height: 24, marginRight: 10 }}
-              />
-            </Pressable>
-            <Pressable onPress={toggleMenu}>
-              <Image
-                source={
-                  menuVisible
-                    ? require("../assets/iconos/close-admin.png")
-                    : require("../assets/iconos/menu-admin.png")
-                }
-                style={{ width: 26, height: 26 }}
-              />
-            </Pressable>
-          </View>
+  /** === CABECERA USUARIO NORMAL (idéntica a UserNotifications) === */
+  const renderUserTopBar = () => (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 24,
+        paddingVertical: 14,
+        justifyContent: "space-between",
+        backgroundColor: "#fff",
+      }}
+    >
+      {/* Perfil Usuario */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View
+          style={{
+            position: "relative",
+            marginRight: 12,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: "#014869",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            source={require("../assets/iconos/user.png")}
+            style={{ width: 24, height: 24, tintColor: "#fff" }}
+          />
         </View>
-      );
-    }
-
-    if (role === "organizer") {
-      return (
-        <View style={styles.topBar}>
-          <Text style={{ color: "#014869" }}>👤 {userName}</Text>
-          <View style={styles.topBarIcons}>
-            <Pressable onPress={goToCalendar}>
-              <Image
-                source={require("../assets/iconos/calendar-organizador.png")}
-                style={{
-                  width: 26,
-                  height: 26,
-                  tintColor: "#F3B23F",
-                  marginRight: 10,
-                }}
-              />
-            </Pressable>
-            <Pressable onPress={goToNotifications}>
-              <Image
-                source={require("../assets/iconos/bell3.png")}
-                style={{
-                  width: 24,
-                  height: 24,
-                  tintColor: "#F3B23F",
-                  marginRight: 10,
-                }}
-              />
-            </Pressable>
-            <Pressable onPress={toggleMenu}>
-              <Image
-                source={
-                  menuVisible
-                    ? require("../assets/iconos/close-organizador.png")
-                    : require("../assets/iconos/menu-organizador.png")
-                }
-                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
-              />
-            </Pressable>
-          </View>
+        <View>
+          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+            Usuario
+          </Text>
+          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
         </View>
-      );
-    }
+      </View>
 
-    return (
-      <View style={styles.topBar}>
-        <Text>👤 {userName}</Text>
-        <View style={styles.topBarIcons}>
-          <Pressable onPress={goToCalendar}>
+      {/* Iconos derecha */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+          <Image
+            source={require("../assets/iconos/bell.png")}
+            style={{ width: 22, height: 22, tintColor: "#014869" }}
+          />
+        </Pressable>
+
+        {Platform.OS === "web" && (
+          <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
             <Image
               source={require("../assets/iconos/calendar.png")}
-              style={{
-                width: 26,
-                height: 26,
-                tintColor: "#014869",
-                marginRight: 10,
-              }}
+              style={{ width: 22, height: 22, tintColor: "#014869" }}
             />
           </Pressable>
-          <Pressable onPress={goToNotifications}>
+        )}
+
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={
+              menuVisible
+                ? require("../assets/iconos/close.png")
+                : require("../assets/iconos/menu-usuario.png")
+            }
+            style={{ width: 24, height: 24, tintColor: "#014869" }}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  // === CABECERA ADMIN ===
+  // === CABECERA ADMIN ===
+  const renderAdminTopBar = () => (
+    <View style={styles.topBar}>
+      <View style={styles.adminInfo}>
+        <View style={styles.adminIconContainer}>
+          <Image
+            source={require("../assets/iconos/user.png")}
+            style={styles.userIcon}
+          />
+          <Image
+            source={require("../assets/iconos/corona.png")}
+            style={styles.crownIcon}
+          />
+        </View>
+        <View>
+          <Text style={styles.adminTitle}>Admin.</Text>
+          <Text style={styles.adminName}>{userName}</Text>
+        </View>
+      </View>
+
+      <View style={styles.iconRow}>
+        <Pressable onPress={goToNotifications} style={styles.iconButton}>
+          <Image
+            source={require("../assets/iconos/bell2.png")}
+            style={styles.topIcon}
+          />
+        </Pressable>
+        <Pressable onPress={goToCalendar} style={styles.iconButton}>
+          <Image
+            source={require("../assets/iconos/calendar-admin.png")}
+            style={styles.topIcon}
+          />
+        </Pressable>
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={
+              menuVisible
+                ? require("../assets/iconos/close-admin.png")
+                : require("../assets/iconos/menu-admin.png")
+            }
+            style={styles.topIcon}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  // === CABECERA ORGANIZADOR (igual que en CulturaHistoria) ===
+  const renderOrganizerTopBar = () =>
+    role === "organizer" && (
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 24,
+          paddingVertical: 14,
+          justifyContent: "space-between",
+          backgroundColor: "#fff",
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View
+            style={{
+              position: "relative",
+              marginRight: 12,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: "#F3B23F",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <Image
-              source={require("../assets/iconos/bell.png")}
+              source={require("../assets/iconos/user.png")}
+              style={{ width: 24, height: 24, tintColor: "#fff" }}
+            />
+            <Image
+              source={require("../assets/iconos/lapiz.png")}
               style={{
-                width: 24,
-                height: 24,
-                tintColor: "#014869",
-                marginRight: 10,
+                position: "absolute",
+                top: -4,
+                left: -4,
+                width: 22,
+                height: 22,
+                resizeMode: "contain",
+                transform: [{ rotate: "-25deg" }],
               }}
             />
+          </View>
+          <View>
+            <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+              Organiz.
+            </Text>
+            <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+          </View>
+        </View>
+
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+            <Image
+              source={require("../assets/iconos/bell3.png")}
+              style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+            />
           </Pressable>
+
+          {Platform.OS === "web" && (
+            <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+              <Image
+                source={require("../assets/iconos/calendar-organizador.png")}
+                style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+              />
+            </Pressable>
+          )}
+
           <Pressable onPress={toggleMenu}>
             <Image
               source={
                 menuVisible
-                  ? require("../assets/iconos/close.png")
-                  : require("../assets/iconos/menu-usuario.png")
+                  ? require("../assets/iconos/close-organizador.png")
+                  : require("../assets/iconos/menu-organizador.png")
               }
-              style={{ width: 26, height: 26, tintColor: "#014869" }}
+              style={{ width: 24, height: 24, tintColor: "#F3B23F" }}
             />
           </Pressable>
         </View>
       </View>
     );
-  };
 
-  // === Menú lateral (solo web) ===
-  const renderMenu = () => {
-    if (!menuVisible || Platform.OS !== "web") return null;
-    let menuItems = [];
-    if (role === "admin") {
-      menuItems = [
-        { label: "Perfil", action: goToProfile },
-        { label: "Cultura e Historia", action: goToCulturaHistoria },
-        { label: "Ver usuarios", action: goToUsers },
-        { label: "Contacto" },
-      ];
-    } else if (role === "organizer") {
-      menuItems = [
-        { label: "Perfil", action: goToProfile },
-        { label: "Cultura e Historia", action: goToCulturaHistoria },
-        { label: "Contacto" },
-      ];
-    } else {
-      menuItems = [
-        { label: "Perfil", action: goToProfile },
-        { label: "Cultura e Historia", action: goToCulturaHistoria },
-        { label: "Ver favoritos", action: goToFavorites },
-        { label: "Contacto" },
-      ];
-    }
-
-    return (
+  // === MENÚ ADMIN WEB ===
+  const renderAdminMenu = () =>
+    Platform.OS === "web" &&
+    menuVisible && (
       <>
         <TouchableWithoutFeedback onPress={toggleMenu}>
           <View style={styles.overlay} />
@@ -352,12 +388,17 @@ export default function Contacto({ navigation }) {
         <Animated.View
           style={[styles.sideMenu, { transform: [{ translateX: menuAnim }] }]}
         >
-          {menuItems.map((item, i) => (
+          {[
+            { label: "Perfil", action: goToProfile },
+            { label: "Cultura e Historia", action: goToCulturaHistoria },
+            { label: "Ver usuarios", action: goToUsers },
+            { label: "Contacto", action: () => {} },
+          ].map((item, i) => (
             <Pressable
               key={i}
               onPress={() => {
                 toggleMenu();
-                if (item.action) item.action();
+                item.action();
               }}
               style={{ marginBottom: 25 }}
             >
@@ -367,22 +408,127 @@ export default function Contacto({ navigation }) {
         </Animated.View>
       </>
     );
-  };
 
-  // === Render principal ===
+  // === MENÚ ORGANIZADOR WEB ===
+  const renderOrganizerMenuWeb = () =>
+    role === "organizer" &&
+    Platform.OS === "web" &&
+    menuVisible && (
+      <Animated.View
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: 250,
+          height: "100%",
+          backgroundColor: "#f8f8f8",
+          padding: 20,
+          zIndex: 10,
+          transform: [{ translateX: menuAnim }],
+          boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
+        }}
+      >
+        {[
+          { label: "Perfil", action: goToProfile },
+          { label: "Cultura e Historia", action: goToCulturaHistoria },
+          { label: "Contacto", action: goToContact },
+        ].map((item, i) => (
+          <Pressable
+            key={i}
+            onPress={() => {
+              toggleMenu();
+              item.action();
+            }}
+            style={{ marginBottom: 25 }}
+          >
+            <Text
+              style={{
+                color: "#014869",
+                fontSize: 18,
+                fontWeight: "700",
+                cursor: "pointer",
+              }}
+            >
+              {item.label}
+            </Text>
+          </Pressable>
+        ))}
+      </Animated.View>
+    );
+
+  // === MENÚ USUARIO WEB (idéntico a UserNotifications) ===
+  const renderUserMenuWeb = () =>
+    role === "user" &&
+    Platform.OS === "web" &&
+    menuVisible && (
+      <Animated.View
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: 250,
+          height: "100%",
+          backgroundColor: "#f8f8f8",
+          padding: 20,
+          zIndex: 10,
+          transform: [{ translateX: menuAnim }],
+          boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
+        }}
+      >
+        {[
+          { label: "Perfil", action: goToProfile },
+          { label: "Cultura e Historia", action: goToCulturaHistoria },
+          { label: "Ver favoritos", action: goToFavorites },
+          { label: "Contacto", action: goToContact },
+        ].map((item, i) => (
+          <Pressable
+            key={i}
+            onPress={() => {
+              toggleMenu();
+              item.action();
+            }}
+            style={{ marginBottom: 25 }}
+          >
+            <Text
+              style={{
+                color: "#014869",
+                fontSize: 18,
+                fontWeight: "700",
+                cursor: "pointer",
+              }}
+            >
+              {item.label}
+            </Text>
+          </Pressable>
+        ))}
+      </Animated.View>
+    );
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
-      {renderTopBar()}
-      {renderMenu()}
+      {/* === CABECERA SEGÚN ROL === */}
+      {role === "admin"
+        ? renderAdminTopBar()
+        : role === "organizer"
+        ? renderOrganizerTopBar()
+        : renderUserTopBar()}
 
-      {Platform.OS !== "web" && menuVisible && (
-        role === "organizer" ? (
+      {/* === MENÚ WEB SEGÚN ROL === */}
+      {role === "admin"
+        ? renderAdminMenu()
+        : role === "organizer"
+        ? renderOrganizerMenuWeb()
+        : renderUserMenuWeb()}
+
+      {/* === MENÚ MÓVIL === */}
+      {Platform.OS !== "web" &&
+        menuVisible &&
+        (role === "organizer" ? (
           <OrganizerMenu onClose={toggleMenu} />
         ) : (
           <UserMenu onClose={toggleMenu} />
-        )
-      )}
+        ))}
 
       <ScrollView
         contentContainerStyle={{
@@ -392,122 +538,60 @@ export default function Contacto({ navigation }) {
           flexGrow: 1,
         }}
       >
-        <Text
-          style={{
-            fontSize: 22,
-            fontWeight: "bold",
-            color: "#014869",
-            textAlign: "center",
-            marginBottom: 30,
-          }}
-        >
-          Contacto
-        </Text>
+        <Text style={styles.title}>Contacto</Text>
 
-        <View
-          style={{
-            backgroundColor: "#f2f2f2",
-            borderRadius: 12,
-            padding: 20,
-            width: "100%",
-            maxWidth: 900,
-          }}
-        >
-          {/* Nombre y Apellidos */}
-          <View style={{ flexDirection: "row", gap: 10, marginBottom: 10 }}>
+        <View style={styles.formContainer}>
+          <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: "#014869", fontWeight: "600" }}>Nombre:</Text>
+              <Text style={styles.label}>Nombre:</Text>
               <TextInput
                 value={form.name}
                 onChangeText={(t) => setForm({ ...form, name: t })}
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 20,
-                  paddingHorizontal: 12,
-                  height: 36,
-                  marginTop: 4,
-                }}
+                style={styles.input}
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: "#014869", fontWeight: "600" }}>Apellidos:</Text>
+              <Text style={styles.label}>Apellidos:</Text>
               <TextInput
                 value={form.lastname}
                 onChangeText={(t) => setForm({ ...form, lastname: t })}
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 20,
-                  paddingHorizontal: 12,
-                  height: 36,
-                  marginTop: 4,
-                }}
+                style={styles.input}
               />
             </View>
           </View>
 
-          {/* Email */}
-          <Text style={{ color: "#014869", fontWeight: "600" }}>Email:</Text>
+          <Text style={styles.label}>Email:</Text>
           <TextInput
             value={form.email}
             onChangeText={(t) => setForm({ ...form, email: t })}
             keyboardType="email-address"
             autoCapitalize="none"
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: 20,
-              paddingHorizontal: 12,
-              height: 36,
-              marginTop: 4,
-              marginBottom: 10,
-            }}
+            style={styles.input}
           />
 
-          {/* Teléfono */}
-          <Text style={{ color: "#014869", fontWeight: "600" }}>Teléfono:</Text>
+          <Text style={styles.label}>Teléfono:</Text>
           <TextInput
             value={form.phone}
             onChangeText={(t) => setForm({ ...form, phone: t })}
             keyboardType="phone-pad"
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: 20,
-              paddingHorizontal: 12,
-              height: 36,
-              marginTop: 4,
-              marginBottom: 10,
-            }}
+            style={styles.input}
           />
 
-          {/* Mensaje */}
-          <Text style={{ color: "#014869", fontWeight: "600" }}>Mensaje:</Text>
+          <Text style={styles.label}>Mensaje:</Text>
           <TextInput
             value={form.message}
             onChangeText={(t) => setForm({ ...form, message: t })}
             multiline
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: 12,
-              padding: 10,
-              height: 100,
-              marginTop: 4,
-              textAlignVertical: "top",
-            }}
+            style={styles.textarea}
           />
 
-          {/* Botón */}
           <View style={{ alignItems: "center", marginTop: 20 }}>
             <Pressable
               onPress={handleSend}
               disabled={sending}
-              style={{
-                backgroundColor: "#F3B23F",
-                borderRadius: 25,
-                paddingVertical: 12,
-                paddingHorizontal: 40,
-                opacity: sending ? 0.7 : 1,
-              }}
+              style={[styles.sendButton, { opacity: sending ? 0.7 : 1 }]}
             >
-              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>
+              <Text style={styles.sendButtonText}>
                 {sending ? "Enviando..." : "Enviar mensaje"}
               </Text>
             </Pressable>
@@ -515,16 +599,14 @@ export default function Contacto({ navigation }) {
         </View>
       </ScrollView>
 
-      {/* === TOAST visual (éxito / error) === */}
       {toast.visible && (
         <Animated.View
           style={{
             position: "absolute",
-            bottom: 40,
+            bottom: 100,
             left: "5%",
             right: "5%",
-            backgroundColor:
-              toast.type === "success" ? "#4CAF50" : "#E74C3C",
+            backgroundColor: toast.type === "success" ? "#4CAF50" : "#E74C3C",
             paddingVertical: 14,
             paddingHorizontal: 18,
             borderRadius: 12,
@@ -548,7 +630,6 @@ export default function Contacto({ navigation }) {
         </Animated.View>
       )}
 
-      {/* FOOTER */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAbout}
@@ -561,25 +642,40 @@ export default function Contacto({ navigation }) {
 }
 
 // === ESTILOS ===
-const styles = {
+const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
   },
-  topBarIcons: { flexDirection: "row", alignItems: "center" },
-  overlay: {
+  adminInfo: { flexDirection: "row", alignItems: "center" },
+  adminIconContainer: {
+    position: "relative",
+    marginRight: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#0094A2",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  userIcon: { width: 24, height: 24, tintColor: "#fff" },
+  crownIcon: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    zIndex: 9,
+    top: -12,
+    left: -6,
+    width: 22,
+    height: 22,
+    resizeMode: "contain",
   },
+  adminTitle: { color: "#014869", fontWeight: "700", fontSize: 14 },
+  adminName: { color: "#6c757d", fontSize: 13 },
+  iconRow: { flexDirection: "row", alignItems: "center" },
+  iconButton: { marginRight: 20 },
+  topIcon: { width: 22, height: 22, tintColor: "#0094A2" },
   sideMenu: {
     position: "absolute",
     top: 0,
@@ -590,9 +686,56 @@ const styles = {
     padding: 20,
     zIndex: 10,
   },
-  menuItem: {
-    color: "#014869",
-    fontSize: 18,
-    fontWeight: "700",
+  menuItem: { color: "#014869", fontSize: 18, fontWeight: "700" },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    zIndex: 9,
   },
-};
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#014869",
+    textAlign: "center",
+    marginBottom: 30,
+  },
+  formContainer: {
+    backgroundColor: "#f2f2f2",
+    borderRadius: 12,
+    padding: 20,
+    width: "100%",
+    maxWidth: 900,
+  },
+  row: { flexDirection: "row", gap: 10, marginBottom: 10 },
+  label: { color: "#014869", fontWeight: "600" },
+  input: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    height: 36,
+    marginTop: 4,
+    marginBottom: 10,
+  },
+  textarea: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 10,
+    height: 100,
+    marginTop: 4,
+    textAlignVertical: "top",
+  },
+  sendButton: {
+    backgroundColor: "#F3B23F",
+    borderRadius: 25,
+    paddingVertical: 10,
+    paddingHorizontal: 40,
+  },
+  sendButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+});

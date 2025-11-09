@@ -8,18 +8,17 @@ import {
   StyleSheet,
   Dimensions,
   ScrollView,
-  Modal,
-  TouchableOpacity,
   Animated,
   TouchableWithoutFeedback,
+  Modal,
+  TouchableOpacity,
   Image,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
-import OrganizerMenu from "./OrganizerMenu"; // ✅ Añadido
-import UserMenu from "./UserMenu"; // ✅ Añadido
+import UserMenu from "./UserMenu";
 
 /** === CONFIG API === */
 const API_BASE =
@@ -63,11 +62,13 @@ function atStartOfDay(d) {
 }
 function parseDDMMYYYY(str) {
   if (!str || typeof str !== "string") return null;
+  // yyyy-mm-dd
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
     const [y, m, d] = str.substring(0, 10).split("-").map(Number);
     const date = new Date(y, m - 1, d, 12, 0, 0);
     if (!isNaN(date.getTime())) return atStartOfDay(date);
   }
+  // dd/mm/yyyy
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
     const [dd, mm, yyyy] = str.split("/").map(Number);
     const date = new Date(yyyy, mm - 1, dd, 12, 0, 0);
@@ -84,7 +85,7 @@ function ymdKey(date) {
 function getMonthMatrix(year, monthIndex) {
   const first = new Date(year, monthIndex, 1);
   const last = new Date(year, monthIndex + 1, 0);
-  const firstWeekday = (first.getDay() + 6) % 7;
+  const firstWeekday = (first.getDay() + 6) % 7; // Lunes=0
   const daysInMonth = last.getDate();
   const matrix = [];
   let week = [];
@@ -118,35 +119,45 @@ function ColorDot({ color }) {
 
 export default function Calendar() {
   const navigation = useNavigation();
-  const [role, setRole] = useState(null);
+
+  // === Estado de sesión ===
+  const [role, setRole] = useState(null); // "admin" | "organizer" | "user"
+  const [userName, setUserName] = useState("Usuario");
+
+  // === Eventos y calendario ===
   const [events, setEvents] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedKey, setSelectedKey] = useState(null);
+
+  // === Panel móvil (detalle del día) ===
   const [mobilePanelVisible, setMobilePanelVisible] = useState(false);
+
+  // === Menú lateral ===
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  // === Cargar sesión y rol ===
+  /** === Cargar sesión (nombre y rol) === */
   useEffect(() => {
     const loadSession = async () => {
       try {
-        let session;
-        if (Platform.OS === "web") {
-          session = JSON.parse(localStorage.getItem("USER_SESSION"));
-        } else {
-          const s = await AsyncStorage.getItem("USER_SESSION");
-          session = s ? JSON.parse(s) : null;
-        }
-        if (session?.user?.role) setRole(session.user.role);
-        else if (session?.role) setRole(session.role);
-      } catch (err) {
-        console.error("Error cargando sesión:", err);
+        const session =
+          Platform.OS === "web"
+            ? JSON.parse(localStorage.getItem("USER_SESSION"))
+            : JSON.parse(await AsyncStorage.getItem("USER_SESSION"));
+        if (session?.user?.name || session?.name)
+          setUserName(session.user?.name || session.name);
+        if (session?.user?.role || session?.role)
+          setRole(session.user?.role || session.role);
+        else setRole("user");
+      } catch {
+        setRole("user");
+        setUserName("Usuario");
       }
     };
     loadSession();
   }, []);
 
-  // === Cargar eventos ===
+  /** === Cargar eventos === */
   useEffect(() => {
     const load = async () => {
       try {
@@ -167,6 +178,7 @@ export default function Calendar() {
     load();
   }, []);
 
+  /** === Agrupar por día === */
   const eventsByDay = useMemo(() => {
     const map = {};
     for (const ev of events) {
@@ -194,7 +206,7 @@ export default function Calendar() {
 
   const selectedEvents = selectedKey ? eventsByDay[selectedKey] || [] : [];
 
-  // === Navegaciones dinámicas ===
+  /** === Navegaciones por rol === */
   const goToProfile = () =>
     role === "admin"
       ? navigation.navigate("AdminProfile")
@@ -211,27 +223,21 @@ export default function Calendar() {
 
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToContact = () => navigation.navigate("Contacto");
-  const goToAboutUs = () => navigation.navigate("SobreNosotros");
+  const goToAbout = () => navigation.navigate("SobreNosotros");
   const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToCalendar = () => navigation.navigate("Calendar");
-
-  // ✅ NUEVO: función ir al Home Organizer (solo móvil)
-  const goToOrganizerHome = () => {
-    if (Platform.OS !== "web" && role === "organizer") {
-      const currentRoute = navigation.getState().routes.slice(-1)[0].name;
-      if (currentRoute === "Organizer") {
-        navigation.reset({ index: 0, routes: [{ name: "Organizer" }] });
-      } else {
-        navigation.navigate("Organizer");
-      }
-    }
+  const goToUsers = () => navigation.navigate("AdminUsers");
+  const goToHomeOrganizador = () => navigation.navigate("Organizer");
+  const goToFavorites = () => {
+    if (Platform.OS !== "web") toggleMenu();
+    navigation.navigate("UserFavorites");
   };
 
-  // === Toggle menú lateral ===
+  /** === Toggle menú lateral === */
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
-      setMenuVisible(!menuVisible);
+      setMenuVisible((prev) => !prev);
       return;
     }
     if (menuVisible) {
@@ -250,102 +256,234 @@ export default function Calendar() {
     }
   };
 
-  const isWeb = Platform.OS === "web";
-  const gridMaxWidth = isWeb
-    ? 860
-    : Math.min(Dimensions.get("window").width - 24, 860);
+  /** === CABECERA IGUAL QUE EN NOTIFICACIONES/ORGANIZER y USUARIO === */
+  const renderTopBar = () => {
+    // ✅ Si el rol es usuario y está en móvil, se usa la misma cabecera que en UserProfile
+    if (role === "user" && Platform.OS !== "web") {
+      return (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 24,
+            paddingVertical: 14,
+            justifyContent: "space-between",
+            backgroundColor: "#fff",
+          }}
+        >
+          {/* Perfil Usuario */}
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View
+              style={{
+                position: "relative",
+                marginRight: 12,
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: "#014869",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Image
+                source={require("../assets/iconos/user.png")}
+                style={{ width: 24, height: 24, tintColor: "#fff" }}
+              />
+            </View>
+            <View>
+              <Text
+                style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}
+              >
+                Usuario
+              </Text>
+              <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+            </View>
+          </View>
 
-  /** === Config visual según rol === */
-  let colorMain = "#014869";
-  let iconCalendar, iconBell, iconMenu, iconClose;
+          {/* Iconos derecha */}
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+              <Image
+                source={require("../assets/iconos/bell.png")}
+                style={{ width: 22, height: 22, tintColor: "#014869" }}
+              />
+            </Pressable>
 
-  if (role === "organizer") {
-    colorMain = "#F3B23F";
-    iconCalendar = require("../assets/iconos/calendar-organizador.png");
-    iconBell = require("../assets/iconos/bell3.png");
-    iconMenu = require("../assets/iconos/menu-organizador.png");
-    iconClose = require("../assets/iconos/close-organizador.png");
-  } else if (role === "admin") {
-    colorMain = "#33ADB5";
-    iconCalendar = require("../assets/iconos/calendar-admin.png");
-    iconBell = require("../assets/iconos/bell2.png");
-    iconMenu = require("../assets/iconos/menu-admin.png");
-    iconClose = require("../assets/iconos/close-admin.png");
-  } else if (role === "user") {
-    colorMain = "#014869";
-    iconCalendar = require("../assets/iconos/calendar.png");
-    iconBell = require("../assets/iconos/bell.png");
-    iconMenu = require("../assets/iconos/menu-usuario.png");
-    iconClose = require("../assets/iconos/close.png");
-  }
+            <Pressable onPress={toggleMenu}>
+              <Image
+                source={
+                  menuVisible
+                    ? require("../assets/iconos/close.png")
+                    : require("../assets/iconos/menu-usuario.png")
+                }
+                style={{ width: 24, height: 24, tintColor: "#014869" }}
+              />
+            </Pressable>
+          </View>
+        </View>
+      );
+    }
 
-  // === Menú lateral web ===
-  const menuItems =
-    role === "admin"
-      ? [
-          { label: "Perfil", action: goToProfile },
-          { label: "Cultura e Historia", action: goToCulturaHistoria },
-          { label: "Ver Usuarios", action: goToContact },
-        ]
-      : role === "organizer"
-      ? [
-          { label: "Perfil", action: goToProfile },
-          { label: "Cultura e Historia", action: goToCulturaHistoria },
-          { label: "Contacto", action: goToContact },
-        ]
-      : [
-          { label: "Perfil", action: goToProfile },
-          { label: "Cultura e Historia", action: goToCulturaHistoria },
-          { label: "Ver Favoritos", action: goToContact },
-          { label: "Contacto", action: goToContact },
-        ];
+    // 🔸 Mantienes tu cabecera original para admin y organizer
+    const tint =
+      role === "organizer"
+        ? "#F3B23F"
+        : role === "admin"
+        ? "#0094A2"
+        : "#014869";
+    const avatarBg = tint;
 
-  return (
-    <View style={styles.container}>
-      <Header hideAuthButtons />
+    const bellIcon =
+      role === "organizer"
+        ? require("../assets/iconos/bell3.png")
+        : role === "admin"
+        ? require("../assets/iconos/bell2.png")
+        : require("../assets/iconos/bell.png");
 
-      {/* === Barra superior === */}
+    const calIcon =
+      role === "organizer"
+        ? require("../assets/iconos/calendar-organizador.png")
+        : role === "admin"
+        ? require("../assets/iconos/calendar-admin.png")
+        : require("../assets/iconos/calendar.png");
+
+    // ✅ Lápiz solo para organizer, corona solo para admin
+    let userBadge = null;
+    if (role === "admin") userBadge = require("../assets/iconos/corona.png");
+    else if (role === "organizer")
+      userBadge = require("../assets/iconos/lapiz.png");
+
+    const userBadgeStyle =
+      role === "admin"
+        ? {
+            position: "absolute",
+            top: -6,
+            left: -6,
+            width: 20,
+            height: 20,
+            resizeMode: "contain",
+          }
+        : {
+            position: "absolute",
+            top: -6,
+            left: -6,
+            width: 20,
+            height: 20,
+            resizeMode: "contain",
+            transform: [{ rotate: "-20deg" }],
+          };
+
+    return (
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
-          padding: 16,
-          justifyContent: "flex-end",
-          borderBottomWidth: 1,
-          borderColor: "#eee",
-          gap: 15,
+          paddingHorizontal: 24,
+          paddingVertical: 14,
+          justifyContent: "space-between",
+          backgroundColor: "#fff",
         }}
       >
-        <Pressable onPress={goToCalendar}>
-          <Image
-            source={iconCalendar}
-            style={{ width: 26, height: 26, tintColor: colorMain }}
-          />
-        </Pressable>
-        <Pressable onPress={goToNotifications}>
-          <Image
-            source={iconBell}
-            style={{ width: 26, height: 26, tintColor: colorMain }}
-          />
-        </Pressable>
-        <Pressable onPress={toggleMenu}>
-          <Image
-            source={menuVisible ? iconClose : iconMenu}
-            style={{ width: 26, height: 26, tintColor: colorMain }}
-          />
-        </Pressable>
-      </View>
-
-      {/* === Menú lateral web === */}
-      {isWeb && menuVisible && (
-        <>
-          <TouchableWithoutFeedback onPress={toggleMenu}>
-            <View style={styles.menuOverlay} />
-          </TouchableWithoutFeedback>
-          <Animated.View
-            style={[styles.sideMenu, { transform: [{ translateX: menuAnim }] }]}
+        {/* Perfil */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View
+            style={{
+              position: "relative",
+              marginRight: 12,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: avatarBg,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
           >
-            {menuItems.map((item, i) => (
+            <Image
+              source={require("../assets/iconos/user.png")}
+              style={{ width: 24, height: 24, tintColor: "#fff" }}
+            />
+            {/* ✅ Solo muestra el icono si el rol lo tiene */}
+            {userBadge && <Image source={userBadge} style={userBadgeStyle} />}
+          </View>
+          <View>
+            <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+              {role === "admin"
+                ? "Admin."
+                : role === "organizer"
+                ? "Organiz."
+                : "Usuario"}
+            </Text>
+            <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+          </View>
+        </View>
+
+        {/* Iconos derecha */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+            <Image
+              source={bellIcon}
+              style={{ width: 22, height: 22, tintColor: tint }}
+            />
+          </Pressable>
+
+          {Platform.OS === "web" && (
+            <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+              <Image
+                source={calIcon}
+                style={{ width: 22, height: 22, tintColor: tint }}
+              />
+            </Pressable>
+          )}
+
+          <Pressable onPress={toggleMenu}>
+            <Image
+              source={
+                menuVisible
+                  ? require("../assets/iconos/close-organizador.png")
+                  : require("../assets/iconos/menu-organizador.png")
+              }
+              style={{ width: 24, height: 24, tintColor: tint }}
+            />
+          </Pressable>
+        </View>
+      </View>
+    );
+  };
+
+  /** === LAYOUT === */
+  const gridMaxWidth =
+    Platform.OS === "web"
+      ? 720
+      : Math.min(Dimensions.get("window").width - 24, 720);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <Header hideAuthButtons />
+      {renderTopBar()}
+
+      {/* === MENÚ LATERAL (WEB) === */}
+      {Platform.OS === "web" && menuVisible && (
+        <>
+          <Animated.View
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: 250,
+              height: "100%",
+              backgroundColor: "#f8f8f8",
+              padding: 20,
+              zIndex: 10,
+              transform: [{ translateX: menuAnim }],
+              boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
+            }}
+          >
+            {[
+              { label: "Perfil", action: goToProfile },
+              { label: "Cultura e Historia", action: goToCulturaHistoria },
+              { label: "Ver favoritos", action: goToFavorites },
+              { label: "Contacto", action: goToContact },
+            ].map((item, i) => (
               <Pressable
                 key={i}
                 onPress={() => {
@@ -354,24 +492,135 @@ export default function Calendar() {
                 }}
                 style={{ marginBottom: 25 }}
               >
-                <Text style={styles.menuItem}>{item.label}</Text>
+                <Text
+                  style={{
+                    color: "#014869",
+                    fontSize: 18,
+                    fontWeight: "700",
+                    cursor: "pointer",
+                  }}
+                >
+                  {item.label}
+                </Text>
               </Pressable>
             ))}
           </Animated.View>
         </>
       )}
+      {Platform.OS !== "web" && menuVisible && (
+        <View style={styles.mobileMenu}>
+          {/* Cabecera menú móvil */}
+          <View style={styles.mobileMenuHeader}>
+            <Pressable onPress={toggleMenu}>
+              <Image
+                source={require("../assets/iconos/back-usuario.png")}
+                style={{ width: 22, height: 22 }}
+              />
+            </Pressable>
+            <Text
+              style={{ fontSize: 18, fontWeight: "bold", color: "#014869" }}
+            >
+              Menú
+            </Text>
+            <View style={{ width: 24 }} />
+          </View>
 
-      {/* === Menú móvil === */}
-      {!isWeb && menuVisible && (
-        role === "organizer" ? (
-          <OrganizerMenu onClose={toggleMenu} onHomePress={goToOrganizerHome} />
-        ) : (
-          <UserMenu onClose={toggleMenu} />
-        )
+          {/* Opciones */}
+          <View style={styles.mobileMenuBody}>
+            {[
+              {
+                label: "Sobre nosotros",
+                icon: require("../assets/iconos/info-usuario.png"),
+                action: goToAbout,
+              },
+              {
+                label: "Cultura e Historia",
+                icon: require("../assets/iconos/museo-usuario.png"),
+                action: goToCulturaHistoria,
+              },
+              {
+                label: "Contacto",
+                icon: require("../assets/iconos/phone-usuario.png"),
+                action: goToContact,
+              },
+            ].map((item, i) => (
+              <Pressable
+                key={i}
+                onPress={() => {
+                  toggleMenu();
+                  item.action();
+                }}
+                style={styles.mobileMenuItem}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Image
+                    source={item.icon}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      tintColor: "#014869",
+                      marginRight: 12,
+                    }}
+                  />
+                  <Text style={styles.mobileMenuText}>{item.label}</Text>
+                </View>
+                <Image
+                  source={require("../assets/iconos/siguiente.png")}
+                  style={{ width: 16, height: 16}}
+                />
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Barra inferior */}
+          <View style={styles.mobileBottomBar}>
+            <Pressable
+              onPress={() => {
+                const currentRoute =
+                  navigation.getState().routes.slice(-1)[0].name || "Organizer";
+                if (currentRoute === "Organizer") {
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: "Organizer" }],
+                  });
+                } else {
+                  navigation.navigate("Organizer");
+                }
+              }}
+            >
+              <Image
+                source={require("../assets/iconos/home-usuario.png")}
+                style={{ width: 26, height: 26}}
+              />
+            </Pressable>
+
+            <Pressable onPress={goToCalendar}>
+              <Image
+                source={require("../assets/iconos/calendar.png")}
+                style={{ width: 26, height: 26 }}
+              />
+            </Pressable>
+
+            <Pressable onPress={goToProfile}>
+              <Image
+                source={require("../assets/iconos/usuario.png")}
+                style={{ width: 26, height: 26 }}
+              />
+            </Pressable>
+          </View>
+        </View>
       )}
 
-      {/* === Contenido del calendario === */}
-      <View style={styles.contentWrapper}>
+      {/* === CALENDARIO === */}
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          alignItems: "center",
+          backgroundColor: "#f5f6f7",
+          paddingVertical: 20,
+        }}
+      >
+        {/* Controles de mes */}
         <View style={[styles.headerRow, { width: gridMaxWidth }]}>
           <Pressable onPress={goPrevMonth} style={styles.navBtn}>
             <Text style={styles.navBtnText}>‹</Text>
@@ -384,6 +633,7 @@ export default function Calendar() {
           </Pressable>
         </View>
 
+        {/* Cabecera semana */}
         <View style={[styles.weekHeader, { width: gridMaxWidth }]}>
           {weekNamesShortEs.map((d) => (
             <Text key={d} style={styles.weekHeaderText}>
@@ -392,6 +642,7 @@ export default function Calendar() {
           ))}
         </View>
 
+        {/* Grilla del mes */}
         <View style={[styles.calendarGrid, { width: gridMaxWidth }]}>
           {matrix.map((week, r) => (
             <View key={r} style={styles.weekRow}>
@@ -422,6 +673,7 @@ export default function Calendar() {
                     >
                       {day}
                     </Text>
+
                     {!!dayEvents.length && (
                       <View style={styles.dotsRow}>
                         {dayEvents.slice(0, 3).map((ev, i) => (
@@ -441,9 +693,10 @@ export default function Calendar() {
           ))}
         </View>
 
-        {/* === Panel detalle === */}
-        {isWeb ? (
-          selectedKey && (
+        {/* === Panel detalle (WEB: tarjeta lateral; MÓVIL: modal) === */}
+        {Platform.OS === "web" ? (
+          selectedKey &&
+          selectedEvents.length > 0 && (
             <View style={[styles.webDetailCard]}>
               <Text style={styles.detailDateTitle}>
                 {renderDateTitle(selectedKey)}
@@ -452,7 +705,10 @@ export default function Calendar() {
                 {selectedEvents.map((ev) => (
                   <View key={ev._id} style={styles.detailItem}>
                     <View
-                      style={[styles.detailBadge, { backgroundColor: ev._color }]}
+                      style={[
+                        styles.detailBadge,
+                        { backgroundColor: ev._color },
+                      ]}
                     />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.detailTitle}>{ev.title}</Text>
@@ -515,11 +771,12 @@ export default function Calendar() {
             </TouchableOpacity>
           </Modal>
         )}
-      </View>
+      </ScrollView>
 
+      {/* === FOOTER WEB === */}
       {Platform.OS === "web" && (
         <Footer
-          onAboutPress={goToAboutUs}
+          onAboutPress={goToAbout}
           onPrivacyPress={goToPrivacy}
           onConditionsPress={goToConditions}
         />
@@ -528,7 +785,7 @@ export default function Calendar() {
   );
 }
 
-/** === Helpers extra === */
+/** === Helpers === */
 function labelFromCategory(cat) {
   const v = (cat || "").toLowerCase();
   switch (v) {
@@ -564,8 +821,7 @@ function renderDateTitle(key) {
 
 /** === STYLES === */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  menuOverlay: {
+  overlay: {
     position: "absolute",
     top: 0,
     left: 0,
@@ -584,12 +840,52 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   menuItem: { color: "#014869", fontSize: 18, fontWeight: "700" },
-  contentWrapper: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 20,
-    paddingHorizontal: 12,
+
+  mobileMenu: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#f4f6f7",
+    zIndex: 20,
+    justifyContent: "space-between",
   },
+  mobileMenuHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 50,
+    paddingBottom: 20,
+  },
+  mobileMenuBody: {
+    flex: 1,
+    paddingHorizontal: 40,
+    justifyContent: "flex-start",
+    gap: 30,
+  },
+  mobileMenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  mobileMenuText: {
+    color: "#014869",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  mobileBottomBar: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderColor: "#014869",
+    backgroundColor: "#fff",
+  },
+
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -598,18 +894,18 @@ const styles = StyleSheet.create({
   },
   monthTitle: { fontSize: 18, fontWeight: "700", color: "#014869" },
   navBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#eef5f8",
   },
-  navBtnText: { fontSize: 20, fontWeight: "700", color: "#014869" },
+  navBtnText: { fontSize: 18, fontWeight: "700", color: "#014869" },
   weekHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 6,
+    marginBottom: 4,
     paddingHorizontal: 4,
   },
   weekHeaderText: {
@@ -622,74 +918,66 @@ const styles = StyleSheet.create({
   calendarGrid: {
     backgroundColor: "#F2F4F5",
     borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
   },
   weekRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginVertical: 6,
+    marginVertical: 3,
   },
   dayCell: {
     width: "13.6%",
-    aspectRatio: 1,
+    aspectRatio: 0.9,
     backgroundColor: "#fff",
-    borderRadius: 14,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
   dayCellEmpty: { backgroundColor: "transparent" },
   todayCell: { borderWidth: 2, borderColor: "#014869" },
   selectedCell: { borderWidth: 2, borderColor: "#F3B23F" },
-  dayNumber: { fontWeight: "700", color: "#334155" },
+  dayNumber: { fontWeight: "700", color: "#334155", fontSize: 12 },
   todayNumber: { color: "#014869" },
   dotsRow: {
     position: "absolute",
-    bottom: 8,
+    bottom: 4,
     flexDirection: "row",
     alignItems: "center",
   },
-  moreDots: {
-    fontSize: 10,
-    marginLeft: 2,
-    color: "#64748b",
-    fontWeight: "600",
-  },
+  moreDots: { fontSize: 9, marginLeft: 2, color: "#64748b", fontWeight: "600" },
+
+  // Panel detalle web
   webDetailCard: {
     position: "absolute",
-    left: 40,
-    top: 180,
+    left: 30,
+    top: 150,
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 10,
+    padding: 12,
     borderWidth: 1,
     borderColor: "#e5e7eb",
+    maxHeight: 320,
+    width: 260,
   },
   detailDateTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "800",
     color: "#014869",
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  detailList: { gap: 10 },
+  detailList: { gap: 8 },
   detailItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 6,
+    gap: 8,
+    paddingVertical: 5,
   },
-  detailBadge: { width: 10, height: 10, borderRadius: 5 },
-  detailTitle: { fontSize: 14, fontWeight: "700", color: "#111827" },
-  detailSub: { fontSize: 12, color: "#6b7280", marginTop: 2 },
-  closeDetailBtn: {
-    marginTop: 12,
-    alignSelf: "flex-end",
-    backgroundColor: "#014869",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  closeDetailText: { color: "#fff", fontWeight: "700" },
+  detailBadge: { width: 8, height: 8, borderRadius: 4 },
+  detailTitle: { fontSize: 13, fontWeight: "700", color: "#111827" },
+  detailSub: { fontSize: 11, color: "#6b7280", marginTop: 2 },
+
+  // Modal móvil
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.15)",
@@ -702,4 +990,13 @@ const styles = StyleSheet.create({
     padding: 16,
     maxHeight: Dimensions.get("window").height * 0.6,
   },
+  closeDetailBtn: {
+    marginTop: 12,
+    alignSelf: "flex-end",
+    backgroundColor: "#014869",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  closeDetailText: { color: "#fff", fontWeight: "700" },
 });

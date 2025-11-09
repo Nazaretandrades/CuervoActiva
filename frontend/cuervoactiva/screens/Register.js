@@ -1,4 +1,3 @@
-// frontend/src/screens/Register.js
 import React, { useState } from "react";
 import {
   View,
@@ -7,7 +6,6 @@ import {
   Pressable,
   ScrollView,
   Image,
-  SafeAreaView,
   Platform,
   Dimensions,
   StatusBar,
@@ -16,7 +14,6 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/HeaderIntro";
-import Footer from "../components/Footer";
 import { registerUser } from "../services/auth";
 
 export default function Register() {
@@ -29,14 +26,12 @@ export default function Register() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Estados para mensajes visuales
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
   const fadeAnim = useState(new Animated.Value(0))[0];
 
-  const { height, width } = Dimensions.get("window");
+  const { width } = Dimensions.get("window");
   const isMobile = width < 768;
 
-  /** === Función para mostrar mensaje visual === */
   const showToast = (type, message) => {
     setToast({ visible: true, type, message });
     Animated.timing(fadeAnim, {
@@ -54,7 +49,6 @@ export default function Register() {
     }, 3000);
   };
 
-  /** === Enviar formulario === */
   async function onSubmit() {
     if (!email.trim() || !name.trim() || !password.trim()) {
       showToast("error", "Por favor, completa todos los campos obligatorios.");
@@ -75,7 +69,7 @@ export default function Register() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
-      {/* 🔹 Fondo decorativo */}
+      {/* Fondo decorativo */}
       <Image
         source={require("../assets/fondo.png")}
         style={{
@@ -94,18 +88,14 @@ export default function Register() {
         }}
       />
 
-      {/* 🔹 HEADER */}
+      {/* HEADER */}
       {Platform.OS === "web" ? (
         <Header
           onLogin={() => navigation.navigate("Login")}
           onRegister={() => navigation.navigate("Register")}
         />
       ) : (
-        <View
-          style={{
-            marginTop: StatusBar.currentHeight ? 0 : 0,
-          }}
-        >
+        <View style={{ marginTop: StatusBar.currentHeight ? 0 : 0 }}>
           <Header
             onLogin={() => navigation.navigate("Login")}
             onRegister={() => navigation.navigate("Register")}
@@ -113,277 +103,248 @@ export default function Register() {
         </View>
       )}
 
-      {/* 🔹 CONTENIDO */}
+      {/* CONTENIDO */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: "center",
           alignItems: "center",
-          paddingVertical: isMobile ? 30 : 50,
+          paddingVertical: isMobile ? 25 : 50,
         }}
       >
-        {/* 🔸 Título */}
+        {/* Título */}
         <Text
           style={{
-            fontSize: isMobile ? 24 : 30,
+            fontSize: isMobile ? 22 : 28,
             fontWeight: "bold",
             color: "#014869",
-            marginBottom: isMobile ? 20 : 30,
+            marginBottom: 20,
             textAlign: "center",
           }}
         >
-          Registrarse
+          Crear cuenta
         </Text>
 
-        {/* 🔸 FORMULARIO */}
+        {/* FORMULARIO */}
         <View
           style={{
-            width: isMobile ? "90%" : "80%",
-            maxWidth: 760,
-            backgroundColor: "#F4F4F4",
-            borderRadius: 20,
-            paddingVertical: isMobile ? 30 : 40,
-            paddingHorizontal: isMobile ? 25 : 50,
-            zIndex: 1,
+            width: isMobile ? "85%" : "60%",
+            maxWidth: 480,
+            backgroundColor: "#F9F9F9",
+            borderRadius: 15,
+            paddingVertical: 25,
+            paddingHorizontal: 30,
+            shadowColor: "#000",
+            shadowOpacity: 0.1,
+            shadowRadius: 10,
+            elevation: 3,
+            alignItems: "center",
           }}
         >
-          {/* FILA 1 */}
+          {/* Email */}
           <View
             style={{
-              flexDirection: isMobile ? "column" : "row",
-              justifyContent: "space-between",
-              marginBottom: isMobile ? 15 : 20,
-              gap: isMobile ? 15 : 20,
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "#fff",
+              borderRadius: 25,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              paddingHorizontal: 12,
+              height: 42,
+              width: "100%",
+              marginBottom: 15,
             }}
           >
-            {/* Email */}
-            <View
+            <Image
+              source={require("../assets/iconos/email.png")}
+              style={{
+                width: 18,
+                height: 18,
+                marginRight: 8,
+                tintColor: "#014869",
+              }}
+            />
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Correo electrónico"
+              placeholderTextColor="#7a7a7a"
               style={{
                 flex: 1,
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: "#fff",
-                borderRadius: 50,
-                borderWidth: 1,
-                borderColor: "#ddd",
-                paddingHorizontal: 14,
-                height: 50,
+                color: "#014869",
+                fontSize: 14,
               }}
-            >
-              <Image
-                source={require("../assets/iconos/email.png")}
-                style={{
-                  width: 20,
-                  height: 20,
-                  marginRight: 10,
-                  tintColor: "#014869",
-                }}
-              />
-              <TextInput
-                value={email}
-                onChangeText={setEmail}
-                placeholder="Gmail:"
-                placeholderTextColor="#7a7a7a"
-                style={{
-                  flex: 1,
-                  color: "#014869",
-                  fontSize: 15,
-                }}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            {/* Usuario */}
-            <View
-              style={{
-                flex: 1,
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: "#fff",
-                borderRadius: 50,
-                borderWidth: 1,
-                borderColor: "#ddd",
-                paddingHorizontal: 14,
-                height: 50,
-              }}
-            >
-              <Image
-                source={require("../assets/iconos/usuario.png")}
-                style={{
-                  width: 20,
-                  height: 20,
-                  marginRight: 10,
-                  tintColor: "#014869",
-                }}
-              />
-              <TextInput
-                value={name}
-                onChangeText={setName}
-                placeholder="Usuario:"
-                placeholderTextColor="#7a7a7a"
-                style={{
-                  flex: 1,
-                  color: "#014869",
-                  fontSize: 15,
-                }}
-              />
-            </View>
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
           </View>
 
-          {/* FILA 2 */}
+          {/* Nombre de usuario */}
           <View
             style={{
-              flexDirection: isMobile ? "column" : "row",
-              justifyContent: "space-between",
-              marginBottom: isMobile ? 20 : 25,
-              gap: isMobile ? 15 : 20,
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "#fff",
+              borderRadius: 25,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              paddingHorizontal: 12,
+              height: 42,
+              width: "100%",
+              marginBottom: 15,
             }}
           >
-            {/* Rol */}
-            <View
+            <Image
+              source={require("../assets/iconos/usuario.png")}
+              style={{
+                width: 18,
+                height: 18,
+                marginRight: 8,
+                tintColor: "#014869",
+              }}
+            />
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="Nombre de usuario"
+              placeholderTextColor="#7a7a7a"
               style={{
                 flex: 1,
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: "#fff",
-                borderRadius: 50,
-                borderWidth: 1,
-                borderColor: "#ddd",
-                paddingHorizontal: 14,
-                height: 50,
-                overflow: "hidden",
+                color: "#014869",
+                fontSize: 14,
               }}
-            >
-              <Image
-                source={require("../assets/iconos/rol.png")}
-                style={{
-                  width: 20,
-                  height: 20,
-                  marginRight: 10,
-                  tintColor: "#014869",
-                }}
-              />
-              <View style={{ flex: 1 }}>
-                <Picker
-                  selectedValue={role}
-                  onValueChange={setRole}
-                  dropdownIconColor="#014869"
-                  style={{
-                    flex: 1,
-                    color: "#7a7a7a",
-                    fontSize: 15,
-                    height: 50,
-                    backgroundColor: "transparent",
-                  }}
-                  itemStyle={{
-                    fontSize: 15,
-                    color: "#014869",
-                  }}
-                >
-                  <Picker.Item label="Usuario" value="user" />
-                  <Picker.Item label="Organizador" value="organizer" />
-                </Picker>
-              </View>
-            </View>
-
-            {/* Contraseña */}
-            <View
-              style={{
-                flex: 1,
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: "#fff",
-                borderRadius: 50,
-                borderWidth: 1,
-                borderColor: "#ddd",
-                paddingHorizontal: 14,
-                height: 50,
-              }}
-            >
-              <Image
-                source={require("../assets/iconos/lock.png")}
-                style={{
-                  width: 20,
-                  height: 20,
-                  marginRight: 10,
-                  tintColor: "#014869",
-                }}
-              />
-              <TextInput
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Contraseña:"
-                placeholderTextColor="#7a7a7a"
-                secureTextEntry={!showPass}
-                style={{
-                  flex: 1,
-                  color: "#014869",
-                  fontSize: 15,
-                }}
-              />
-              <Pressable onPress={() => setShowPass(!showPass)}>
-                <Image
-                  source={require("../assets/iconos/invisible.png")}
-                  style={{
-                    width: 20,
-                    height: 20,
-                    tintColor: showPass ? "#F3B23F" : "#014869",
-                  }}
-                />
-              </Pressable>
-            </View>
+            />
           </View>
 
-          {/* Botón */}
-          <View style={{ alignItems: "center", marginTop: 10 }}>
-            <Pressable
-              onPress={onSubmit}
-              disabled={loading}
-              android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+          {/* Rol */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "#fff",
+              borderRadius: 25,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              paddingHorizontal: 12,
+              height: 42,
+              width: "100%",
+              marginBottom: 15,
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/rol.png")}
               style={{
-                backgroundColor: "#F3B23F",
-                borderRadius: 25,
-                paddingVertical: 10,
-                paddingHorizontal: 28,
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: loading ? 0.7 : 1,
+                width: 18,
+                height: 18,
+                marginRight: 8,
+                tintColor: "#014869",
               }}
-            >
-              <Text
+            />
+            <View style={{ flex: 1 }}>
+              <Picker
+                selectedValue={role}
+                onValueChange={setRole}
+                dropdownIconColor="#014869"
                 style={{
-                  color: "#fff",
-                  fontWeight: "700",
-                  fontSize: 15,
+                  flex: 1,
+                  color: "#014869", // ✅ Se ve bien en móvil ahora
+                  fontSize: 14,
+                  height: 42,
+                  backgroundColor: "transparent",
+                }}
+                itemStyle={{
+                  fontSize: 14,
+                  color: "#014869",
                 }}
               >
-                {loading ? "Registrando..." : "Registrarse"}
-              </Text>
+                <Picker.Item label="Usuario" value="user" />
+                <Picker.Item label="Organizador" value="organizer" />
+              </Picker>
+            </View>
+          </View>
+
+          {/* Contraseña */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "#fff",
+              borderRadius: 25,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              paddingHorizontal: 12,
+              height: 42,
+              width: "100%",
+              marginBottom: 20,
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/lock.png")}
+              style={{
+                width: 18,
+                height: 18,
+                marginRight: 8,
+                tintColor: "#014869",
+              }}
+            />
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Contraseña"
+              placeholderTextColor="#7a7a7a"
+              secureTextEntry={!showPass}
+              style={{
+                flex: 1,
+                color: "#014869",
+                fontSize: 14,
+              }}
+            />
+            <Pressable onPress={() => setShowPass(!showPass)}>
+              <Image
+                source={require("../assets/iconos/invisible.png")}
+                style={{
+                  width: 18,
+                  height: 18,
+                  tintColor: showPass ? "#F3B23F" : "#014869",
+                }}
+              />
             </Pressable>
           </View>
 
-          {/* ✅ NUEVO: Botón Perfil solo en móvil (para el usuario) */}
-          {isMobile && role === "user" && (
-            <View style={{ alignItems: "center", marginTop: 25 }}>
-              <Pressable
-                onPress={() => navigation.navigate("UserProfile")}
-                style={{
-                  backgroundColor: "#014869",
-                  borderRadius: 25,
-                  paddingVertical: 10,
-                  paddingHorizontal: 28,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-              </Pressable>
-            </View>
-          )}
+          {/* Botón */}
+          <Pressable
+            onPress={onSubmit}
+            disabled={loading}
+            android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+            style={{
+              backgroundColor: "#F3B23F",
+              borderRadius: 8,
+              paddingVertical: 10,
+              paddingHorizontal: 40,
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: loading ? 0.7 : 1,
+              shadowColor: "#000",
+              shadowOpacity: 0.2,
+              shadowRadius: 3,
+              elevation: 4,
+            }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontWeight: "700",
+                fontSize: 15,
+              }}
+            >
+              {loading ? "Registrando..." : "Registrarse"}
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
 
-      {/* 🔸 MENSAJE VISUAL (TOAST) */}
+      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={{

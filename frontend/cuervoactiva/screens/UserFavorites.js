@@ -69,17 +69,20 @@ export default function UserFavorites() {
         setUserName(session.user.email.split("@")[0]);
       else if (session?.email) setUserName(session.email.split("@")[0]);
       else setUserName("Invitado");
-    } catch (err) {
-      console.error("Error obteniendo usuario:", err);
+    } catch {
       setUserName("Invitado");
     }
   };
+
+  /** === Cargar nombre del usuario === */
+  useEffect(() => {
+    getUserName();
+  }, []);
 
   /** === Cargar favoritos === */
   useEffect(() => {
     const loadFavorites = async () => {
       try {
-        await getUserName();
         const token = await getToken();
         if (!token) return;
 
@@ -124,7 +127,6 @@ export default function UserFavorites() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
   const goToContact = () => navigation.navigate("Contacto");
-  const goToSearch = () => navigation.navigate("UserHome");
   const goToHome = () => navigation.navigate("User");
 
   /** === Menú lateral === */
@@ -148,6 +150,77 @@ export default function UserFavorites() {
       }).start();
     }
   };
+
+  /** === Cabecera móvil idéntica a UserProfile === */
+  const renderTopBar = () => (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 24,
+        paddingVertical: 14,
+        justifyContent: "space-between",
+        backgroundColor: "#fff",
+      }}
+    >
+      {/* Perfil Usuario */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View
+          style={{
+            position: "relative",
+            marginRight: 12,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: "#014869",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            source={require("../assets/iconos/user.png")}
+            style={{ width: 24, height: 24, tintColor: "#fff" }}
+          />
+        </View>
+        <View>
+          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+            Usuario
+          </Text>
+          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+        </View>
+      </View>
+
+      {/* Iconos derecha */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+          <Image
+            source={require("../assets/iconos/bell.png")}
+            style={{ width: 22, height: 22, tintColor: "#014869" }}
+          />
+        </Pressable>
+
+        {Platform.OS === "web" && (
+          <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+            <Image
+              source={require("../assets/iconos/calendar.png")}
+              style={{ width: 22, height: 22, tintColor: "#014869" }}
+            />
+          </Pressable>
+        )}
+
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={
+              menuVisible
+                ? require("../assets/iconos/close.png")
+                : require("../assets/iconos/menu-usuario.png")
+            }
+            style={{ width: 24, height: 24, tintColor: "#014869" }}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
 
   /** === Menú móvil azul === */
   const renderMobileMenu = () =>
@@ -227,95 +300,53 @@ export default function UserFavorites() {
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
+      {renderTopBar()}
 
-      {/* ======= Barra superior ======= */}
-      <View style={styles.topBar}>
-        <Text style={{ color: "#014869", fontWeight: "bold" }}>
-          👤 {userName}
-        </Text>
-
-        <TextInput
-          placeholder="Buscar favoritos..."
-          value={search}
-          onChangeText={setSearch}
-          style={styles.searchBox}
-        />
-
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Pressable onPress={goToCalendar} style={{ marginHorizontal: 8 }}>
-            <Image
-              source={require("../assets/iconos/calendar.png")}
-              style={styles.iconBlue}
-            />
-          </Pressable>
-
-          <Pressable onPress={goToNotifications} style={{ marginHorizontal: 8 }}>
-            <Image
-              source={require("../assets/iconos/bell.png")}
-              style={styles.iconBlue}
-            />
-          </Pressable>
-
-          <Pressable onPress={toggleMenu}>
-            <Image
-              source={
-                Platform.OS === "web" && menuVisible
-                  ? require("../assets/iconos/close.png")
-                  : require("../assets/iconos/menu-usuario.png")
-              }
-              style={styles.iconBlue}
-            />
-          </Pressable>
-        </View>
-      </View>
-
-      {/* ======= Menú lateral ======= */}
-      {Platform.OS === "web" ? (
-        <>
-          {menuVisible && (
-            <TouchableWithoutFeedback onPress={toggleMenu}>
-              <View style={styles.overlay} />
-            </TouchableWithoutFeedback>
-          )}
-          <Animated.View
-            style={[
-              styles.sideMenu,
-              { transform: [{ translateX: menuAnim }] },
-            ]}
-          >
-            {[
-              { label: "Perfil", action: goToProfile },
-              { label: "Cultura e Historia", action: goToCulturaHistoria },
-              {
-                label: "Ver favoritos",
-                action: () => navigation.navigate("UserFavorites"),
-              },
-              { label: "Contacto", action: goToContact },
-            ].map((item, i) => (
-              <Pressable
-                key={i}
-                onPress={() => {
-                  toggleMenu();
-                  item.action();
+      {/* ======= MENÚ WEB (idéntico al de UserProfile) ======= */}
+      {Platform.OS === "web" && menuVisible && (
+        <Animated.View
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: 250,
+            height: "100%",
+            backgroundColor: "#f8f8f8",
+            padding: 20,
+            zIndex: 10,
+            transform: [{ translateX: menuAnim }],
+            boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
+          }}
+        >
+          {[
+            { label: "Perfil", action: goToProfile },
+            { label: "Cultura e Historia", action: goToCulturaHistoria },
+            { label: "Ver favoritos", action: () => navigation.navigate("UserFavorites") },
+            { label: "Contacto", action: goToContact },
+          ].map((item, i) => (
+            <Pressable
+              key={i}
+              onPress={() => {
+                toggleMenu();
+                item.action();
+              }}
+              style={{ marginBottom: 25 }}
+            >
+              <Text
+                style={{
+                  color: "#014869",
+                  fontSize: 18,
+                  fontWeight: "700",
+                  cursor: "pointer",
                 }}
-                style={{ marginBottom: 25 }}
               >
-                <Text
-                  style={{
-                    color: "#014869",
-                    fontSize: 16,
-                    fontWeight: "600",
-                  }}
-                >
-                  {item.label}
-                </Text>
-              </Pressable>
-            ))}
-          </Animated.View>
-        </>
-      ) : (
-        renderMobileMenu()
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+        </Animated.View>
       )}
+      {Platform.OS !== "web" && renderMobileMenu()}
 
       {/* ======= Contenido principal ======= */}
       <View style={{ flex: 1, paddingHorizontal: 20, paddingVertical: 20 }}>
@@ -368,21 +399,6 @@ export default function UserFavorites() {
 
 /** === Estilos === */
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    justifyContent: "space-between",
-  },
-  searchBox: {
-    flex: 1,
-    marginHorizontal: 16,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    paddingHorizontal: 8,
-    height: 36,
-    borderRadius: 6,
-  },
   iconBlue: { width: 26, height: 26, tintColor: "#014869" },
   overlay: {
     position: "absolute",

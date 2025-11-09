@@ -10,28 +10,51 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
-export default function UserMenu() {
+export default function UserMenu({ onClose }) {
   const navigation = useNavigation();
 
   // === Navegaciones ===
-  const goToAbout = () => navigation.navigate("SobreNosotros");
-  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
-  const goToFavorites = () => navigation.navigate("UserFavorites");
-  const goToContact = () => navigation.navigate("Contacto");
-  const goToCalendar = () => navigation.navigate("Calendar");
-  const goToProfile = () => navigation.navigate("UserProfile");
-  const goToHome = () => navigation.navigate("User");
+  const goToAbout = () => {
+    onClose();
+    navigation.navigate("SobreNosotros");
+  };
+  const goToCulturaHistoria = () => {
+    onClose();
+    navigation.navigate("CulturaHistoria");
+  };
+  const goToFavorites = () => {
+    onClose();
+    navigation.navigate("UserFavorites");
+  };
+  const goToContact = () => {
+    onClose();
+    navigation.navigate("Contacto");
+  };
+  const goToCalendar = () => {
+    onClose();
+    navigation.navigate("Calendar");
+  };
+  const goToProfile = () => {
+    onClose();
+    navigation.navigate("UserProfile");
+  };
+  const goToHome = () => {
+    onClose();
+    navigation.navigate("User");
+  };
 
   return (
     <View style={styles.container}>
       {/* === CABECERA === */}
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()}>
+        {/* Botón atrás que solo cierra el menú */}
+        <Pressable onPress={onClose} style={{ marginRight: 15 }}>
           <Image
             source={require("../assets/iconos/back-usuario.png")}
-            style={styles.backIcon}
+            style={{ width: 22, height: 22, tintColor: "#014869" }}
           />
         </Pressable>
+
         <Text style={styles.headerTitle}>Menú</Text>
         <View style={{ width: 24 }} />
       </View>
@@ -114,7 +137,7 @@ export default function UserMenu() {
 
           <Pressable onPress={goToProfile}>
             <Image
-              source={require("../assets/iconos/usuario.png")}
+              source={require("../assets/iconos/user.png")}
               style={styles.bottomIcon}
             />
           </Pressable>
@@ -129,8 +152,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     justifyContent: "space-between",
-
-    // 🔥 Añadido para ocupar toda la pantalla
     position: "absolute",
     top: 0,
     left: 0,
@@ -150,11 +171,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#014869",
-  },
-  backIcon: {
-    width: 22,
-    height: 22,
-    tintColor: "#014869",
   },
   menuOptions: {
     flex: 1,

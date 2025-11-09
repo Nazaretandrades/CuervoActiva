@@ -1,11 +1,7 @@
-
-//PANTALLA PRINCIPAL
-//1) Importaciones necesarias
 import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
-  Pressable,
   Image,
   FlatList,
   StyleSheet,
@@ -15,24 +11,17 @@ import {
 } from "react-native";
 
 //2) Componente principal HeroBanner
-export default function HeroBanner({ onNext }) {
-  //Obtenemos el ancho actual de la pantalla
+export default function HeroBanner() {
   const { width: screenWidth } = useWindowDimensions();
-
-  //Estado que guarda el ancho del contenedor (por si se redimensiona)
   const [containerWidth, setContainerWidth] = useState(screenWidth);
-
-  //Índice de la imagen actual (posición del carrusel)
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  //Referencia al FlatList (para mover el carrusel manualmente)
   const flatListRef = useRef(null);
 
-  //3) Configuración de animaciones (solo en móvil)
+  // Animaciones (solo móvil)
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const translateAnim = useRef(new Animated.Value(20)).current; //desplazamiento vertical (de abajo hacia arriba)
+  const translateAnim = useRef(new Animated.Value(20)).current;
 
-  //4) Array de imágenes (slides del carrusel)
+  // Array de imágenes
   const slides = [
     require("../assets/romeria.jpg"),
     require("../assets/patrona_feria.jpg"),
@@ -42,35 +31,27 @@ export default function HeroBanner({ onNext }) {
     require("../assets/ciclismo.jpg"),
   ];
 
-  //5) Función para pasar a la siguiente imagen
+  // Pasar automáticamente a la siguiente imagen
   const handleNext = () => {
-    const nextIndex = (currentIndex + 1) % slides.length; //Calcula siguiente slide (vuelve al inicio al llegar al final)
-
-    //Mueve el FlatList al siguiente slide
+    const nextIndex = (currentIndex + 1) % slides.length;
     flatListRef.current?.scrollToOffset({
       offset: nextIndex * containerWidth,
       animated: true,
     });
-
     setCurrentIndex(nextIndex);
-
-    //Solo dispara la animación en móvil
     if (Platform.OS !== "web") triggerAnimation();
   };
 
-  //&) Función que ejecuta la animación "fade + movimiento"
+  // Animación fade + movimiento
   const triggerAnimation = () => {
     fadeAnim.setValue(0);
     translateAnim.setValue(20);
-
     Animated.parallel([
-      //Animación de opacidad (aparecer)
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 600,
         useNativeDriver: true,
       }),
-      //Animación de movimiento vertical (subir)
       Animated.timing(translateAnim, {
         toValue: 0,
         duration: 600,
@@ -79,14 +60,22 @@ export default function HeroBanner({ onNext }) {
     ]).start();
   };
 
-  //Ejecuta la animación la primera vez (solo móvil)
+  // Primera animación
   useEffect(() => {
     if (Platform.OS !== "web") triggerAnimation();
   }, []);
 
-  //7) Renderizado de cada imagen (item del carrusel)
+  // 🕒 Carrusel automático (cada 4 segundos)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      handleNext();
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [currentIndex]);
+
+  // Renderizado de cada imagen
   const renderItem = ({ item }) => {
-    //Versión WEB
+    // Versión WEB
     if (Platform.OS === "web") {
       return (
         <View
@@ -100,15 +89,15 @@ export default function HeroBanner({ onNext }) {
             overflow: "hidden",
           }}
         >
-          {/* Fondo borroso expandido */}
+          {/* Fondo borroso */}
           <Image
             source={item}
             style={styles.blurredBackground}
-            blurRadius={30}
+            blurRadius={20}
             resizeMode="cover"
           />
 
-          {/* Imagen principal centrada */}
+          {/* Imagen principal centrada y completa */}
           <Image
             source={item}
             style={{
@@ -116,13 +105,14 @@ export default function HeroBanner({ onNext }) {
               height: "100%",
               resizeMode: "contain",
               zIndex: 2,
+              borderRadius: 10,
             }}
           />
 
-          {/* Capa semitransparente para oscurecer el fondo */}
+          {/* Capa semitransparente */}
           <View style={styles.overlay} />
 
-          {/* Texto + botón */}
+          {/* Texto */}
           <View style={styles.content}>
             <View style={{ maxWidth: "70%" }}>
               <Text style={styles.title}>CUERVO ACTIVA</Text>
@@ -131,20 +121,12 @@ export default function HeroBanner({ onNext }) {
                 nuestro pueblo.
               </Text>
             </View>
-
-            {/* Botón siguiente */}
-            <Pressable onPress={handleNext} style={styles.button}>
-              <Image
-                source={require("../assets/iconos/next.png")}
-                style={{ width: 18, height: 18, tintColor: "#ffffffff" }}
-              />
-            </Pressable>
           </View>
         </View>
       );
     }
 
-    //Versión MÓVIL (con animación fade-up)
+    // Versión MÓVIL
     return (
       <View
         style={{
@@ -157,7 +139,6 @@ export default function HeroBanner({ onNext }) {
           overflow: "hidden",
         }}
       >
-        {/* Fondo borroso */}
         <Image
           source={item}
           style={styles.blurredBackground}
@@ -165,38 +146,39 @@ export default function HeroBanner({ onNext }) {
           resizeMode="cover"
         />
 
-        {/* Imagen principal (centrada verticalmente) */}
         <Image
           source={item}
           style={{
             width: "100%",
-            height: 400,
+            height: "100%",
             resizeMode: "contain",
             zIndex: 2,
+            borderRadius: 15,
           }}
         />
 
-        {/* Capa de oscurecimiento */}
         <View style={styles.overlay} />
 
-        {/* Contenido animado (texto + botón) */}
         <Animated.View
           style={{
             position: "absolute",
             bottom: 40,
             alignItems: "center",
             zIndex: 5,
-            opacity: fadeAnim, //controlado por animación
+            opacity: fadeAnim,
             transform: [{ translateY: translateAnim }],
           }}
         >
           <Text
             style={{
               color: "#fff",
-              fontSize: 22,
-              fontWeight: "bold",
+              fontSize: 30,
+              fontWeight: "900",
               marginBottom: 8,
               textAlign: "center",
+              fontFamily:
+                Platform.OS === "web" ? "'Bebas Neue', sans-serif" : undefined,
+              letterSpacing: 2,
             }}
           >
             CUERVO ACTIVA
@@ -205,7 +187,7 @@ export default function HeroBanner({ onNext }) {
           <Text
             style={{
               color: "#fff",
-              fontSize: 15,
+              fontSize: 16,
               textAlign: "center",
               lineHeight: 22,
               marginBottom: 16,
@@ -214,20 +196,12 @@ export default function HeroBanner({ onNext }) {
             Tu guía digital para vivir las tradiciones{"\n"}y la cultura de
             nuestro pueblo.
           </Text>
-
-          {/* Botón siguiente */}
-          <Pressable onPress={handleNext} style={styles.button}>
-            <Image
-              source={require("../assets/iconos/next.png")}
-              style={{ width: 18, height: 18, tintColor: "#fff" }}
-            />
-          </Pressable>
         </Animated.View>
       </View>
     );
   };
 
-  //8) FlatList — Carrusel de imágenes horizontal
+  // FlatList — Carrusel
   return (
     <View
       style={{ width: "100%", overflow: "hidden" }}
@@ -244,7 +218,7 @@ export default function HeroBanner({ onNext }) {
         snapToAlignment="center"
         snapToInterval={containerWidth}
         showsHorizontalScrollIndicator={false}
-        scrollEnabled={false} //Control manual (botón "next")
+        scrollEnabled={false}
         getItemLayout={(_, index) => ({
           length: containerWidth,
           offset: containerWidth * index,
@@ -255,16 +229,15 @@ export default function HeroBanner({ onNext }) {
             event.nativeEvent.contentOffset.x / containerWidth
           );
           setCurrentIndex(index);
-          if (Platform.OS !== "web") triggerAnimation(); //Reinicia animación
+          if (Platform.OS !== "web") triggerAnimation();
         }}
       />
     </View>
   );
 }
 
-//9) Estilos comunes
+// Estilos
 const styles = StyleSheet.create({
-  //Fondo difuminado (borroso)
   blurredBackground: {
     position: "absolute",
     width: "110%",
@@ -273,47 +246,31 @@ const styles = StyleSheet.create({
     left: "-5%",
     opacity: 0.9,
   },
-
-  //Capa oscura semitransparente
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.25)",
+    backgroundColor: "rgba(0,0,0,0.3)",
     zIndex: 3,
   },
-
-  //Contenedor del texto + botón (en versión web)
   content: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
+    flexDirection: "column",
+    alignItems: "flex-start",
+    justifyContent: "center",
+    paddingHorizontal: 40,
     position: "absolute",
     zIndex: 4,
     width: "100%",
   },
-
-  //Título principal
   title: {
     color: "#fff",
-    fontSize: 22,
-    fontWeight: "bold",
+    fontSize: 42,
+    fontWeight: "900",
     marginBottom: 8,
+    letterSpacing: 2,
+    fontFamily: Platform.OS === "web" ? "'Bebas Neue', sans-serif" : undefined,
   },
-
-  //Subtítulo
   subtitle: {
     color: "#fff",
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 22,
-  },
-
-  //Botón circular “next”
-  button: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#f7931e",
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

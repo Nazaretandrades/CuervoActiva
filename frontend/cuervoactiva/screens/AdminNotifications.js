@@ -19,14 +19,13 @@ const API_BASE =
     : "http://localhost:5000";
 
 export default function AdminNotifications({ navigation }) {
-  const [adminName, setAdminName] = useState("Administrador");
+  const [adminName, setAdminName] = useState("Admin");
   const [notifications, setNotifications] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
-
-  // === Toast visual ===
   const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
 
+  // === Toast visual ===
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
     setTimeout(() => setToast({ visible: false, message: "", type: "info" }), 2500);
@@ -39,7 +38,7 @@ export default function AdminNotifications({ navigation }) {
       if (session?.user?.name || session?.name)
         setAdminName(session.user?.name || session.name);
     } catch {
-      setAdminName("Administrador");
+      setAdminName("Admin");
     }
   }, []);
 
@@ -58,7 +57,7 @@ export default function AdminNotifications({ navigation }) {
           const data = await res.json();
           setNotifications(data);
         } else {
-          showToast("❌ Error al cargar notificaciones del admin.", "error");
+          showToast("❌ Error al cargar notificaciones.", "error");
         }
       } catch (err) {
         console.error("Error al cargar notificaciones:", err);
@@ -68,24 +67,23 @@ export default function AdminNotifications({ navigation }) {
     loadNotifications();
   }, []);
 
-  // === Marcar notificación como leída ===
+  // === Marcar como leída y eliminar de la BD ===
   const markAsRead = async (id) => {
     try {
       const session = JSON.parse(localStorage.getItem("USER_SESSION"));
       const token = session?.token;
 
-      const res = await fetch(`${API_BASE}/api/notifications/${id}/read`, {
-        method: "PUT",
+      const res = await fetch(`${API_BASE}/api/notifications/${id}`, {
+        method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.ok) throw new Error("Error al marcar como leída");
 
-      setNotifications((prev) =>
-        prev.map((n) => (n._id === id ? { ...n, read: true } : n))
-      );
+      // Eliminar del estado
+      setNotifications((prev) => prev.filter((n) => n._id !== id));
 
-      showToast("✅ Notificación marcada como leída.", "success");
+      showToast("✅ Notificación marcada como leída correctamente.", "success");
     } catch (err) {
       console.error("Error al marcar como leída:", err);
       showToast("❌ No se pudo marcar la notificación.", "error");
@@ -126,37 +124,67 @@ export default function AdminNotifications({ navigation }) {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* === BARRA SUPERIOR === */}
+      {/* === CABECERA ADMIN === */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
           paddingHorizontal: 24,
           paddingVertical: 14,
-          borderBottomWidth: 1,
-          borderColor: "#eee",
+          justifyContent: "space-between",
+          backgroundColor: "#fff",
         }}
       >
-        {/* 👑 Admin */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <Text>👑</Text>
-          <Text>Admin: {adminName}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View
+            style={{
+              position: "relative",
+              marginRight: 12,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: "#0094A2",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/user.png")}
+              style={{ width: 24, height: 24, tintColor: "#fff" }}
+            />
+            <Image
+              source={require("../assets/iconos/corona.png")}
+              style={{
+                position: "absolute",
+                top: -6,
+                left: -6,
+                width: 20,
+                height: 20,
+                resizeMode: "contain",
+              }}
+            />
+          </View>
+          <View>
+            <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+              Admin.
+            </Text>
+            <Text style={{ color: "#6c757d", fontSize: 13 }}>{adminName}</Text>
+          </View>
         </View>
 
-        {/* === ICONOS DE CALENDARIO + NOTIFICACIONES + MENÚ === */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 15 }}>
-          <Pressable onPress={goToCalendar} style={{ marginRight: 10 }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable onPress={goToNotifications} style={{ marginRight: 20 }}>
             <Image
-              source={require("../assets/iconos/calendar-admin.png")}
-              style={{ width: 26, height: 26 }}
+              source={require("../assets/iconos/bell2.png")}
+              style={{ width: 22, height: 22, tintColor: "#0094A2" }}
             />
           </Pressable>
-
-          <Pressable onPress={goToNotifications}>
-            <Image source={require("../assets/iconos/bell2.png")} />
+          <Pressable onPress={goToCalendar} style={{ marginRight: 20 }}>
+            <Image
+              source={require("../assets/iconos/calendar-admin.png")}
+              style={{ width: 22, height: 22, tintColor: "#0094A2" }}
+            />
           </Pressable>
-
           <Pressable onPress={toggleMenu}>
             <Image
               source={
@@ -164,7 +192,7 @@ export default function AdminNotifications({ navigation }) {
                   ? require("../assets/iconos/close-admin.png")
                   : require("../assets/iconos/menu-admin.png")
               }
-              style={{ width: 26, height: 26, tintColor: "#33ADB5" }}
+              style={{ width: 24, height: 24, tintColor: "#0094A2" }}
             />
           </Pressable>
         </View>
@@ -199,12 +227,10 @@ export default function AdminNotifications({ navigation }) {
               transform: [{ translateX: menuAnim }],
             }}
           >
-            {[
-              { label: "Perfil", action: goToProfile },
+            {[{ label: "Perfil", action: goToProfile },
               { label: "Cultura e Historia", action: goToCulturaHistoria },
               { label: "Ver usuarios", action: goToUsers },
-              { label: "Contacto", action: goToContact },
-            ].map((item, i) => (
+              { label: "Contacto", action: goToContact }].map((item, i) => (
               <Pressable
                 key={i}
                 onPress={() => {
@@ -229,10 +255,10 @@ export default function AdminNotifications({ navigation }) {
       )}
 
       {/* === LISTA DE NOTIFICACIONES === */}
-      <View style={{ flex: 1, padding: 24 }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: "#f5f6f7" }}>
         <Text
           style={{
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: "bold",
             color: "#014869",
             marginBottom: 20,
@@ -243,15 +269,10 @@ export default function AdminNotifications({ navigation }) {
         </Text>
 
         <ScrollView
-          style={{
-            maxHeight: 500,
-            width: "100%",
-          }}
           contentContainerStyle={{
             alignItems: "center",
-            paddingBottom: 40,
+            paddingBottom: 100,
           }}
-          showsVerticalScrollIndicator={true}
         >
           {notifications.length === 0 ? (
             <Text style={{ color: "#777" }}>No hay notificaciones aún.</Text>
@@ -261,7 +282,7 @@ export default function AdminNotifications({ navigation }) {
                 key={n._id}
                 onPress={() => markAsRead(n._id)}
                 style={{
-                  backgroundColor: n.read ? "#9bbad0" : "#014869",
+                  backgroundColor: "#014869",
                   paddingVertical: 12,
                   borderRadius: 25,
                   marginBottom: 12,
@@ -288,37 +309,32 @@ export default function AdminNotifications({ navigation }) {
         </ScrollView>
       </View>
 
-      {/* === TOAST VISUAL === */}
+      {/* === TOAST === */}
       {toast.visible && (
         <Animated.View
           style={{
             position: "absolute",
-            bottom: 30,
+            bottom: 100,
             alignSelf: "center",
             backgroundColor:
               toast.type === "success"
                 ? "#4BB543"
                 : toast.type === "error"
                 ? "#D9534F"
-                : toast.type === "warning"
-                ? "#F0AD4E"
                 : "#014869",
             paddingVertical: 12,
             paddingHorizontal: 25,
             borderRadius: 25,
-            shadowColor: "#000",
-            shadowOpacity: 0.3,
-            shadowRadius: 5,
-            elevation: 6,
           }}
         >
-          <Text style={{ color: "#fff", fontWeight: "bold", textAlign: "center" }}>
+          <Text
+            style={{ color: "#fff", fontWeight: "bold", textAlign: "center" }}
+          >
             {toast.message}
           </Text>
         </Animated.View>
       )}
 
-      {/* === FOOTER === */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAboutUs}

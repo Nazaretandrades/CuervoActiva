@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -19,7 +19,67 @@ export default function Header({
 }) {
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
-  const isMobile = width < 768; // breakpoint para pantallas pequeñas
+  const isMobile = width < 768;
+
+  const [hoverLogin, setHoverLogin] = useState(false);
+  const [hoverRegister, setHoverRegister] = useState(false);
+  const [roleColor, setRoleColor] = useState("#02486b");
+  const [userRole, setUserRole] = useState(null);
+
+  // Detectar rol del usuario
+  useEffect(() => {
+    const loadRole = async () => {
+      try {
+        let session;
+        if (Platform.OS === "web") {
+          session = JSON.parse(localStorage.getItem("USER_SESSION"));
+        } else {
+          const sessionString = await AsyncStorage.getItem("USER_SESSION");
+          session = sessionString ? JSON.parse(sessionString) : null;
+        }
+
+        const role =
+          session?.user?.role || session?.role || session?.userType || "user";
+        setUserRole(role);
+
+        if (role === "admin") setRoleColor("#0094A2");
+        else if (role === "organizer" || role === "organizador")
+          setRoleColor("#F3B23F");
+        else setRoleColor("#02486b");
+      } catch (err) {
+        console.error("Error detectando rol:", err);
+      }
+    };
+
+    loadRole();
+  }, []);
+
+  const handleLogoPress = async () => {
+    try {
+      let session;
+      if (Platform.OS === "web") {
+        session = JSON.parse(localStorage.getItem("USER_SESSION"));
+      } else {
+        const sessionString = await AsyncStorage.getItem("USER_SESSION");
+        session = sessionString ? JSON.parse(sessionString) : null;
+      }
+
+      if (!session || !session.token) {
+        navigation.navigate("Intro");
+        return;
+      }
+
+      const role =
+        session.user?.role || session.role || session.userType || "user";
+
+      if (role === "admin") navigation.navigate("Admin");
+      else if (role === "organizer" || role === "organizador")
+        navigation.navigate("Organizer");
+      else navigation.navigate("User");
+    } catch {
+      navigation.navigate("Intro");
+    }
+  };
 
   const styles = {
     container: {
@@ -66,104 +126,85 @@ export default function Header({
       fontSize: isMobile ? 12 : 14,
       fontWeight: "600",
     },
-    separatorWhite: {
-      height: 6,
-      backgroundColor: "#ffffff",
-      width: "100%",
-    },
-    separatorBlue: {
-      height: Platform.OS === "android" ? 1 : 5,
-      backgroundColor: "#02486b",
+    separatorRole: {
+      height: 5,
+      backgroundColor: roleColor,
       width: "100%",
     },
   };
 
-  // === 🔹 Función para redirigir según el rol (solo web) ===
-  const handleLogoPress = async () => {
-    try {
-      let session;
-
-      if (Platform.OS === "web") {
-        session = JSON.parse(localStorage.getItem("USER_SESSION"));
-      } else {
-        const sessionString = await AsyncStorage.getItem("USER_SESSION");
-        session = sessionString ? JSON.parse(sessionString) : null;
-      }
-
-      // Si no hay sesión, ir a Intro
-      if (!session || !session.token) {
-        navigation.navigate("Intro");
-        return;
-      }
-
-      // Determinar rol y redirigir
-      const role =
-        session.user?.role || session.role || session.userType || "user";
-
-      if (role === "admin") {
-        navigation.navigate("Admin");
-      } else if (role === "organizer" || role === "organizador") {
-        navigation.navigate("Organizer");
-      } else {
-        navigation.navigate("User");
-      }
-    } catch (err) {
-      console.error("Error leyendo sesión:", err);
-      navigation.navigate("Intro");
-    }
-  };
-
-  // ✅ Versión móvil — SIN click en el logo
+  // 📱 MODO MÓVIL
+  // === 📱 Versión móvil ===
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
-      <SafeAreaView
-        style={{
-          backgroundColor: "#02486b",
-          paddingTop:
-            Platform.OS === "android" ? StatusBar.currentHeight || 15 : 0,
-        }}
-      >
-        <View style={styles.container}>
-          {/* IZQUIERDA */}
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <View style={styles.logoContainer}>
-              <Image
-                source={require("../assets/logo.png")}
-                style={styles.logo}
-              />
-            </View>
-            <Text style={styles.title}>CUERVO ACTIVA</Text>
+      <View style={{ backgroundColor: "#fff" }}>
+        <SafeAreaView
+          style={{
+            backgroundColor: "#02486b",
+            paddingTop:
+              Platform.OS === "android" ? StatusBar.currentHeight || 15 : 0,
+            borderBottomColor: roleColor, // 👈 añade borde inferior dinámico
+            borderBottomWidth: 5, // 👈 grosor igual que web
+          }}
+        >
+          <View style={styles.container}>
+            <Pressable
+              onPress={handleLogoPress}
+              style={{ flexDirection: "row", alignItems: "center" }}
+            >
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require("../assets/logo.png")}
+                  style={styles.logo}
+                />
+              </View>
+            </Pressable>
+
+            {!hideAuthButtons && (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Pressable
+                  onPress={onLogin}
+                  android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+                  style={({ pressed }) => [
+                    styles.button,
+                    pressed && { backgroundColor: "#d99b30" },
+                  ]}
+                >
+                  <Text style={styles.buttonText}>Iniciar Sesión</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={onRegister}
+                  android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+                  style={({ pressed }) => [
+                    styles.button,
+                    pressed && { backgroundColor: "#d99b30" },
+                  ]}
+                >
+                  <Text style={styles.buttonText}>Registrarse</Text>
+                </Pressable>
+              </View>
+            )}
           </View>
+        </SafeAreaView>
 
-          {/* DERECHA */}
-          {!hideAuthButtons && (
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Pressable onPress={onLogin} style={styles.button}>
-                <Text style={styles.buttonText}>Iniciar Sesión</Text>
-              </Pressable>
-
-              <Pressable onPress={onRegister} style={styles.button}>
-                <Text style={styles.buttonText}>Registrarse</Text>
-              </Pressable>
-            </View>
-          )}
-        </View>
-
-        {/* Línea blanca + azul */}
+        {/* Línea blanca debajo del header (igual que web) */}
         <View style={styles.separatorWhite} />
-        <View style={styles.separatorBlue} />
-      </SafeAreaView>
+      </View>
     );
   }
 
-  // 💻 Versión web — CON click en el logo
+  // 💻 MODO WEB
   return (
     <>
       <View style={styles.container}>
-        {/* IZQUIERDA */}
         <Pressable
           onPress={handleLogoPress}
-          style={{ flexDirection: "row", alignItems: "center", cursor: "pointer" }}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            cursor: "pointer",
+          }}
         >
           <View style={styles.logoContainer}>
             <Image source={require("../assets/logo.png")} style={styles.logo} />
@@ -171,7 +212,6 @@ export default function Header({
           <Text style={styles.title}>CUERVO ACTIVA</Text>
         </Pressable>
 
-        {/* DERECHA */}
         {!hideAuthButtons && (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <Pressable onPress={onLogin} style={styles.button}>
@@ -185,9 +225,9 @@ export default function Header({
         )}
       </View>
 
-      {/* Línea blanca + azul */}
+      {/* Líneas decorativas — fuera del fondo azul */}
       <View style={styles.separatorWhite} />
-      <View style={styles.separatorBlue} />
+      <View style={styles.separatorRole} />
     </>
   );
 }

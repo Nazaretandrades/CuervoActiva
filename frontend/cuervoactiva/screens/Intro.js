@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { View, ScrollView, Platform, SafeAreaView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import HeroBanner from "../components/HeroBanner";
 import Footer from "../components/Footer";
@@ -15,19 +16,30 @@ export default function Intro() {
     }
   }, []);
 
+  // ✅ Guarda flag de que el usuario ya vio el intro
+  const handleSeenIntro = async (nextScreen) => {
+    try {
+      await AsyncStorage.setItem("SEEN_INTRO", "true");
+      navigation.navigate(nextScreen);
+    } catch (err) {
+      console.error("Error guardando SEEN_INTRO:", err);
+      navigation.navigate(nextScreen);
+    }
+  };
+
   return (
     <View className="flex-1 bg-[#ffffff] justify-between">
       {/* HEADER */}
       {Platform.OS === "web" ? (
         <Header
-          onLogin={() => navigation.navigate("Login")}
-          onRegister={() => navigation.navigate("Register")}
+          onLogin={() => handleSeenIntro("Login")}
+          onRegister={() => handleSeenIntro("Register")}
         />
       ) : (
         <SafeAreaView className="mt-12">
           <Header
-            onLogin={() => navigation.navigate("Login")}
-            onRegister={() => navigation.navigate("Register")}
+            onLogin={() => handleSeenIntro("Login")}
+            onRegister={() => handleSeenIntro("Register")}
           />
         </SafeAreaView>
       )}
@@ -42,10 +54,26 @@ export default function Intro() {
           className="bg-[#ffffff]"
         >
           <View className="items-center justify-center w-full bg-[#ffffff]">
-            <HeroBanner onNext={() => navigation.navigate("Home")} />
+            <HeroBanner onNext={() => handleSeenIntro("Login")} />
           </View>
         </ScrollView>
       </View>
+
+      {/* FOOTER FIJO ABAJO (solo web) */}
+      {Platform.OS === "web" && (
+        <View
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            width: "100%",
+            zIndex: 50,
+            backgroundColor: "#ffffff",
+          }}
+        >
+          <Footer />
+        </View>
+      )}
     </View>
   );
 }

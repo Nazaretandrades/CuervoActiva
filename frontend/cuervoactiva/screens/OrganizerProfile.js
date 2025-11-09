@@ -9,13 +9,12 @@ import {
   Alert,
   Platform,
   Animated,
-  TouchableWithoutFeedback,
+  ScrollView,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import OrganizerMenu from "./OrganizerMenu"; // ✅ añadido
 
 const API_BASE =
   Platform.OS === "android"
@@ -53,7 +52,7 @@ export default function OrganizerProfile() {
     loadUser();
   }, []);
 
-  // === Guardar cambios en BD ===
+  // === Guardar cambios ===
   const handleSave = async () => {
     try {
       let session;
@@ -100,7 +99,10 @@ export default function OrganizerProfile() {
         );
       }
 
-      Alert.alert("✅ Guardado", "Tu perfil ha sido actualizado correctamente.");
+      Alert.alert(
+        "✅ Guardado",
+        "Tu perfil ha sido actualizado correctamente."
+      );
       setEditing(false);
       setOrganizerName(updatedUser.name);
     } catch (err) {
@@ -152,90 +154,202 @@ export default function OrganizerProfile() {
     }
   };
 
-  return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      <Header hideAuthButtons />
-
-      {/* === Barra superior (naranja) === */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          padding: 16,
-          justifyContent: "space-between",
-          borderBottomWidth: 1,
-          borderColor: "#eee",
-        }}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text>👤</Text>
-          <Text>{organizerName}</Text>
+  // === CABECERA IGUAL QUE EN NOTIFICACIONES ===
+  const renderTopBar = () => (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 24,
+        paddingVertical: 14,
+        justifyContent: "space-between",
+        backgroundColor: "#fff",
+      }}
+    >
+      {/* Perfil organizador */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View
+          style={{
+            position: "relative",
+            marginRight: 12,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: "#F3B23F",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            source={require("../assets/iconos/user.png")}
+            style={{ width: 24, height: 24, tintColor: "#fff" }}
+          />
+          <Image
+            source={require("../assets/iconos/lapiz.png")}
+            style={{
+              position: "absolute",
+              top: -4,
+              left: -4,
+              width: 22,
+              height: 22,
+              resizeMode: "contain",
+              transform: [{ rotate: "-25deg" }],
+            }}
+          />
         </View>
-
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {/* 📅 CALENDARIO */}
-          <Pressable onPress={goToCalendar} style={{ marginRight: 10 }}>
-            <Image
-              source={require("../assets/iconos/calendar-organizador.png")}
-              style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
-            />
-          </Pressable>
-
-          {/* 🔔 NOTIFICACIONES */}
-          <Pressable onPress={goToNotifications} style={{ marginRight: 10 }}>
-            <Image
-              source={require("../assets/iconos/bell3.png")}
-              style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
-            />
-          </Pressable>
-
-          {/* ☰ MENÚ */}
-          <Pressable onPress={toggleMenu}>
-            <Image
-              source={
-                menuVisible
-                  ? require("../assets/iconos/close-organizador.png")
-                  : require("../assets/iconos/menu-organizador.png")
-              }
-              style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
-            />
-          </Pressable>
+        <View>
+          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+            Organiz.
+          </Text>
+          <Text style={{ color: "#6c757d", fontSize: 13 }}>
+            {organizerName}
+          </Text>
         </View>
       </View>
 
-      {/* === Menú lateral web === */}
-      {Platform.OS === "web" && menuVisible && (
-        <>
-          <TouchableWithoutFeedback onPress={toggleMenu}>
-            <View
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                zIndex: 9,
-              }}
-            />
-          </TouchableWithoutFeedback>
+      {/* Iconos derecha */}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+          <Image
+            source={require("../assets/iconos/bell3.png")}
+            style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+          />
+        </Pressable>
 
-          <Animated.View
+        {Platform.OS === "web" && (
+          <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+            <Image
+              source={require("../assets/iconos/calendar-organizador.png")}
+              style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+            />
+          </Pressable>
+        )}
+
+        <Pressable onPress={toggleMenu}>
+          <Image
+            source={
+              menuVisible
+                ? require("../assets/iconos/close-organizador.png")
+                : require("../assets/iconos/menu-organizador.png")
+            }
+            style={{ width: 24, height: 24, tintColor: "#F3B23F" }}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <Header hideAuthButtons />
+      {renderTopBar()}
+
+      {/* === MENÚ WEB === */}
+      {Platform.OS === "web" && menuVisible && (
+        <Animated.View
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: 250,
+            height: "100%",
+            backgroundColor: "#f8f8f8",
+            padding: 20,
+            zIndex: 10,
+            transform: [{ translateX: menuAnim }],
+            boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
+          }}
+        >
+          {[
+            { label: "Perfil", action: goToProfile },
+            { label: "Cultura e Historia", action: goToCulturaHistoria },
+            { label: "Contacto", action: goToContact },
+          ].map((item, i) => (
+            <Pressable
+              key={i}
+              onPress={() => {
+                toggleMenu();
+                item.action();
+              }}
+              style={{ marginBottom: 25 }}
+            >
+              <Text
+                style={{
+                  color: "#014869",
+                  fontSize: 18,
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+        </Animated.View>
+      )}
+
+      {/* === MENÚ MÓVIL IGUAL AL DE NOTIFICACIONES === */}
+      {menuVisible && Platform.OS !== "web" && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "#fff",
+            zIndex: 20,
+            justifyContent: "space-between",
+          }}
+        >
+          {/* CABECERA DEL MENÚ MÓVIL */}
+          <View
             style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: 250,
-              height: "100%",
-              backgroundColor: "#f8f8f8",
-              padding: 20,
-              zIndex: 10,
-              transform: [{ translateX: menuAnim }],
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingHorizontal: 20,
+              paddingTop: 50,
+              paddingBottom: 20,
+            }}
+          >
+            <Pressable onPress={toggleMenu}>
+              <Image
+                source={require("../assets/iconos/back-organizador.png")}
+                style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+              />
+            </Pressable>
+            <Text style={{ fontSize: 18, fontWeight: "bold", color: "#F3B23F" }}>
+              Menú
+            </Text>
+            <View style={{ width: 24 }} />
+          </View>
+
+          {/* OPCIONES DEL MENÚ MÓVIL */}
+          <View
+            style={{
+              flex: 1,
+              paddingHorizontal: 40,
+              justifyContent: "flex-start",
+              gap: 30,
             }}
           >
             {[
-              { label: "Perfil", action: goToProfile },
-              { label: "Cultura e Historia", action: goToCulturaHistoria },
-              { label: "Contacto", action: goToContact },
+              {
+                label: "Sobre nosotros",
+                icon: require("../assets/iconos/info-usuario.png"),
+                action: goToAboutUs,
+              },
+              {
+                label: "Cultura e Historia",
+                icon: require("../assets/iconos/museo-usuario.png"),
+                action: goToCulturaHistoria,
+              },
+              {
+                label: "Contacto",
+                icon: require("../assets/iconos/phone-usuario.png"),
+                action: goToContact,
+              },
             ].map((item, i) => (
               <Pressable
                 key={i}
@@ -243,109 +357,236 @@ export default function OrganizerProfile() {
                   toggleMenu();
                   item.action();
                 }}
-                style={{ marginBottom: 25 }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
               >
-                <Text
-                  style={{
-                    color: "#014869",
-                    fontSize: 18,
-                    fontWeight: "700",
-                  }}
-                >
-                  {item.label}
-                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Image
+                    source={item.icon}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      tintColor: "#014869",
+                      marginRight: 12,
+                    }}
+                  />
+                  <Text
+                    style={{
+                      color: "#014869",
+                      fontSize: 16,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                </View>
+                <Image
+                  source={require("../assets/iconos/siguiente.png")}
+                  style={{ width: 16, height: 16, tintColor: "#F3B23F" }}
+                />
               </Pressable>
             ))}
-          </Animated.View>
-        </>
-      )}
+          </View>
 
-      {/* === Menú móvil (igual que Contacto y Calendar) === */}
-      {Platform.OS !== "web" && menuVisible && (
-        <OrganizerMenu onClose={toggleMenu} />
-      )}
-
-      {/* === Contenido principal === */}
-      <View style={{ flex: 1, alignItems: "center", paddingTop: 30 }}>
-        <Text style={{ fontSize: 22, fontWeight: "bold", marginBottom: 20 }}>
-          Perfil
-        </Text>
-
-        <Image
-          source={require("../assets/iconos/user.png")}
-          style={{
-            width: 60,
-            height: 60,
-            tintColor: "#F3B23F",
-            marginBottom: 20,
-          }}
-        />
-
-        <View style={{ width: "80%", maxWidth: 400 }}>
-          <Text>Username:</Text>
-          <TextInput
-            editable={editing}
-            value={form.name}
-            onChangeText={(t) => setForm({ ...form, name: t })}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ccc",
-              borderRadius: 10,
-              padding: 8,
-              marginBottom: 15,
-            }}
-          />
-
-          <Text>Email:</Text>
-          <TextInput
-            editable={editing}
-            value={form.email}
-            onChangeText={(t) => setForm({ ...form, email: t })}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ccc",
-              borderRadius: 10,
-              padding: 8,
-              marginBottom: 25,
-            }}
-          />
-
+          {/* FOOTER INFERIOR DEL MENÚ MÓVIL */}
           <View
             style={{
               flexDirection: "row",
-              justifyContent: "space-between",
+              justifyContent: "space-around",
+              alignItems: "center",
+              paddingVertical: 10,
+              borderTopWidth: 1,
+              borderColor: "#F3B23F",
+              backgroundColor: "#fff",
             }}
           >
             <Pressable
-              onPress={() => (editing ? handleSave() : setEditing(true))}
-              style={{
-                backgroundColor: "#F3B23F",
-                paddingVertical: 10,
-                paddingHorizontal: 20,
-                borderRadius: 20,
+              onPress={() => {
+                const currentRoute =
+                  navigation.getState().routes.slice(-1)[0].name || "Organizer";
+                if (currentRoute === "Organizer") {
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: "Organizer" }],
+                  });
+                } else {
+                  navigation.navigate("Organizer");
+                }
               }}
             >
-              <Text style={{ color: "#fff" }}>
-                {editing ? "Guardar" : "Editar"}
-              </Text>
+              <Image
+                source={require("../assets/iconos/home-organizador.png")}
+                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+              />
             </Pressable>
 
-            <Pressable
-              onPress={handleLogout}
-              style={{
-                backgroundColor: "#444",
-                paddingVertical: 10,
-                paddingHorizontal: 20,
-                borderRadius: 20,
-              }}
-            >
-              <Text style={{ color: "#fff" }}>Cerrar Sesión</Text>
+            <Pressable onPress={goToCalendar}>
+              <Image
+                source={require("../assets/iconos/calendar-organizador.png")}
+                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+              />
+            </Pressable>
+
+            <Pressable onPress={goToProfile}>
+              <Image
+                source={require("../assets/iconos/user.png")}
+                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
+              />
             </Pressable>
           </View>
         </View>
-      </View>
+      )}
 
-      {/* === Footer solo en web === */}
+      {/* === CONTENIDO PERFIL === */}
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          alignItems: "center",
+          justifyContent: "flex-start",
+          paddingVertical: 65,
+          backgroundColor: "#fff",
+        }}
+      >
+        <View
+          style={{
+            backgroundColor: "#f5f5f5",
+            borderRadius: 8,
+            width: "90%",
+            maxWidth: 420,
+            paddingVertical: 20,
+            alignItems: "center",
+            shadowColor: "#000",
+            shadowOpacity: 0.1,
+            shadowRadius: 5,
+            marginTop: 30,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "bold",
+              color: "#014869",
+              marginBottom: 15,
+            }}
+          >
+            Perfil
+          </Text>
+
+          {/* Icono organizador */}
+          <View
+            style={{
+              position: "relative",
+              width: 70,
+              height: 70,
+              borderRadius: 35,
+              backgroundColor: "#F3B23F",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 20,
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/user.png")}
+              style={{ width: 36, height: 36, tintColor: "#fff" }}
+            />
+            <Image
+              source={require("../assets/iconos/lapiz.png")}
+              style={{
+                position: "absolute",
+                top: -4,
+                left: -4,
+                width: 22,
+                height: 22,
+                resizeMode: "contain",
+                transform: [{ rotate: "-25deg" }],
+              }}
+            />
+          </View>
+
+          <View style={{ width: "80%" }}>
+            <Text
+              style={{ fontWeight: "bold", color: "#014869", marginBottom: 5 }}
+            >
+              Username:
+            </Text>
+            <TextInput
+              editable={editing}
+              value={form.name}
+              onChangeText={(t) => setForm({ ...form, name: t })}
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: 20,
+                paddingVertical: 8,
+                paddingHorizontal: 14,
+                marginBottom: 15,
+                borderWidth: 1,
+                borderColor: "#ddd",
+              }}
+            />
+
+            <Text
+              style={{ fontWeight: "bold", color: "#014869", marginBottom: 5 }}
+            >
+              Email:
+            </Text>
+            <TextInput
+              editable={editing}
+              value={form.email}
+              onChangeText={(t) => setForm({ ...form, email: t })}
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: 20,
+                paddingVertical: 8,
+                paddingHorizontal: 14,
+                marginBottom: 25,
+                borderWidth: 1,
+                borderColor: "#ddd",
+              }}
+            />
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-around",
+                marginTop: 10,
+              }}
+            >
+              <Pressable
+                onPress={() => (editing ? handleSave() : setEditing(true))}
+                style={{
+                  backgroundColor: "#014869",
+                  paddingVertical: 10,
+                  paddingHorizontal: 25,
+                  borderRadius: 30,
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  {editing ? "Guardar" : "Editar"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleLogout}
+                style={{
+                  backgroundColor: "#014869",
+                  paddingVertical: 10,
+                  paddingHorizontal: 25,
+                  borderRadius: 30,
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  Cerrar Sesión
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* === FOOTER === */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAboutUs}

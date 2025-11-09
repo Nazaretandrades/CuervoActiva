@@ -9,7 +9,6 @@ import {
   Platform,
   Animated,
   TouchableWithoutFeedback,
-  Alert,
   Modal,
   Linking,
 } from "react-native";
@@ -18,7 +17,10 @@ import Footer from "../components/Footer";
 import { getSession } from "../services/sessionManager";
 import { useNavigation } from "@react-navigation/native";
 
-const API_BASE = "http://localhost:5000";
+const API_BASE =
+  Platform.OS === "android"
+    ? "http://192.168.18.19:5000"
+    : "http://localhost:5000";
 const API_URL = `${API_BASE}/api/events`;
 const COMMENTS_URL = `${API_BASE}/api/comments`;
 
@@ -26,14 +28,12 @@ export default function AdminEventDetail({ route }) {
   const { eventId } = route?.params || {};
   const [event, setEvent] = useState(null);
   const [comments, setComments] = useState([]);
-  const [adminName, setAdminName] = useState("Administrador");
+  const [adminName, setAdminName] = useState("Admin");
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [shareVisible, setShareVisible] = useState(false);
-
   const navigation = useNavigation();
 
-  // === Obtener sesión del administrador ===
   useEffect(() => {
     const loadAdmin = async () => {
       const session = await getSession();
@@ -48,7 +48,6 @@ export default function AdminEventDetail({ route }) {
       try {
         const session = await getSession();
         const token = session?.token;
-
         const res = await fetch(`${API_URL}/${eventId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -63,46 +62,22 @@ export default function AdminEventDetail({ route }) {
         }
       } catch (err) {
         console.error(err);
-        Alert.alert("Error", "Error al cargar evento o valoraciones.");
       }
     };
     if (eventId) loadEvent();
   }, [eventId]);
 
-  // === Renderizar estrellas ===
-  const renderStars = (rating) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <Text
-          key={i}
-          style={{
-            fontSize: 22,
-            marginRight: 4,
-            color: i <= rating ? "#014869" : "#ccc",
-          }}
-        >
-          {i <= rating ? "★" : "☆"}
-        </Text>
-      );
-    }
-    return <View style={{ flexDirection: "row" }}>{stars}</View>;
-  };
-
-  // === Navegaciones ===
   const goToProfile = () => navigation.navigate("AdminProfile");
-  const goToUsers = () => navigation.navigate("AdminUsers");
-  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
-  const goToContact = () => navigation.navigate("Contacto");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
-  const goToAbout = () => navigation.navigate("SobreNosotros");
+  const goToAboutUs = () => navigation.navigate("SobreNosotros");
   const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
   const goToConditions = () => navigation.navigate("Condiciones");
+  const goToContact = () => navigation.navigate("Contacto");
+  const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
+  const goToUsers = () => navigation.navigate("AdminUsers");
 
-  // === Alternar menú lateral ===
   const toggleMenu = () => {
-    if (Platform.OS !== "web") return;
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
@@ -119,100 +94,147 @@ export default function AdminEventDetail({ route }) {
     }
   };
 
-  // === Compartir ===
+  const renderStars = (rating) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <Text
+          key={i}
+          style={{
+            fontSize: 18,
+            color: i <= rating ? "#014869" : "#ccc",
+            marginRight: 3,
+          }}
+        >
+          {i <= rating ? "★" : "☆"}
+        </Text>
+      );
+    }
+    return <View style={{ flexDirection: "row" }}>{stars}</View>;
+  };
+
   const shareWhatsApp = () => {
     if (!event) return;
     const msg = `¡Mira este evento! ${event.title} - ${event.location}`;
     const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    Linking.openURL(url).catch(() =>
-      Alert.alert("Error", "No se pudo abrir WhatsApp")
-    );
+    Linking.openURL(url);
   };
 
   const shareTwitter = () => {
     if (!event) return;
     const msg = `¡Mira este evento! ${event.title} - ${event.location}`;
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-      msg
-    )}`;
-    Linking.openURL(url).catch(() =>
-      Alert.alert("Error", "No se pudo abrir Twitter")
-    );
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(msg)}`;
+    Linking.openURL(url);
   };
 
-  if (!event)
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Cargando evento...</Text>
-      </View>
-    );
-
-  // === Render principal ===
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* === CABECERA SUPERIOR === */}
+      {/* === BARRA SUPERIOR IGUAL QUE ADMIN.JS (sin buscador) === */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
           paddingHorizontal: 24,
           paddingVertical: 14,
-          borderBottomWidth: 1,
-          borderColor: "#eee",
-          zIndex: 1,
+          justifyContent: "space-between",
+          backgroundColor: "#fff",
         }}
       >
-        {/* 👑 Admin */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <Text>👑</Text>
-          <Text>
-            Admin. {adminName}
-          </Text>
+        {/* Usuario */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View
+            style={{
+              position: "relative",
+              marginRight: 12,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: "#0094A2",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/user.png")}
+              style={{ width: 24, height: 24, tintColor: "#fff" }}
+            />
+            <Image
+              source={require("../assets/iconos/corona.png")}
+              style={{
+                position: "absolute",
+                top: -6,
+                left: -6,
+                width: 20,
+                height: 20,
+                resizeMode: "contain",
+              }}
+            />
+          </View>
+          <View>
+            <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+              Admin.
+            </Text>
+            <Text style={{ color: "#6c757d", fontSize: 13 }}>{adminName}</Text>
+          </View>
         </View>
 
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-          <Pressable onPress={goToCalendar}>
-            <Image
-              source={require("../assets/iconos/calendar-admin.png")}
-              style={{ width: 26, height: 26 }}
-            />
-          </Pressable>
-
-          <Pressable onPress={goToNotifications}>
+        {/* Iconos derecha */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable
+            onPress={goToNotifications}
+            style={{
+              marginRight: 20,
+              ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+            }}
+          >
             <Image
               source={require("../assets/iconos/bell2.png")}
-              style={{ width: 26, height: 26 }}
+              style={{ width: 22, height: 22, tintColor: "#0094A2" }}
             />
           </Pressable>
 
-          <Pressable onPress={toggleMenu}>
+          <Pressable
+            onPress={goToCalendar}
+            style={{
+              marginRight: 20,
+              ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/calendar-admin.png")}
+              style={{ width: 22, height: 22, tintColor: "#0094A2" }}
+            />
+          </Pressable>
+
+          <Pressable
+            onPress={toggleMenu}
+            style={Platform.OS === "web" ? { cursor: "pointer" } : {}}
+          >
             <Image
               source={
-                Platform.OS === "web" && menuVisible
+                menuVisible
                   ? require("../assets/iconos/close-admin.png")
                   : require("../assets/iconos/menu-admin.png")
               }
-              style={{ width: 26, height: 26 }}
+              style={{ width: 24, height: 24, tintColor: "#0094A2" }}
             />
           </Pressable>
         </View>
       </View>
 
-      {/* === MENÚ LATERAL (estilo moderno y fijo) === */}
+      {/* === MENÚ LATERAL === */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
             <View
               style={{
-                position: "fixed",
+                position: "absolute",
                 top: 0,
                 left: 0,
                 width: "100%",
                 height: "100%",
-                backgroundColor: "rgba(0,0,0,0.1)",
                 zIndex: 9,
               }}
             />
@@ -220,7 +242,7 @@ export default function AdminEventDetail({ route }) {
 
           <Animated.View
             style={{
-              position: "fixed",
+              position: "absolute",
               top: 0,
               left: 0,
               width: 250,
@@ -229,7 +251,6 @@ export default function AdminEventDetail({ route }) {
               padding: 20,
               zIndex: 10,
               transform: [{ translateX: menuAnim }],
-              boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
             }}
           >
             {[
@@ -251,7 +272,6 @@ export default function AdminEventDetail({ route }) {
                     color: "#014869",
                     fontSize: 18,
                     fontWeight: "700",
-                    cursor: "pointer",
                   }}
                 >
                   {item.label}
@@ -262,142 +282,190 @@ export default function AdminEventDetail({ route }) {
         </>
       )}
 
-      {/* === CONTENIDO PRINCIPAL === */}
-      <ScrollView
-        style={{ flex: 1, paddingHorizontal: 24, paddingVertical: 20 }}
-        contentContainerStyle={{ paddingBottom: 120 }}
-      >
-        {/* === Título === */}
-        <View
-          style={{
-            backgroundColor: "#014869",
-            paddingVertical: 10,
-            paddingHorizontal: 15,
-            marginBottom: 20,
-            borderRadius: 6,
-          }}
-        >
-          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 18 }}>
-            {event.title}
-          </Text>
-        </View>
-
-        {/* === Imagen === */}
-        <Image
-          source={{
-            uri: event.image_url.startsWith("http")
-              ? event.image_url
-              : `${API_BASE}${
-                  event.image_url.startsWith("/") ? "" : "/"
-                }${event.image_url}`,
-          }}
-          style={{
-            width: "100%",
-            height: 220,
-            borderRadius: 8,
-            marginBottom: 15,
-          }}
-          resizeMode="cover"
-        />
-
-        {/* === Descripción === */}
-        <Text style={{ fontWeight: "bold", color: "#014869", marginBottom: 6 }}>
-          Descripción:
-        </Text>
-        <Text style={{ marginBottom: 16 }}>{event.description}</Text>
-
-        {/* === Valoraciones === */}
-        <Text style={{ fontWeight: "bold", color: "#014869", marginBottom: 8 }}>
-          Valoraciones de usuarios:
-        </Text>
-        {comments.length > 0 ? (
-          <ScrollView
-            style={{
-              maxHeight: 150,
-              backgroundColor: "#f9f9f9",
-              borderRadius: 8,
-              padding: 10,
-            }}
-          >
-            {comments.map((c, i) => (
-              <View
-                key={i}
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 6,
-                  borderBottomWidth: 0.5,
-                  borderBottomColor: "#ddd",
-                  paddingBottom: 4,
-                }}
-              >
-                <Text style={{ color: "#014869", fontWeight: "600", flex: 1 }}>
-                  {c.user?.name || "Usuario"}
-                </Text>
-                {renderStars(c.rating)}
-              </View>
-            ))}
-          </ScrollView>
-        ) : (
-          <Text style={{ color: "#777", fontStyle: "italic" }}>
-            Sin valoraciones aún.
-          </Text>
-        )}
-
-        {/* === Estado === */}
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "flex-end",
-            marginTop: 20,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: "#2ECC71",
-              borderRadius: 20,
-              paddingHorizontal: 16,
-              paddingVertical: 5,
-            }}
-          >
-            <Text style={{ color: "#fff", fontWeight: "bold" }}>
-              Habilitado
-            </Text>
-          </View>
-        </View>
-
-        {/* === Botón compartir === */}
-        <View style={{ alignItems: "center", marginTop: 20 }}>
-          <Pressable
-            onPress={() => setShareVisible(true)}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              paddingHorizontal: 16,
-              paddingVertical: 10,
-              borderRadius: 8,
-            }}
-          >
-            <Image
-              source={require("../assets/iconos/compartir.png")}
-              style={{ width: 22, height: 22, marginRight: 8 }}
-            />
-          </Pressable>
-        </View>
-      </ScrollView>
-
-      {/* === MODAL COMPARTIR === */}
-      <Modal
-        visible={shareVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShareVisible(false)}
-      >
+      {/* === DETALLE EVENTO === */}
+      {event && (
         <View
           style={{
             flex: 1,
-            backgroundColor: "rgba(0,0,0,0.4)",
+            backgroundColor: "#f5f6f7",
+            padding: 25,
+          }}
+        >
+          {/* Título */}
+          <View
+            style={{
+              backgroundColor: "#014869",
+              paddingVertical: 10,
+              paddingHorizontal: 15,
+              marginBottom: 15,
+              borderRadius: 3,
+            }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontWeight: "bold",
+                fontSize: 14,
+              }}
+            >
+              {event.title}
+            </Text>
+          </View>
+
+          {/* Contenido principal */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "flex-start",
+              gap: 20,
+            }}
+          >
+            {/* Imagen izquierda */}
+            <Image
+              source={{
+                uri: event.image_url.startsWith("http")
+                  ? event.image_url
+                  : `${API_BASE}${event.image_url.startsWith("/") ? "" : "/"}${
+                      event.image_url
+                    }`,
+              }}
+              style={{
+                width: 320,
+                height: 260,
+                borderRadius: 3,
+              }}
+              resizeMode="cover"
+            />
+
+            {/* Texto y botón */}
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  color: "#014869",
+                  fontWeight: "bold",
+                  marginBottom: 5,
+                  fontSize: 13,
+                }}
+              >
+                Descripción
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: "#333",
+                  lineHeight: 18,
+                  textAlign: "justify",
+                }}
+              >
+                {event.description}
+              </Text>
+
+              {/* Estado habilitado */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "flex-end",
+                  marginTop: 20,
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: "#2ECC71",
+                    borderRadius: 25,
+                    paddingVertical: 7,
+                    paddingHorizontal: 18,
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontSize: 16,
+                      marginRight: 6,
+                    }}
+                  >
+                    ✔
+                  </Text>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontWeight: "bold",
+                      fontSize: 13,
+                    }}
+                  >
+                    Habilitado
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* === VALORACIONES === */}
+          <View style={{ marginTop: 20 }}>
+            {comments.length > 0 ? (
+              comments.map((c, i) => (
+                <View
+                  key={i}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 6,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#014869",
+                      fontWeight: "bold",
+                      fontSize: 13,
+                    }}
+                  >
+                    {c.user?.name || "Usuario"}
+                  </Text>
+                  {renderStars(c.rating)}
+                </View>
+              ))
+            ) : (
+              <Text
+                style={{
+                  color: "#777",
+                  fontStyle: "italic",
+                  fontSize: 13,
+                }}
+              >
+                Sin valoraciones aún.
+              </Text>
+            )}
+          </View>
+
+          {/* === COMPARTIR === */}
+          <View
+            style={{
+              alignItems: "flex-end",
+              marginTop: 10,
+              marginRight: 10,
+            }}
+          >
+            <Pressable
+              onPress={() => setShareVisible(true)}
+              style={Platform.OS === "web" ? { cursor: "pointer" } : {}}
+            >
+              <Image
+                source={require("../assets/iconos/compartir.png")}
+                style={{ width: 20, height: 20, tintColor: "#014869" }}
+              />
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      {/* === MODAL COMPARTIR === */}
+      <Modal visible={shareVisible} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
             justifyContent: "center",
             alignItems: "center",
           }}
@@ -405,23 +473,22 @@ export default function AdminEventDetail({ route }) {
           <View
             style={{
               backgroundColor: "#fff",
+              width: 300,
               borderRadius: 10,
               padding: 20,
-              width: "80%",
               alignItems: "center",
             }}
           >
             <Text
               style={{
-                fontWeight: "bold",
                 fontSize: 16,
+                fontWeight: "bold",
                 color: "#014869",
-                marginBottom: 15,
+                marginBottom: 10,
               }}
             >
               Compartir evento
             </Text>
-
             <Pressable
               onPress={() => {
                 setShareVisible(false);
@@ -429,16 +496,15 @@ export default function AdminEventDetail({ route }) {
               }}
               style={{
                 backgroundColor: "#25D366",
-                paddingVertical: 10,
-                borderRadius: 8,
                 width: "100%",
                 alignItems: "center",
-                marginBottom: 10,
+                borderRadius: 8,
+                paddingVertical: 10,
+                marginBottom: 8,
               }}
             >
               <Text style={{ color: "#fff", fontWeight: "bold" }}>WhatsApp</Text>
             </Pressable>
-
             <Pressable
               onPress={() => {
                 setShareVisible(false);
@@ -446,19 +512,16 @@ export default function AdminEventDetail({ route }) {
               }}
               style={{
                 backgroundColor: "#1DA1F2",
-                paddingVertical: 10,
-                borderRadius: 8,
                 width: "100%",
                 alignItems: "center",
+                borderRadius: 8,
+                paddingVertical: 10,
+                marginBottom: 8,
               }}
             >
               <Text style={{ color: "#fff", fontWeight: "bold" }}>Twitter</Text>
             </Pressable>
-
-            <Pressable
-              onPress={() => setShareVisible(false)}
-              style={{ marginTop: 15 }}
-            >
+            <Pressable onPress={() => setShareVisible(false)}>
               <Text style={{ color: "#014869", fontWeight: "bold" }}>
                 Cancelar
               </Text>
@@ -467,24 +530,13 @@ export default function AdminEventDetail({ route }) {
         </View>
       </Modal>
 
-      {/* === FOOTER FIJO === */}
+      {/* === FOOTER === */}
       {Platform.OS === "web" && (
-        <View
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: 100,
-            backgroundColor: "#fff",
-          }}
-        >
-          <Footer
-            onAboutPress={goToAbout}
-            onPrivacyPress={goToPrivacy}
-            onConditionsPress={goToConditions}
-          />
-        </View>
+        <Footer
+          onAboutPress={goToAboutUs}
+          onPrivacyPress={goToPrivacy}
+          onConditionsPress={goToConditions}
+        />
       )}
     </View>
   );

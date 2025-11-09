@@ -14,6 +14,8 @@ import {
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import OrganizerMenu from "./OrganizerMenu";
+import UserMenu from "./UserMenu";
 
 export default function SobreNosotros({ navigation }) {
   const [role, setRole] = useState("user");
@@ -48,11 +50,15 @@ export default function SobreNosotros({ navigation }) {
 
   /** === Navegaciones === */
   const goToProfile = () =>
-    role === "organizer"
+    role === "admin"
+      ? navigation.navigate("AdminProfile")
+      : role === "organizer"
       ? navigation.navigate("OrganizerProfile")
       : navigation.navigate("UserProfile");
   const goToNotifications = () =>
-    role === "organizer"
+    role === "admin"
+      ? navigation.navigate("AdminNotifications")
+      : role === "organizer"
       ? navigation.navigate("OrganizerNotifications")
       : navigation.navigate("UserNotifications");
   const goToCalendar = () => navigation.navigate("Calendar");
@@ -61,10 +67,8 @@ export default function SobreNosotros({ navigation }) {
   const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToFavorites = () => navigation.navigate("UserFavorites");
-  const goToHome = () =>
-    role === "organizer"
-      ? navigation.navigate("Organizer")
-      : navigation.navigate("User");
+  const goToAbout = () => navigation.navigate("SobreNosotros");
+  const goToUsers = () => navigation.navigate("AdminUsers");
 
   /** === Menú lateral web === */
   const toggleMenu = () => {
@@ -88,123 +92,120 @@ export default function SobreNosotros({ navigation }) {
     }
   };
 
-  /** === Barra superior === */
+  /** === Cabecera superior (idéntica a Calendar.js, con corona/lápiz) === */
   const renderTopBar = () => {
-    if (role === "admin") {
-      return (
-        <View style={styles.topBar}>
-          <Text>👑 Admin. {userName}</Text>
-          <View style={styles.topBarIcons}>
-            <Pressable onPress={goToCalendar}>
-              <Image
-                source={require("../assets/iconos/calendar-admin.png")}
-                style={{ width: 26, height: 26, marginRight: 10 }}
-              />
-            </Pressable>
+    const tint =
+      role === "organizer"
+        ? "#F3B23F"
+        : role === "admin"
+        ? "#0094A2"
+        : "#014869";
+    const avatarBg = tint;
 
-            <Pressable onPress={goToNotifications}>
-              <Image
-                source={require("../assets/iconos/bell2.png")}
-                style={{ width: 24, height: 24, marginRight: 10 }}
-              />
-            </Pressable>
+    const bellIcon =
+      role === "organizer"
+        ? require("../assets/iconos/bell3.png")
+        : role === "admin"
+        ? require("../assets/iconos/bell2.png")
+        : require("../assets/iconos/bell.png");
 
-            <Pressable onPress={toggleMenu}>
-              <Image
-                source={
-                  menuVisible
-                    ? require("../assets/iconos/close-admin.png")
-                    : require("../assets/iconos/menu-admin.png")
-                }
-                style={{ width: 26, height: 26 }}
-              />
-            </Pressable>
-          </View>
-        </View>
-      );
-    }
+    const calIcon =
+      role === "organizer"
+        ? require("../assets/iconos/calendar-organizador.png")
+        : role === "admin"
+        ? require("../assets/iconos/calendar-admin.png")
+        : require("../assets/iconos/calendar.png");
 
-    if (role === "organizer") {
-      return (
-        <View style={styles.topBar}>
-          <Text style={{ color: "#014869" }}>👤 {userName}</Text>
-          <View style={styles.topBarIcons}>
-            <Pressable onPress={goToCalendar}>
-              <Image
-                source={require("../assets/iconos/calendar-organizador.png")}
-                style={{
-                  width: 26,
-                  height: 26,
-                  tintColor: "#F3B23F",
-                  marginRight: 10,
-                }}
-              />
-            </Pressable>
+    // 👑 Admin tiene corona — 🖋️ Organizer tiene lápiz — Usuario no tiene nada
+    const userBadge =
+      role === "admin"
+        ? require("../assets/iconos/corona.png")
+        : role === "organizer"
+        ? require("../assets/iconos/lapiz.png")
+        : null;
 
-            <Pressable onPress={goToNotifications}>
-              <Image
-                source={require("../assets/iconos/bell3.png")}
-                style={{
-                  width: 24,
-                  height: 24,
-                  tintColor: "#F3B23F",
-                  marginRight: 10,
-                }}
-              />
-            </Pressable>
+    const userBadgeStyle =
+      role === "admin"
+        ? {
+            position: "absolute",
+            top: -10,
+            left: -4,
+            width: 22,
+            height: 22,
+            resizeMode: "contain",
+            transform: [{ rotate: "-15deg" }],
+          }
+        : {
+            position: "absolute",
+            top: -6,
+            left: -6,
+            width: 20,
+            height: 20,
+            resizeMode: "contain",
+            transform: [{ rotate: "-20deg" }],
+          };
 
-            <Pressable onPress={toggleMenu}>
-              <Image
-                source={
-                  menuVisible
-                    ? require("../assets/iconos/close-organizador.png")
-                    : require("../assets/iconos/menu-organizador.png")
-                }
-                style={{ width: 26, height: 26, tintColor: "#F3B23F" }}
-              />
-            </Pressable>
-          </View>
-        </View>
-      );
-    }
-
-    // === USUARIO ===
     return (
       <View style={styles.topBar}>
-        <Text>👤 {userName}</Text>
-        <View style={styles.topBarIcons}>
-          <Pressable onPress={goToCalendar}>
+        {/* Perfil */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View
+            style={{
+              position: "relative",
+              marginRight: 12,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: avatarBg,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <Image
-              source={require("../assets/iconos/calendar.png")}
-              style={{
-                width: 26,
-                height: 26,
-                tintColor: "#014869",
-                marginRight: 10,
-              }}
+              source={require("../assets/iconos/user.png")}
+              style={{ width: 24, height: 24, tintColor: "#fff" }}
+            />
+            {/* Solo muestra la insignia si es admin u organizer */}
+            {userBadge && <Image source={userBadge} style={userBadgeStyle} />}
+          </View>
+          <View>
+            <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+              {role === "admin"
+                ? "Admin."
+                : role === "organizer"
+                ? "Organiz."
+                : "Usuario"}
+            </Text>
+            <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+          </View>
+        </View>
+
+        {/* Iconos derecha */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+            <Image
+              source={bellIcon}
+              style={{ width: 22, height: 22, tintColor: tint }}
             />
           </Pressable>
 
-          <Pressable onPress={goToNotifications}>
-            <Image
-              source={require("../assets/iconos/bell.png")}
-              style={{
-                width: 24,
-                height: 24,
-                tintColor: "#014869",
-                marginRight: 10,
-              }}
-            />
-          </Pressable>
+          {Platform.OS === "web" && (
+            <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+              <Image
+                source={calIcon}
+                style={{ width: 22, height: 22, tintColor: tint }}
+              />
+            </Pressable>
+          )}
 
           <Pressable onPress={toggleMenu}>
             <Image
               source={
                 menuVisible
-                  ? require("../assets/iconos/close.png")
-                  : require("../assets/iconos/menu-usuario.png")
+                  ? require("../assets/iconos/close-organizador.png")
+                  : require("../assets/iconos/menu-organizador.png")
               }
-              style={{ width: 26, height: 26, tintColor: "#014869" }}
+              style={{ width: 24, height: 24, tintColor: tint }}
             />
           </Pressable>
         </View>
@@ -212,20 +213,16 @@ export default function SobreNosotros({ navigation }) {
     );
   };
 
-  /** === Menú web === */
-  const renderWebMenu = () => {
+  /** === Menú lateral web === */
+  const renderMenu = () => {
     if (!menuVisible || Platform.OS !== "web") return null;
 
     let items = [];
-
     if (role === "admin") {
       items = [
         { label: "Perfil", action: goToProfile },
         { label: "Cultura e Historia", action: goToCulturaHistoria },
-        {
-          label: "Ver usuarios",
-          action: () => navigation.navigate("AdminUsers"),
-        },
+        { label: "Ver usuarios", action: goToUsers },
         { label: "Contacto", action: goToContact },
       ];
     } else if (role === "organizer") {
@@ -268,152 +265,7 @@ export default function SobreNosotros({ navigation }) {
     );
   };
 
-  /** === Menú móvil azul (user) === */
-  const renderMobileMenuUser = () =>
-    menuVisible &&
-    role === "user" && (
-      <View style={styles.mobileMenuContainer}>
-        <View style={styles.headerBlue}>
-          <Pressable onPress={toggleMenu}>
-            <Image
-              source={require("../assets/iconos/back-usuario.png")}
-              style={styles.backIconBlue}
-            />
-          </Pressable>
-          <Text style={styles.headerTitleBlue}>Menú</Text>
-          <View style={{ width: 24 }} />
-        </View>
-
-        <View style={styles.menuOptionsBlue}>
-          {[
-            {
-              label: "Cultura e Historia",
-              icon: require("../assets/iconos/museo-usuario.png"),
-              action: goToCulturaHistoria,
-            },
-            {
-              label: "Sobre nosotros",
-              icon: require("../assets/iconos/info-usuario.png"),
-              action: () => {},
-            },
-            {
-              label: "Ver favoritos",
-              icon: require("../assets/iconos/favs-usuario.png"),
-              action: goToFavorites,
-            },
-            {
-              label: "Contacto",
-              icon: require("../assets/iconos/phone-usuario.png"),
-              action: goToContact,
-            },
-          ].map((item, i) => (
-            <Pressable key={i} onPress={item.action} style={styles.optionBlue}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Image source={item.icon} style={styles.optionIconBlue} />
-                <Text style={styles.optionTextBlue}>{item.label}</Text>
-              </View>
-              <Image
-                source={require("../assets/iconos/siguiente.png")}
-                style={styles.arrowIconBlue}
-              />
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.bottomBarBlue}>
-          <Pressable onPress={goToHome}>
-            <Image
-              source={require("../assets/iconos/home-usuario.png")}
-              style={styles.bottomIconBlue}
-            />
-          </Pressable>
-          <Pressable onPress={goToCalendar}>
-            <Image
-              source={require("../assets/iconos/calendar.png")}
-              style={styles.bottomIconBlue}
-            />
-          </Pressable>
-          <Pressable onPress={goToProfile}>
-            <Image
-              source={require("../assets/iconos/user.png")}
-              style={styles.bottomIconBlue}
-            />
-          </Pressable>
-        </View>
-      </View>
-    );
-
-  /** === Menú móvil naranja (organizer) === */
-  const renderMobileMenuOrganizer = () =>
-    menuVisible &&
-    role === "organizer" && (
-      <View style={styles.mobileMenuContainer}>
-        <View style={styles.header}>
-          <Pressable onPress={toggleMenu}>
-            <Image
-              source={require("../assets/iconos/back-organizador.png")}
-              style={styles.backIcon}
-            />
-          </Pressable>
-          <Text style={styles.headerTitle}>Menú</Text>
-          <View style={{ width: 24 }} />
-        </View>
-
-        <View style={styles.menuOptions}>
-          {[
-            {
-              label: "Sobre nosotros",
-              icon: require("../assets/iconos/info-usuario.png"),
-              action: () => {},
-            },
-            {
-              label: "Cultura e Historia",
-              icon: require("../assets/iconos/museo-usuario.png"),
-              action: goToCulturaHistoria,
-            },
-            {
-              label: "Contacto",
-              icon: require("../assets/iconos/phone-usuario.png"),
-              action: goToContact,
-            },
-          ].map((item, i) => (
-            <Pressable key={i} onPress={item.action} style={styles.option}>
-              <View style={styles.optionLeft}>
-                <Image source={item.icon} style={styles.optionIcon} />
-                <Text style={styles.optionText}>{item.label}</Text>
-              </View>
-              <Image
-                source={require("../assets/iconos/siguiente.png")}
-                style={styles.arrowIcon}
-              />
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.bottomBar}>
-          <Pressable onPress={goToHome}>
-            <Image
-              source={require("../assets/iconos/home-organizador.png")}
-              style={styles.bottomIcon}
-            />
-          </Pressable>
-          <Pressable onPress={goToCalendar}>
-            <Image
-              source={require("../assets/iconos/calendar-organizador.png")}
-              style={styles.bottomIcon}
-            />
-          </Pressable>
-          <Pressable onPress={goToProfile}>
-            <Image
-              source={require("../assets/iconos/user.png")}
-              style={styles.bottomIcon}
-            />
-          </Pressable>
-        </View>
-      </View>
-    );
-
-  /** === Texto principal === */
+  /** === CONTENIDO === */
   const content = `Cuervo Activa es una aplicación multiplataforma creada para fomentar la participación ciudadana y la difusión cultural en el municipio de El Cuervo de Sevilla.
 Su objetivo principal es ofrecer un espacio digital donde los vecinos puedan descubrir, promover y participar en los distintos eventos, actividades y celebraciones locales de una forma sencilla, rápida y accesible.
 
@@ -426,62 +278,97 @@ Cuervo Activa busca modernizar la comunicación entre la administración y la ci
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
       {renderTopBar()}
-      {renderWebMenu()}
-      {Platform.OS !== "web" && role === "user" && renderMobileMenuUser()}
-      {Platform.OS !== "web" &&
-        role === "organizer" &&
-        renderMobileMenuOrganizer()}
+      {renderMenu()}
 
-      {/* === Contenido === */}
+      {/* === Menú móvil (igual que en Contacto) === */}
+      {Platform.OS !== "web" && menuVisible && (
+        role === "organizer" ? (
+          <OrganizerMenu onClose={toggleMenu} />
+        ) : (
+          <UserMenu onClose={toggleMenu} />
+        )
+      )}
+
       <ScrollView
-        style={{ flex: 1, paddingHorizontal: 30, paddingVertical: 20 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          padding: 24,
+          alignItems: "center",
+          backgroundColor: "#f9f9f9",
+          flexGrow: 1,
+          paddingBottom: 120,
+          marginTop: 60,
+        }}
       >
         <Text
           style={{
-            textAlign: "center",
-            fontSize: 20,
+            fontSize: 22,
             fontWeight: "bold",
-            marginBottom: 20,
             color: "#014869",
+            textAlign: "center",
+            marginBottom: 30,
           }}
         >
           Sobre Nosotros
         </Text>
-        <Text
+
+        <View
           style={{
-            textAlign: "justify",
-            fontSize: 15,
-            lineHeight: 22,
-            color: "#333",
+            backgroundColor: "#fff",
+            borderRadius: 16,
+            padding: 20,
+            maxWidth: 900,
+            shadowColor: "#000",
+            shadowOpacity: 0.1,
+            shadowRadius: 5,
+            elevation: 3,
           }}
         >
-          {content}
-        </Text>
+          <Text
+            style={{
+              color: "#333",
+              lineHeight: 22,
+              textAlign: "justify",
+              fontSize: 16,
+            }}
+          >
+            {content}
+          </Text>
+        </View>
       </ScrollView>
 
       {Platform.OS === "web" && (
-        <Footer
-          onAboutPress={() => {}}
-          onPrivacyPress={goToPrivacy}
-          onConditionsPress={goToConditions}
-        />
+        <View
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            backgroundColor: "#fff",
+          }}
+        >
+          <Footer
+            onAboutPress={goToAbout}
+            onPrivacyPress={goToPrivacy}
+            onConditionsPress={goToConditions}
+          />
+        </View>
       )}
     </View>
   );
 }
 
-/** === Estilos === */
+/** === ESTILOS === */
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: 24,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
   },
-  topBarIcons: { flexDirection: "row", alignItems: "center" },
   sideMenu: {
     position: "absolute",
     top: 0,
@@ -501,89 +388,4 @@ const styles = StyleSheet.create({
     zIndex: 9,
   },
   menuItem: { color: "#014869", fontSize: 18, fontWeight: "700" },
-
-  // === Azul ===
-  mobileMenuContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "#fff",
-    zIndex: 100,
-  },
-  headerBlue: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 20,
-  },
-  headerTitleBlue: { fontSize: 18, fontWeight: "bold", color: "#014869" },
-  backIconBlue: { width: 22, height: 22, tintColor: "#014869" },
-  menuOptionsBlue: {
-    flex: 1,
-    paddingHorizontal: 40,
-    justifyContent: "flex-start",
-    gap: 30,
-  },
-  optionBlue: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  optionIconBlue: {
-    width: 28,
-    height: 28,
-    tintColor: "#014869",
-    marginRight: 12,
-  },
-  optionTextBlue: { color: "#014869", fontSize: 16, fontWeight: "600" },
-  arrowIconBlue: { width: 16, height: 16, tintColor: "#014869" },
-  bottomBarBlue: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderColor: "#014869",
-  },
-  bottomIconBlue: { width: 26, height: 26, tintColor: "#014869" },
-
-  // === Naranja ===
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 20,
-  },
-  headerTitle: { fontSize: 18, fontWeight: "bold", color: "#F3B23F" },
-  backIcon: { width: 22, height: 22, tintColor: "#F3B23F" },
-  menuOptions: {
-    flex: 1,
-    paddingHorizontal: 40,
-    justifyContent: "flex-start",
-    gap: 30,
-  },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  optionLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
-  optionIcon: { width: 28, height: 28, tintColor: "#014869" },
-  optionText: { color: "#014869", fontSize: 16, fontWeight: "600" },
-  arrowIcon: { width: 16, height: 16, tintColor: "#F3B23F" },
-  bottomBar: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderColor: "#F3B23F",
-  },
-  bottomIcon: { width: 26, height: 26, tintColor: "#F3B23F" },
 });
