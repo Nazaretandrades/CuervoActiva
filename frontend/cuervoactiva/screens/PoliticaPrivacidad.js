@@ -1,4 +1,3 @@
-// frontend/src/screens/PoliticaPrivacidad.js
 import React, { useEffect, useState, useRef } from "react";
 import {
   View,
@@ -21,7 +20,7 @@ export default function PoliticaPrivacidad({ navigation }) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  /** === Cargar sesión === */
+  /** Cargar sesión */
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -45,7 +44,7 @@ export default function PoliticaPrivacidad({ navigation }) {
     loadSession();
   }, []);
 
-  /** === Navegaciones === */
+  /** Navegaciones */
   const goToProfile = () =>
     role === "admin"
       ? navigation.navigate("AdminProfile")
@@ -68,7 +67,7 @@ export default function PoliticaPrivacidad({ navigation }) {
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToAbout = () => navigation.navigate("SobreNosotros");
 
-  /** === Menú lateral animado === */
+  /** Menú lateral animado */
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -90,7 +89,7 @@ export default function PoliticaPrivacidad({ navigation }) {
     }
   };
 
-  /** === Cabecera USUARIO NORMAL (idéntica a la de Contacto) === */
+  /** Cabecera USUARIO NORMAL*/
   const renderUserTopBar = () => (
     <View
       style={{
@@ -161,7 +160,7 @@ export default function PoliticaPrivacidad({ navigation }) {
     </View>
   );
 
-  /** === Cabecera ADMIN (igual que en CONTACTO) === */
+  /** Cabecera ADMIN*/
   const renderAdminTopBar = () => (
     <View style={styles.topBar}>
       <View style={styles.adminInfo}>
@@ -208,7 +207,7 @@ export default function PoliticaPrivacidad({ navigation }) {
     </View>
   );
 
-  /** === Cabecera ORGANIZADOR (idéntica a CulturaHistoria y Contacto) === */
+  /** Cabecera ORGANIZADOR */
   const renderOrganizerTopBar = () =>
     role === "organizer" && (
       <View
@@ -292,7 +291,7 @@ export default function PoliticaPrivacidad({ navigation }) {
       </View>
     );
 
-  /** === Menú ADMIN (igual que en CONTACTO) === */
+  /** Menú ADMIN  */
   const renderAdminMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
@@ -324,7 +323,7 @@ export default function PoliticaPrivacidad({ navigation }) {
       </>
     );
 
-  /** === Menú ORGANIZADOR (idéntico al de Contacto y CulturaHistoria) === */
+  /** Menú ORGANIZADOR */
   const renderOrganizerMenuWeb = () =>
     role === "organizer" &&
     Platform.OS === "web" &&
@@ -371,7 +370,7 @@ export default function PoliticaPrivacidad({ navigation }) {
       </Animated.View>
     );
 
-  /** === Menú USUARIO (web) — el que echabas en falta === */
+  /** Menú USUARIO (web) */
   const renderUserMenuWeb = () =>
     role === "user" &&
     Platform.OS === "web" &&
@@ -422,7 +421,7 @@ export default function PoliticaPrivacidad({ navigation }) {
       </Animated.View>
     );
 
-  /** === Render principal === */
+  /** Render principal */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", position: "relative" }}>
       <Header hideAuthButtons />
@@ -580,7 +579,7 @@ export default function PoliticaPrivacidad({ navigation }) {
   );
 }
 
-// === ESTILOS ===
+// ESTILOS
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",

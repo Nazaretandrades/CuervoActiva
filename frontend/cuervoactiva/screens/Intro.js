@@ -9,14 +9,14 @@ import Footer from "../components/Footer";
 export default function Intro() {
   const navigation = useNavigation();
 
-  // ✅ Asegura fondo blanco también en web (body)
+  // Asegura fondo blanco también en web (body)
   useEffect(() => {
     if (Platform.OS === "web") {
       document.body.style.backgroundColor = "#ffffff";
     }
   }, []);
 
-  // ✅ Guarda flag de que el usuario ya vio el intro
+  // Guarda flag de que el usuario ya vio el intro
   const handleSeenIntro = async (nextScreen) => {
     try {
       await AsyncStorage.setItem("SEEN_INTRO", "true");
@@ -58,22 +58,6 @@ export default function Intro() {
           </View>
         </ScrollView>
       </View>
-
-      {/* FOOTER FIJO ABAJO (solo web) */}
-      {Platform.OS === "web" && (
-        <View
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            width: "100%",
-            zIndex: 50,
-            backgroundColor: "#ffffff",
-          }}
-        >
-          <Footer />
-        </View>
-      )}
     </View>
   );
 }

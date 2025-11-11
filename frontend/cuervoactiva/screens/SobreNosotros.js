@@ -1,4 +1,3 @@
-// frontend/src/screens/SobreNosotros.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -10,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   Pressable,
   StyleSheet,
+  ImageBackground,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -23,7 +23,7 @@ export default function SobreNosotros({ navigation }) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  /** === Cargar sesión === */
+  /** Cargar sesión */
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -48,7 +48,7 @@ export default function SobreNosotros({ navigation }) {
     loadSession();
   }, []);
 
-  /** === Navegaciones === */
+  /** Navegaciones */
   const goToProfile = () =>
     role === "admin"
       ? navigation.navigate("AdminProfile")
@@ -70,7 +70,7 @@ export default function SobreNosotros({ navigation }) {
   const goToAbout = () => navigation.navigate("SobreNosotros");
   const goToUsers = () => navigation.navigate("AdminUsers");
 
-  /** === Menú lateral web === */
+  /** Menú lateral web */
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -92,7 +92,7 @@ export default function SobreNosotros({ navigation }) {
     }
   };
 
-  /** === Cabecera superior (idéntica a Calendar.js, con corona/lápiz) === */
+  /** Cabecera */
   const renderTopBar = () => {
     const tint =
       role === "organizer"
@@ -116,7 +116,6 @@ export default function SobreNosotros({ navigation }) {
         ? require("../assets/iconos/calendar-admin.png")
         : require("../assets/iconos/calendar.png");
 
-    // 👑 Admin tiene corona — 🖋️ Organizer tiene lápiz — Usuario no tiene nada
     const userBadge =
       role === "admin"
         ? require("../assets/iconos/corona.png")
@@ -147,7 +146,6 @@ export default function SobreNosotros({ navigation }) {
 
     return (
       <View style={styles.topBar}>
-        {/* Perfil */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View
             style={{
@@ -165,7 +163,6 @@ export default function SobreNosotros({ navigation }) {
               source={require("../assets/iconos/user.png")}
               style={{ width: 24, height: 24, tintColor: "#fff" }}
             />
-            {/* Solo muestra la insignia si es admin u organizer */}
             {userBadge && <Image source={userBadge} style={userBadgeStyle} />}
           </View>
           <View>
@@ -180,7 +177,6 @@ export default function SobreNosotros({ navigation }) {
           </View>
         </View>
 
-        {/* Iconos derecha */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
             <Image
@@ -213,7 +209,7 @@ export default function SobreNosotros({ navigation }) {
     );
   };
 
-  /** === Menú lateral web === */
+  /** Menú lateral web */
   const renderMenu = () => {
     if (!menuVisible || Platform.OS !== "web") return null;
 
@@ -265,7 +261,7 @@ export default function SobreNosotros({ navigation }) {
     );
   };
 
-  /** === CONTENIDO === */
+  /** CONTENIDO */
   const content = `Cuervo Activa es una aplicación multiplataforma creada para fomentar la participación ciudadana y la difusión cultural en el municipio de El Cuervo de Sevilla.
 Su objetivo principal es ofrecer un espacio digital donde los vecinos puedan descubrir, promover y participar en los distintos eventos, actividades y celebraciones locales de una forma sencilla, rápida y accesible.
 
@@ -280,62 +276,72 @@ Cuervo Activa busca modernizar la comunicación entre la administración y la ci
       {renderTopBar()}
       {renderMenu()}
 
-      {/* === Menú móvil (igual que en Contacto) === */}
-      {Platform.OS !== "web" && menuVisible && (
-        role === "organizer" ? (
+      {Platform.OS !== "web" &&
+        menuVisible &&
+        (role === "organizer" ? (
           <OrganizerMenu onClose={toggleMenu} />
         ) : (
           <UserMenu onClose={toggleMenu} />
-        )
-      )}
+        ))}
 
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          padding: 24,
-          alignItems: "center",
-          backgroundColor: "#f9f9f9",
-          flexGrow: 1,
-          paddingBottom: 120,
-          marginTop: 60,
+      <ImageBackground
+        source={require("../assets/logo.png")}
+        resizeMode="contain"
+        imageStyle={{
+          opacity: 0.12,
+          position: "absolute",
+          width: "100%",
+          height: "100%",
         }}
+        style={{ flex: 1 }}
       >
-        <Text
-          style={{
-            fontSize: 22,
-            fontWeight: "bold",
-            color: "#014869",
-            textAlign: "center",
-            marginBottom: 30,
-          }}
-        >
-          Sobre Nosotros
-        </Text>
-
-        <View
-          style={{
-            backgroundColor: "#fff",
-            borderRadius: 16,
-            padding: 20,
-            maxWidth: 900,
-            shadowColor: "#000",
-            shadowOpacity: 0.1,
-            shadowRadius: 5,
-            elevation: 3,
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            padding: 24,
+            alignItems: "center",
+            flexGrow: 1,
+            paddingBottom: 120,
+            marginTop: 60,
           }}
         >
           <Text
             style={{
-              color: "#333",
-              lineHeight: 22,
-              textAlign: "justify",
-              fontSize: 16,
+              fontSize: 22,
+              fontWeight: "bold",
+              color: "#014869",
+              textAlign: "center",
+              marginBottom: 30,
             }}
           >
-            {content}
+            Sobre Nosotros
           </Text>
-        </View>
-      </ScrollView>
+
+          <View
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 16,
+              padding: 20,
+              maxWidth: 900,
+              shadowColor: "#000",
+              shadowOpacity: 0.1,
+              shadowRadius: 5,
+              elevation: 3,
+            }}
+          >
+            <Text
+              style={{
+                color: "#333",
+                lineHeight: 22,
+                textAlign: "justify",
+                fontSize: 14,
+              }}
+            >
+              {content}
+            </Text>
+          </View>
+        </ScrollView>
+      </ImageBackground>
 
       {Platform.OS === "web" && (
         <View
@@ -359,7 +365,7 @@ Cuervo Activa busca modernizar la comunicación entre la administración y la ci
   );
 }
 
-/** === ESTILOS === */
+/** ESTILOS */
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",

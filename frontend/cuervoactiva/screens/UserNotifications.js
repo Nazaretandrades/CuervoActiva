@@ -1,4 +1,3 @@
-// frontend/src/screens/UserNotifications.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -14,9 +13,7 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
 const API_BASE =
-  Platform.OS === "android"
-    ? "http://192.168.18.19:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
 export default function UserNotifications({ navigation }) {
   const [userName, setUserName] = useState("Usuario");
@@ -29,7 +26,7 @@ export default function UserNotifications({ navigation }) {
     type: "info",
   });
 
-  // === Toast visual ===
+  // Toast visual
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
     setTimeout(
@@ -38,7 +35,7 @@ export default function UserNotifications({ navigation }) {
     );
   };
 
-  // === Obtener usuario logueado ===
+  // Obtener usuario logueado
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -55,7 +52,7 @@ export default function UserNotifications({ navigation }) {
     loadUser();
   }, []);
 
-  // === Cargar notificaciones ===
+  // Cargar notificaciones
   useEffect(() => {
     const loadNotifications = async () => {
       try {
@@ -83,7 +80,7 @@ export default function UserNotifications({ navigation }) {
     loadNotifications();
   }, []);
 
-  // === Marcar como leída (eliminar) ===
+  // Marcar como leída (eliminar)
   const markAsRead = async (id) => {
     try {
       const session =
@@ -107,7 +104,7 @@ export default function UserNotifications({ navigation }) {
     }
   };
 
-  // === Navegaciones ===
+  // Navegaciones
   const goToProfile = () => navigation.navigate("UserProfile");
   const goToNotifications = () => navigation.navigate("UserNotifications");
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
@@ -118,7 +115,7 @@ export default function UserNotifications({ navigation }) {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToHome = () => navigation.navigate("User");
 
-  // === Menú lateral ===
+  // Menú lateral
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible((prev) => !prev);
@@ -140,7 +137,7 @@ export default function UserNotifications({ navigation }) {
     }
   };
 
-  // === CABECERA IGUAL QUE EN User.js ===
+  // CABECERA
   const renderTopBar = () => (
     <View
       style={{
@@ -179,7 +176,7 @@ export default function UserNotifications({ navigation }) {
         </View>
       </View>
 
-      {/* Iconos derecha */}
+      {/* Iconos */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
@@ -216,7 +213,7 @@ export default function UserNotifications({ navigation }) {
       <Header hideAuthButtons />
       {renderTopBar()}
 
-      {/* === MENÚ WEB === */}
+      {/* MENÚ WEB */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <Animated.View
@@ -266,7 +263,7 @@ export default function UserNotifications({ navigation }) {
         </>
       )}
 
-      {/* === CONTENIDO PRINCIPAL === */}
+      {/* CONTENIDO PRINCIPAL */}
       <View
         style={{
           flex: 1,
@@ -332,7 +329,7 @@ export default function UserNotifications({ navigation }) {
         </ScrollView>
       </View>
 
-      {/* === MENÚ MÓVIL (idéntico a User.js) === */}
+      {/* MENÚ MÓVIL */}
       {menuVisible && Platform.OS !== "web" && (
         <View
           style={{
@@ -347,7 +344,7 @@ export default function UserNotifications({ navigation }) {
             paddingTop: 50,
           }}
         >
-          {/* 🔙 Header */}
+          {/*Header */}
           <View
             style={{
               flexDirection: "row",
@@ -375,7 +372,7 @@ export default function UserNotifications({ navigation }) {
             </Text>
           </View>
 
-          {/* 🔹 Opciones */}
+          {/*Opciones */}
           <View style={{ flex: 1 }}>
             {[
               {
@@ -441,7 +438,7 @@ export default function UserNotifications({ navigation }) {
             ))}
           </View>
 
-          {/* 🔸 Barra inferior (ahora llega hasta el borde) */}
+          {/*Barra inferior */}
           <View
             style={{
               position: "absolute",
@@ -451,8 +448,8 @@ export default function UserNotifications({ navigation }) {
               flexDirection: "row",
               justifyContent: "space-around",
               alignItems: "center",
-              borderTopWidth: 2, // ← antes era 1
-              borderTopColor: "#01486999", // un poco más visible
+              borderTopWidth: 2,
+              borderTopColor: "#01486999",
               paddingVertical: 14,
               backgroundColor: "#fff",
             }}
@@ -479,7 +476,7 @@ export default function UserNotifications({ navigation }) {
         </View>
       )}
 
-      {/* === FOOTER FIJO === */}
+      {/* FOOTER FIJO */}
       {Platform.OS === "web" && (
         <View
           style={{
@@ -499,7 +496,7 @@ export default function UserNotifications({ navigation }) {
         </View>
       )}
 
-      {/* === TOAST === */}
+      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={{

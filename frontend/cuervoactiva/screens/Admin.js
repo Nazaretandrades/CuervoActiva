@@ -1,4 +1,3 @@
-// frontend/src/screens/Admin.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -20,8 +19,8 @@ import { useNavigation } from "@react-navigation/native";
 
 const API_URL =
   Platform.OS === "android"
-    ? "http://192.168.18.19:5000/api/events"
-    : "http://localhost:5000/api/events";
+    ? "http://10.0.2.2:5000/api/events"
+    : "http://localhost:5000/api/events"; 
 
 export default function Admin() {
   const [events, setEvents] = useState([]);
@@ -47,8 +46,6 @@ export default function Admin() {
   const [menuAnim] = useState(new Animated.Value(-250));
   const [modalVisible, setModalVisible] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
-
-  // Toast
   const [toast, setToast] = useState({
     visible: false,
     message: "",
@@ -65,7 +62,6 @@ export default function Admin() {
 
   const navigation = useNavigation();
 
-  // Cargar eventos
   useEffect(() => {
     const loadData = async () => {
       const session = await getSession();
@@ -91,7 +87,6 @@ export default function Admin() {
     loadData();
   }, []);
 
-  // Filtro búsqueda
   useEffect(() => {
     if (!search.trim()) setFiltered(events);
     else {
@@ -107,7 +102,6 @@ export default function Admin() {
     }
   }, [search, events]);
 
-  // Editar
   const handleEdit = (ev) => {
     setForm({
       _id: ev._id,
@@ -136,7 +130,6 @@ export default function Admin() {
     });
   };
 
-  // Guardar
   const handleSave = async () => {
     if (!form.title || !form.description || !form.location)
       return showToast("⚠️ Completa todos los campos requeridos.", "warning");
@@ -171,7 +164,6 @@ export default function Admin() {
     }
   };
 
-  // Eliminar
   const confirmDelete = (id) => {
     setEventToDelete(id);
     setModalVisible(true);
@@ -579,7 +571,7 @@ export default function Admin() {
                 textAlign: "center",
               }}
             >
-            Editar evento
+              Editar evento
             </Text>
 
             <ScrollView
@@ -594,7 +586,7 @@ export default function Admin() {
                 elevation: 2,
               }}
               contentContainerStyle={{
-                paddingBottom: Platform.OS === "web" ? 150 : 80, // ✅ más espacio si hay footer fijo
+                paddingBottom: Platform.OS === "web" ? 150 : 80,
               }}
             >
               {[

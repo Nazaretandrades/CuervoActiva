@@ -1,102 +1,51 @@
-// frontend/src/screens/AdminProfile.js
 import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TextInput,
-  Pressable,
   Image,
-  Alert,
+  Pressable,
   Platform,
   Animated,
   TouchableWithoutFeedback,
   ScrollView,
+  Alert,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
 
 const API_BASE =
-  Platform.OS === "android"
-    ? "http://192.168.18.19:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
 export default function AdminProfile() {
   const navigation = useNavigation();
-  const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "" });
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
-  const [adminName, setAdminName] = useState("Admin");
+  const [adminData, setAdminData] = useState({ name: "Admin", email: "" });
 
-  // === Cargar usuario logueado ===
+  /** Cargar usuario logueado */
   useEffect(() => {
-    const loadUser = async () => {
+    const loadUser = () => {
       try {
         const session = JSON.parse(localStorage.getItem("USER_SESSION"));
         if (session?.name && session?.email) {
-          setForm({ name: session.name, email: session.email });
-          setAdminName(session.name);
+          setAdminData({ name: session.name, email: session.email });
         }
       } catch (err) {
         console.error("Error cargando sesión:", err);
       }
     };
+
     loadUser();
+    window.addEventListener("storage", loadUser);
+    return () => window.removeEventListener("storage", loadUser);
   }, []);
 
-  // === Guardar cambios en BD ===
-  const handleSave = async () => {
-    try {
-      const session = JSON.parse(localStorage.getItem("USER_SESSION"));
-      if (!session?.token) {
-        Alert.alert("Error", "No se encontró la sesión del administrador.");
-        return;
-      }
-
-      const res = await fetch(`${API_BASE}/api/users/profile`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.token}`,
-        },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Error al guardar en la base de datos");
-
-      const updatedUser = await res.json();
-      localStorage.setItem(
-        "USER_SESSION",
-        JSON.stringify({
-          ...session,
-          name: updatedUser.name,
-          email: updatedUser.email,
-        })
-      );
-
-      Alert.alert(
-        "✅ Guardado",
-        "Tu perfil ha sido actualizado correctamente."
-      );
-      setEditing(false);
-      setAdminName(updatedUser.name);
-    } catch (err) {
-      console.error("Error guardando perfil:", err);
-      Alert.alert("Error", err.message);
-    }
-  };
-  // === Cerrar sesión ===
+  /** Cerrar sesión */
   const handleLogout = async () => {
     try {
-      // 🔹 Eliminar datos de sesión y flag del intro
       localStorage.removeItem("USER_SESSION");
       localStorage.removeItem("SEEN_INTRO");
-
-      // 🔹 Reiniciar navegación completamente (sin volver atrás)
       navigation.reset({
         index: 0,
         routes: [{ name: "Intro" }],
@@ -107,7 +56,7 @@ export default function AdminProfile() {
     }
   };
 
-  // === Navegaciones ===
+  /** Navegaciones */
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -118,7 +67,7 @@ export default function AdminProfile() {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToUsers = () => navigation.navigate("AdminUsers");
 
-  // === Menú lateral ===
+  /** Menú lateral */
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -140,6 +89,7 @@ export default function AdminProfile() {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
+      {/* CABECERA */}
       <View
         style={{
           flexDirection: "row",
@@ -150,7 +100,6 @@ export default function AdminProfile() {
           backgroundColor: "#fff",
         }}
       >
-        {/* Usuario */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View
             style={{
@@ -184,11 +133,15 @@ export default function AdminProfile() {
             <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
               Admin.
             </Text>
-            <Text style={{ color: "#6c757d", fontSize: 13 }}>{adminName}</Text>
+            <Text
+              key={adminData.name}
+              style={{ color: "#6c757d", fontSize: 13 }}
+            >
+              {adminData.name}
+            </Text>
           </View>
         </View>
 
-        {/* Iconos derecha */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable
             onPress={goToNotifications}
@@ -232,7 +185,7 @@ export default function AdminProfile() {
         </View>
       </View>
 
-      {/* === MENÚ LATERAL === */}
+      {/*MENÚ LATERAL */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -290,13 +243,13 @@ export default function AdminProfile() {
         </>
       )}
 
-      {/* === CONTENIDO PERFIL === */}
+      {/* CONTENIDO PERFIL */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
           alignItems: "center",
-          justifyContent: "flex-start", // 🔹 sube el contenido
-          paddingVertical: 65, // 🔹 menos espacio arriba y abajo
+          justifyContent: "flex-start",
+          paddingVertical: 65,
           backgroundColor: "#fff",
         }}
       >
@@ -306,15 +259,14 @@ export default function AdminProfile() {
             borderRadius: 8,
             width: "90%",
             maxWidth: 420,
-            paddingVertical: 20, // 🔹 menos alto el recuadro
+            paddingVertical: 20,
             alignItems: "center",
             shadowColor: "#000",
             shadowOpacity: 0.1,
             shadowRadius: 5,
-            marginTop: 30, // 🔹 un poco más cerca del encabezado
+            marginTop: 30,
           }}
         >
-          {/* 🔹 TÍTULO PERFIL ENCIMA DEL ICONO */}
           <Text
             style={{
               fontSize: 20,
@@ -326,7 +278,6 @@ export default function AdminProfile() {
             Perfil
           </Text>
 
-          {/* ICONO DE USUARIO CON CORONA */}
           <View
             style={{
               position: "relative",
@@ -362,10 +313,7 @@ export default function AdminProfile() {
             >
               Username:
             </Text>
-            <TextInput
-              editable={editing}
-              value={form.name}
-              onChangeText={(t) => setForm({ ...form, name: t })}
+            <Text
               style={{
                 backgroundColor: "#fff",
                 borderRadius: 20,
@@ -375,17 +323,16 @@ export default function AdminProfile() {
                 borderWidth: 1,
                 borderColor: "#ddd",
               }}
-            />
+            >
+              {adminData.name}
+            </Text>
 
             <Text
               style={{ fontWeight: "bold", color: "#014869", marginBottom: 5 }}
             >
               Email:
             </Text>
-            <TextInput
-              editable={editing}
-              value={form.email}
-              onChangeText={(t) => setForm({ ...form, email: t })}
+            <Text
               style={{
                 backgroundColor: "#fff",
                 borderRadius: 20,
@@ -395,48 +342,29 @@ export default function AdminProfile() {
                 borderWidth: 1,
                 borderColor: "#ddd",
               }}
-            />
+            >
+              {adminData.email}
+            </Text>
 
-            <View
+            <Pressable
+              onPress={handleLogout}
               style={{
-                flexDirection: "row",
-                justifyContent: "space-around",
+                backgroundColor: "#014869",
+                paddingVertical: 10,
+                paddingHorizontal: 25,
+                borderRadius: 30,
+                alignSelf: "center",
                 marginTop: 10,
               }}
             >
-              <Pressable
-                onPress={() => (editing ? handleSave() : setEditing(true))}
-                style={{
-                  backgroundColor: "#014869",
-                  paddingVertical: 10,
-                  paddingHorizontal: 25,
-                  borderRadius: 30,
-                }}
-              >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                  {editing ? "Guardar" : "Editar"}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={handleLogout}
-                style={{
-                  backgroundColor: "#014869",
-                  paddingVertical: 10,
-                  paddingHorizontal: 25,
-                  borderRadius: 30,
-                }}
-              >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                  Cerrar Sesión
-                </Text>
-              </Pressable>
-            </View>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                Cerrar Sesión
+              </Text>
+            </Pressable>
           </View>
         </View>
       </ScrollView>
 
-      {/* === FOOTER === */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAboutUs}

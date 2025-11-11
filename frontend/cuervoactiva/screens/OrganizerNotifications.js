@@ -1,4 +1,3 @@
-// frontend/src/screens/OrganizerNotifications.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -13,11 +12,8 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
-
 const API_BASE =
-  Platform.OS === "android"
-    ? "http://192.168.18.19:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
 export default function OrganizerNotifications({ navigation }) {
   const [userName, setUserName] = useState("Organizador");
@@ -30,7 +26,7 @@ export default function OrganizerNotifications({ navigation }) {
     type: "info",
   });
 
-  // === Toast visual ===
+  // Toast visual
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
     setTimeout(
@@ -39,7 +35,7 @@ export default function OrganizerNotifications({ navigation }) {
     );
   };
 
-  // === Obtener usuario logueado ===
+  // Obtener usuario logueado
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -56,7 +52,7 @@ export default function OrganizerNotifications({ navigation }) {
     loadUser();
   }, []);
 
-  // === Cargar notificaciones ===
+  // Cargar notificaciones
   useEffect(() => {
     const loadNotifications = async () => {
       try {
@@ -84,7 +80,7 @@ export default function OrganizerNotifications({ navigation }) {
     loadNotifications();
   }, []);
 
-  // === Marcar como leída y eliminar ===
+  // Marcar como leída y eliminar
   const markAsRead = async (id) => {
     try {
       const session =
@@ -109,7 +105,7 @@ export default function OrganizerNotifications({ navigation }) {
     }
   };
 
-  // === Navegaciones ===
+  // Navegaciones
   const goToProfile = () => navigation.navigate("OrganizerProfile");
   const goToNotifications = () => navigation.navigate("OrganizerNotifications");
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
@@ -120,7 +116,7 @@ export default function OrganizerNotifications({ navigation }) {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToHomeOrganizador = () => navigation.navigate("Organizer");
 
-  // === Menú lateral / móvil ===
+  // Menú lateral / móvil
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible((prev) => !prev);
@@ -142,7 +138,7 @@ export default function OrganizerNotifications({ navigation }) {
     }
   };
 
-  // === CABECERA IGUAL A ORGANIZER ===
+  // CABECERA IGUAL A ORGANIZER
   const renderTopBar = () => (
     <View
       style={{
@@ -230,7 +226,7 @@ export default function OrganizerNotifications({ navigation }) {
       <Header hideAuthButtons />
       {renderTopBar()}
 
-      {/* === NUEVO MENÚ WEB (igual al del segundo código) === */}
+      {/* NUEVO MENÚ WEB */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <Animated.View
@@ -276,7 +272,7 @@ export default function OrganizerNotifications({ navigation }) {
         </>
       )}
 
-      {/* === CONTENIDO SCROLL CON FOOTER FIJO === */}
+      {/* CONTENIDO SCROLL CON FOOTER FIJO */}
       <View
         style={{
           flex: 1,
@@ -344,7 +340,7 @@ export default function OrganizerNotifications({ navigation }) {
         </ScrollView>
       </View>
 
-      {/* === MENÚ MÓVIL IGUAL A ORGANIZER === */}
+      {/* MENÚ MÓVIL */}
       {menuVisible && Platform.OS !== "web" && (
         <View
           style={{
@@ -375,7 +371,9 @@ export default function OrganizerNotifications({ navigation }) {
                 style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
               />
             </Pressable>
-            <Text style={{ fontSize: 18, fontWeight: "bold", color: "#F3B23F" }}>
+            <Text
+              style={{ fontSize: 18, fontWeight: "bold", color: "#F3B23F" }}
+            >
               Menú
             </Text>
             <View style={{ width: 24 }} />
@@ -496,7 +494,7 @@ export default function OrganizerNotifications({ navigation }) {
         </View>
       )}
 
-      {/* === FOOTER FIJO === */}
+      {/* FOOTER FIJO */}
       {Platform.OS === "web" && (
         <View
           style={{
@@ -516,7 +514,7 @@ export default function OrganizerNotifications({ navigation }) {
         </View>
       )}
 
-      {/* === TOAST === */}
+      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={{

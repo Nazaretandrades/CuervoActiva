@@ -1,4 +1,3 @@
-// frontend/src/screens/UserEventDetail.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -18,9 +17,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoute, useNavigation } from "@react-navigation/native";
 
 const API_BASE =
-  Platform.OS === "android"
-    ? "http://192.168.18.19:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+
 const API_URL = `${API_BASE}/api/events`;
 const COMMENTS_URL = `${API_BASE}/api/comments`;
 
@@ -38,7 +36,7 @@ export default function UserEventDetail() {
   const [menuAnim] = useState(new Animated.Value(-250));
   const [shareVisible, setShareVisible] = useState(false);
 
-  // === Obtener token ===
+  // Obtener token
   const getToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -55,7 +53,7 @@ export default function UserEventDetail() {
     }
   };
 
-  // === Obtener usuario ===
+  // Obtener usuario
   const getUserInfo = async () => {
     try {
       let session;
@@ -81,7 +79,7 @@ export default function UserEventDetail() {
     }
   };
 
-  // === Cargar evento ===
+  //  Cargar evento
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -99,7 +97,7 @@ export default function UserEventDetail() {
     if (eventId) loadData();
   }, [eventId]);
 
-  // === Valorar evento ===
+  // Valorar evento
   const handleRate = async (value) => {
     try {
       const token = await getToken();
@@ -154,7 +152,7 @@ export default function UserEventDetail() {
     return <View style={{ flexDirection: "row" }}>{stars}</View>;
   };
 
-  // === Compartir ===
+  // Compartir
   const shareWhatsApp = () => {
     if (!event) return;
     const msg = `¡Mira este evento! ${event.title} - ${event.location}`;
@@ -170,7 +168,7 @@ export default function UserEventDetail() {
     Linking.openURL(url);
   };
 
-  // === Navegaciones ===
+  // Navegaciones
   const goToProfile = () => navigation.navigate("UserProfile");
   const goToNotifications = () => navigation.navigate("UserNotifications");
   const goToCalendar = () => navigation.navigate("Calendar");
@@ -199,7 +197,7 @@ export default function UserEventDetail() {
     }
   };
 
-  // === CABECERA WEB ===
+  // CABECERA WEB
   const renderTopBarWeb = () => (
     <View
       style={{
@@ -268,7 +266,7 @@ export default function UserEventDetail() {
     </View>
   );
 
-  // === CABECERA MÓVIL ===
+  // CABECERA MÓVIL
   const renderTopBarMobile = () => (
     <View
       style={{
@@ -332,7 +330,7 @@ export default function UserEventDetail() {
     </View>
   );
 
-  // === MENÚ WEB ===
+  // MENÚ WEB
   const renderWebMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
@@ -379,7 +377,7 @@ export default function UserEventDetail() {
       </Animated.View>
     );
 
-  // === MENÚ MÓVIL ===
+  // MENÚ MÓVIL
   const renderMobileMenu = () =>
     Platform.OS !== "web" &&
     menuVisible && (
@@ -521,7 +519,7 @@ export default function UserEventDetail() {
       </View>
     );
 
-  // === RENDER PRINCIPAL ===
+  // RENDER PRINCIPAL
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
@@ -529,7 +527,7 @@ export default function UserEventDetail() {
       {renderWebMenu()}
       {renderMobileMenu()}
 
-      {/* === CONTENIDO DEL DETALLE === */}
+      {/* CONTENIDO DEL DETALLE */}
       {event && (
         <ScrollView
           style={{
@@ -565,8 +563,15 @@ export default function UserEventDetail() {
             <Image
               source={{
                 uri: event.image_url.startsWith("http")
-                  ? event.image_url.replace("localhost", "192.168.18.19")
-                  : `${API_BASE}${
+                  ? event.image_url.replace(
+                      "localhost",
+                      Platform.OS === "android" ? "10.0.2.2" : "192.168.18.19"
+                    )
+                  : `${
+                      Platform.OS === "android"
+                        ? "http://10.0.2.2:5000"
+                        : "http://192.168.18.19:5000"
+                    }${
                       event.image_url.startsWith("/") ? "" : "/"
                     }${event.image_url.replace(/\\/g, "/")}`,
               }}
@@ -666,7 +671,7 @@ export default function UserEventDetail() {
         </ScrollView>
       )}
 
-      {/* === MODAL COMPARTIR === */}
+      {/* MODAL COMPARTIR */}
       <Modal visible={shareVisible} transparent animationType="fade">
         <View
           style={{
@@ -709,7 +714,9 @@ export default function UserEventDetail() {
                 marginBottom: 8,
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>WhatsApp</Text>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                WhatsApp
+              </Text>
             </Pressable>
             <Pressable
               onPress={() => {
@@ -736,7 +743,7 @@ export default function UserEventDetail() {
         </View>
       </Modal>
 
-      {/* === FOOTER WEB === */}
+      {/* FOOTER WEB */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAbout}

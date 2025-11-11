@@ -1,4 +1,3 @@
-// frontend/src/screens/AdminNotifications.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -14,24 +13,27 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
 const API_BASE =
-  Platform.OS === "android"
-    ? "http://192.168.18.19:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
 export default function AdminNotifications({ navigation }) {
   const [adminName, setAdminName] = useState("Admin");
   const [notifications, setNotifications] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
-  const [toast, setToast] = useState({ visible: false, message: "", type: "info" });
-
-  // === Toast visual ===
+  const [toast, setToast] = useState({
+    visible: false,
+    message: "",
+    type: "info",
+  });
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
-    setTimeout(() => setToast({ visible: false, message: "", type: "info" }), 2500);
+    setTimeout(
+      () => setToast({ visible: false, message: "", type: "info" }),
+      2500
+    );
   };
 
-  // === Obtener usuario logueado ===
+  // Obtener usuario logueado
   useEffect(() => {
     try {
       const session = JSON.parse(localStorage.getItem("USER_SESSION"));
@@ -42,7 +44,7 @@ export default function AdminNotifications({ navigation }) {
     }
   }, []);
 
-  // === Cargar notificaciones ===
+  // Cargar notificaciones
   useEffect(() => {
     const loadNotifications = async () => {
       try {
@@ -67,7 +69,7 @@ export default function AdminNotifications({ navigation }) {
     loadNotifications();
   }, []);
 
-  // === Marcar como leída y eliminar de la BD ===
+  // Marcar como leída y eliminar de la BD
   const markAsRead = async (id) => {
     try {
       const session = JSON.parse(localStorage.getItem("USER_SESSION"));
@@ -90,7 +92,7 @@ export default function AdminNotifications({ navigation }) {
     }
   };
 
-  // === Navegaciones ===
+  //  Navegaciones
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -101,7 +103,7 @@ export default function AdminNotifications({ navigation }) {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToUsers = () => navigation.navigate("AdminUsers");
 
-  // === Menú lateral ===
+  // Menú lateral
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -119,12 +121,11 @@ export default function AdminNotifications({ navigation }) {
     }
   };
 
-  // === UI ===
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* === CABECERA ADMIN === */}
+      {/* CABECERA ADMIN */}
       <View
         style={{
           flexDirection: "row",
@@ -198,7 +199,7 @@ export default function AdminNotifications({ navigation }) {
         </View>
       </View>
 
-      {/* === MENÚ LATERAL === */}
+      {/* MENÚ LATERAL */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -227,10 +228,12 @@ export default function AdminNotifications({ navigation }) {
               transform: [{ translateX: menuAnim }],
             }}
           >
-            {[{ label: "Perfil", action: goToProfile },
+            {[
+              { label: "Perfil", action: goToProfile },
               { label: "Cultura e Historia", action: goToCulturaHistoria },
               { label: "Ver usuarios", action: goToUsers },
-              { label: "Contacto", action: goToContact }].map((item, i) => (
+              { label: "Contacto", action: goToContact },
+            ].map((item, i) => (
               <Pressable
                 key={i}
                 onPress={() => {
@@ -254,7 +257,7 @@ export default function AdminNotifications({ navigation }) {
         </>
       )}
 
-      {/* === LISTA DE NOTIFICACIONES === */}
+      {/* LISTA DE NOTIFICACIONES */}
       <View style={{ flex: 1, padding: 24, backgroundColor: "#f5f6f7" }}>
         <Text
           style={{
@@ -309,7 +312,7 @@ export default function AdminNotifications({ navigation }) {
         </ScrollView>
       </View>
 
-      {/* === TOAST === */}
+      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={{

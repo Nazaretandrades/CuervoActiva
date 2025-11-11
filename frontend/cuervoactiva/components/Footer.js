@@ -1,8 +1,22 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, Image, Platform, Linking } from "react-native";
 
-export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress }) {
-  // 🌐 Abrir enlaces externos
+/**
+ * Componente: Footer
+ * Pie de página reutilizable para la aplicación.
+ * Muestra enlaces legales ("Privacidad", "Condiciones", "Sobre Nosotros"),
+ * idioma actual y accesos a redes sociales.
+ */
+export default function Footer({
+  onAboutPress,
+  onPrivacyPress,
+  onConditionsPress,
+}) {
+  /**
+   * Función: openLink
+   * Abre un enlace externo en el navegador del dispositivo.
+   * Se usa para las redes sociales del proyecto.
+   */
   const openLink = async (url) => {
     try {
       await Linking.openURL(url);
@@ -11,7 +25,7 @@ export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress
     }
   };
 
-  // Estados de hover (solo web)
+  // Estados para manejar efectos de hover (solo en versión web)
   const [hoveredLink, setHoveredLink] = useState(null);
   const [hoveredIcon, setHoveredIcon] = useState(null);
 
@@ -26,7 +40,7 @@ export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress
         paddingHorizontal: 28,
       }}
     >
-      {/* Contenedor principal */}
+      {/* Contenedor principal del footer */}
       <View
         style={{
           flexDirection: "row",
@@ -35,7 +49,7 @@ export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress
           flexWrap: "nowrap",
         }}
       >
-        {/* IZQUIERDA — textos legales */}
+        {/* SECCIÓN IZQUIERDA — Enlaces legales */}
         <View
           style={{
             flexDirection: "row",
@@ -43,11 +57,12 @@ export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress
             flexWrap: "nowrap",
           }}
         >
+          {/* Marca y año */}
           <Text style={{ color: "#555", fontSize: 12, marginRight: 10 }}>
             © 2025 CuervoActiva, Inc.
           </Text>
 
-          {/* PRIVACIDAD */}
+          {/* Enlace: Política de Privacidad */}
           <Pressable
             onPress={onPrivacyPress}
             onHoverIn={() => setHoveredLink("privacidad")}
@@ -68,7 +83,7 @@ export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress
             </Text>
           </Pressable>
 
-          {/* CONDICIONES */}
+          {/* Enlace: Condiciones de uso */}
           <Pressable
             onPress={onConditionsPress}
             onHoverIn={() => setHoveredLink("condiciones")}
@@ -89,7 +104,7 @@ export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress
             </Text>
           </Pressable>
 
-          {/* SOBRE NOSOTROS */}
+          {/* Enlace: Sobre Nosotros */}
           <Pressable
             onPress={onAboutPress}
             onHoverIn={() => setHoveredLink("sobre")}
@@ -111,9 +126,9 @@ export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress
           </Pressable>
         </View>
 
-        {/* DERECHA — idioma + redes sociales */}
+        {/* SECCIÓN DERECHA — Idioma + redes sociales */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {/* Idioma */}
+          {/* Selector de idioma (actualmente fijo en Español) */}
           <View
             style={{
               flexDirection: "row",
@@ -133,7 +148,7 @@ export default function Footer({ onAboutPress, onPrivacyPress, onConditionsPress
             <Text style={{ color: "#555", fontSize: 12 }}>Español (ES)</Text>
           </View>
 
-          {/* Redes sociales con hover */}
+          {/* Íconos de redes sociales */}
           {[
             {
               id: "facebook",

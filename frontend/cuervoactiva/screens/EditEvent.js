@@ -14,7 +14,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 
 const API_URL =
   Platform.OS === "android"
-    ? "http://192.168.18.19:5000/api/events"
+    ? "http://10.0.2.2:5000/api/events"
     : "http://localhost:5000/api/events";
 
 export default function EditEvent() {
@@ -116,7 +116,7 @@ export default function EditEvent() {
 
       {/* FORMULARIO */}
       <ScrollView
-        style={{ paddingHorizontal: 25, marginTop: 150}}
+        style={{ paddingHorizontal: 25, marginTop: 150 }}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         {/* TÍTULO */}

@@ -1,4 +1,3 @@
-// frontend/src/screens/OrganizerMenu.js
 import React from "react";
 import {
   View,
@@ -40,7 +39,7 @@ export default function OrganizerMenu({ onClose }) {
 
   return (
     <View style={styles.container}>
-      {/* === CABECERA === */}
+      {/*  CABECERA */}
       <View style={styles.header}>
         <Pressable onPress={onClose}>
           <Image
@@ -52,7 +51,7 @@ export default function OrganizerMenu({ onClose }) {
         <View style={{ width: 24 }} />
       </View>
 
-      {/* === OPCIONES DEL MENÚ === */}
+      {/* OPCIONES DEL MENÚ */}
       <View style={styles.menuOptions}>
         <Pressable style={styles.option} onPress={goToAbout}>
           <View style={styles.optionLeft}>
@@ -97,7 +96,7 @@ export default function OrganizerMenu({ onClose }) {
         </Pressable>
       </View>
 
-      {/* === BARRA INFERIOR === */}
+      {/* BARRA INFERIOR */}
       {Platform.OS !== "web" && (
         <View style={styles.bottomBar}>
           <Pressable onPress={goToHomeOrganizador}>
@@ -131,7 +130,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     justifyContent: "space-between",
-    position: "absolute", // 🔥 para cubrir toda la pantalla
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,

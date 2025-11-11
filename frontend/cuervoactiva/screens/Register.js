@@ -69,7 +69,6 @@ export default function Register() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
-      {/* Fondo decorativo */}
       <Image
         source={require("../assets/fondo.png")}
         style={{
@@ -227,7 +226,7 @@ export default function Register() {
               borderWidth: 1,
               borderColor: "#ddd",
               paddingHorizontal: 12,
-              height: 42,
+              height: 55,
               width: "100%",
               marginBottom: 15,
             }}
@@ -241,20 +240,20 @@ export default function Register() {
                 tintColor: "#014869",
               }}
             />
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, justifyContent: "center" }}>
               <Picker
                 selectedValue={role}
                 onValueChange={setRole}
                 dropdownIconColor="#014869"
                 style={{
                   flex: 1,
-                  color: "#014869", // ✅ Se ve bien en móvil ahora
-                  fontSize: 14,
-                  height: 42,
+                  color: "#014869",
+                  fontSize: 16,
+                  height: 55,
                   backgroundColor: "transparent",
                 }}
                 itemStyle={{
-                  fontSize: 14,
+                  fontSize: 16,
                   color: "#014869",
                 }}
               >
@@ -352,8 +351,7 @@ export default function Register() {
             bottom: 60,
             left: "5%",
             right: "5%",
-            backgroundColor:
-              toast.type === "success" ? "#4CAF50" : "#E74C3C",
+            backgroundColor: toast.type === "success" ? "#4CAF50" : "#E74C3C",
             paddingVertical: 14,
             paddingHorizontal: 18,
             borderRadius: 12,

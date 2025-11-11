@@ -1,4 +1,3 @@
-// frontend/src/screens/UserFavorites.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -19,9 +18,8 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
 const API_BASE =
-  Platform.OS === "android"
-    ? "http://192.168.18.19:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+
 const FAVORITES_URL = `${API_BASE}/api/favorites`;
 
 export default function UserFavorites() {
@@ -33,7 +31,7 @@ export default function UserFavorites() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  /** === Obtener token multiplataforma === */
+  /** Obtener token multiplataforma */
   const getToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -50,7 +48,7 @@ export default function UserFavorites() {
     }
   };
 
-  /** === Obtener nombre del usuario === */
+  /** Obtener nombre del usuario */
   const getUserName = async () => {
     try {
       let session;
@@ -74,12 +72,12 @@ export default function UserFavorites() {
     }
   };
 
-  /** === Cargar nombre del usuario === */
+  /** Cargar nombre del usuario */
   useEffect(() => {
     getUserName();
   }, []);
 
-  /** === Cargar favoritos === */
+  /** Cargar favoritos */
   useEffect(() => {
     const loadFavorites = async () => {
       try {
@@ -102,7 +100,7 @@ export default function UserFavorites() {
     loadFavorites();
   }, []);
 
-  /** === 🔍 Filtro búsqueda === */
+  /** Filtro búsqueda */
   useEffect(() => {
     if (!search.trim()) {
       setFilteredFavorites(favorites);
@@ -118,7 +116,7 @@ export default function UserFavorites() {
     }
   }, [search, favorites]);
 
-  /** === Navegaciones === */
+  /** Navegaciones */
   const goToEventDetail = (eventId) =>
     navigation.navigate("UserEventDetail", { eventId });
   const goToNotifications = () => navigation.navigate("UserNotifications");
@@ -129,7 +127,7 @@ export default function UserFavorites() {
   const goToContact = () => navigation.navigate("Contacto");
   const goToHome = () => navigation.navigate("User");
 
-  /** === Menú lateral === */
+  /** Menú lateral */
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -151,7 +149,7 @@ export default function UserFavorites() {
     }
   };
 
-  /** === Cabecera móvil idéntica a UserProfile === */
+  /** Cabecera móvil*/
   const renderTopBar = () => (
     <View
       style={{
@@ -222,7 +220,7 @@ export default function UserFavorites() {
     </View>
   );
 
-  /** === Menú móvil azul === */
+  /** Menú móvil */
   const renderMobileMenu = () =>
     menuVisible && (
       <View style={styles.mobileMenuContainer}>
@@ -273,7 +271,7 @@ export default function UserFavorites() {
           ))}
         </View>
 
-        {/* 🔹 Barra inferior con iconos actualizados */}
+        {/* Barra inferior con iconos */}
         <View style={styles.bottomBarBlue}>
           <Pressable onPress={goToHome}>
             <Image
@@ -302,7 +300,7 @@ export default function UserFavorites() {
       <Header hideAuthButtons />
       {renderTopBar()}
 
-      {/* ======= MENÚ WEB (idéntico al de UserProfile) ======= */}
+      {/* MENÚ WEB*/}
       {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
@@ -321,7 +319,10 @@ export default function UserFavorites() {
           {[
             { label: "Perfil", action: goToProfile },
             { label: "Cultura e Historia", action: goToCulturaHistoria },
-            { label: "Ver favoritos", action: () => navigation.navigate("UserFavorites") },
+            {
+              label: "Ver favoritos",
+              action: () => navigation.navigate("UserFavorites"),
+            },
             { label: "Contacto", action: goToContact },
           ].map((item, i) => (
             <Pressable
@@ -348,7 +349,7 @@ export default function UserFavorites() {
       )}
       {Platform.OS !== "web" && renderMobileMenu()}
 
-      {/* ======= Contenido principal ======= */}
+      {/* Contenido principal */}
       <View style={{ flex: 1, paddingHorizontal: 20, paddingVertical: 20 }}>
         <Text
           style={{
@@ -397,7 +398,7 @@ export default function UserFavorites() {
   );
 }
 
-/** === Estilos === */
+/** Estilos */
 const styles = StyleSheet.create({
   iconBlue: { width: 26, height: 26, tintColor: "#014869" },
   overlay: {
@@ -420,7 +421,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
 
-  // === Menú móvil azul ===
+  // Menú móvil azul
   mobileMenuContainer: {
     position: "absolute",
     top: 0,

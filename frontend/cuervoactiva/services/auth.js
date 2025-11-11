@@ -1,20 +1,14 @@
-//SERVICIOS DE AUTENTICACIÓN (REGISTRO Y LOGIN)
-//1) Importamos Platform para saber si estamos en web o móvil
 import { Platform } from "react-native";
 
-//CONFIGURACIÓN DE CONEXIÓN AL BACKEND
-//Dirección IP local de tu PC (necesaria para emulador o móvil físico)
-const LOCAL_PC_IP = "192.168.18.19"; //Cámbiala según tu red local
-const PORT = 5000; //Puerto donde corre el servidor backend (Express)
+const PORT = 5000;
 
-//Detecta automáticamente si estás en navegador o dispositivo móvil
 const API_URL =
-  Platform.OS === "web"
-    ? "http://localhost:" + PORT //En navegador: usa localhost
-    : `http://${LOCAL_PC_IP}:${PORT}`; //En móvil: usa IP de tu PC
+  Platform.OS === "android"
+    ? `http://10.0.2.2:${PORT}`
+    : Platform.OS === "web"
+    ? `http://localhost:${PORT}`
+    : `http://192.168.18.19:${PORT}`;
 
-//Si está en producción (por ejemplo en Vercel o Render)
-//se puede usar una variable de entorno para sobrescribir esta URL
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || API_URL;
 
 //FUNCIÓN: Registrar un nuevo usuario

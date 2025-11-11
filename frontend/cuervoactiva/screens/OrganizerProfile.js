@@ -1,9 +1,7 @@
-// frontend/src/screens/OrganizerProfile.js
 import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TextInput,
   Pressable,
   Image,
   Alert,
@@ -17,19 +15,18 @@ import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_BASE =
-  Platform.OS === "android"
-    ? "http://192.168.18.19:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
 export default function OrganizerProfile() {
   const navigation = useNavigation();
-  const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "" });
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
-  const [organizerName, setOrganizerName] = useState("Organizador");
+  const [organizerData, setOrganizerData] = useState({
+    name: "Organizador",
+    email: "",
+  });
 
-  // === Cargar usuario logueado ===
+  // Cargar usuario logueado
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -42,86 +39,31 @@ export default function OrganizerProfile() {
         }
 
         if (session?.name && session?.email) {
-          setForm({ name: session.name, email: session.email });
-          setOrganizerName(session.name);
+          setOrganizerData({ name: session.name, email: session.email });
         }
       } catch (err) {
         console.error("Error cargando sesión:", err);
       }
     };
+
     loadUser();
   }, []);
 
-  // === Guardar cambios ===
-  const handleSave = async () => {
-    try {
-      let session;
-      if (Platform.OS === "web") {
-        session = JSON.parse(localStorage.getItem("USER_SESSION"));
-      } else {
-        const s = await AsyncStorage.getItem("USER_SESSION");
-        session = s ? JSON.parse(s) : null;
-      }
-
-      if (!session?.token) {
-        Alert.alert("Error", "No se encontró la sesión del organizador.");
-        return;
-      }
-
-      const res = await fetch(`${API_BASE}/api/users/profile`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.token}`,
-        },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Error al guardar en la base de datos");
-
-      const updatedUser = await res.json();
-
-      const updatedSession = {
-        ...session,
-        name: updatedUser.name,
-        email: updatedUser.email,
-      };
-
-      if (Platform.OS === "web") {
-        localStorage.setItem("USER_SESSION", JSON.stringify(updatedSession));
-      } else {
-        await AsyncStorage.setItem(
-          "USER_SESSION",
-          JSON.stringify(updatedSession)
-        );
-      }
-
-      Alert.alert(
-        "✅ Guardado",
-        "Tu perfil ha sido actualizado correctamente."
-      );
-      setEditing(false);
-      setOrganizerName(updatedUser.name);
-    } catch (err) {
-      console.error("Error guardando perfil:", err);
-      Alert.alert("Error", err.message);
-    }
-  };
-
-  // === Cerrar sesión ===
+  // Cerrar sesión
   const handleLogout = async () => {
-    if (Platform.OS === "web") {
-      localStorage.removeItem("USER_SESSION");
-    } else {
-      await AsyncStorage.removeItem("USER_SESSION");
+    try {
+      if (Platform.OS === "web") {
+        localStorage.removeItem("USER_SESSION");
+      } else {
+        await AsyncStorage.removeItem("USER_SESSION");
+      }
+      navigation.navigate("Intro");
+    } catch (err) {
+      Alert.alert("Error", "No se pudo cerrar sesión correctamente.");
     }
-    navigation.navigate("Intro");
   };
 
-  // === Navegaciones ===
+  // Navegaciones
   const goToProfile = () => navigation.navigate("OrganizerProfile");
   const goToNotifications = () => navigation.navigate("OrganizerNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -131,7 +73,7 @@ export default function OrganizerProfile() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
 
-  // === Menú lateral ===
+  // Menú lateral
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -154,7 +96,7 @@ export default function OrganizerProfile() {
     }
   };
 
-  // === CABECERA IGUAL QUE EN NOTIFICACIONES ===
+  // CABECERA
   const renderTopBar = () => (
     <View
       style={{
@@ -202,7 +144,7 @@ export default function OrganizerProfile() {
             Organiz.
           </Text>
           <Text style={{ color: "#6c757d", fontSize: 13 }}>
-            {organizerName}
+            {organizerData.name}
           </Text>
         </View>
       </View>
@@ -244,7 +186,7 @@ export default function OrganizerProfile() {
       <Header hideAuthButtons />
       {renderTopBar()}
 
-      {/* === MENÚ WEB === */}
+      {/* MENÚ WEB */}
       {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
@@ -288,7 +230,7 @@ export default function OrganizerProfile() {
         </Animated.View>
       )}
 
-      {/* === MENÚ MÓVIL IGUAL AL DE NOTIFICACIONES === */}
+      {/* MENÚ MÓVIL */}
       {menuVisible && Platform.OS !== "web" && (
         <View
           style={{
@@ -319,7 +261,9 @@ export default function OrganizerProfile() {
                 style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
               />
             </Pressable>
-            <Text style={{ fontSize: 18, fontWeight: "bold", color: "#F3B23F" }}>
+            <Text
+              style={{ fontSize: 18, fontWeight: "bold", color: "#F3B23F" }}
+            >
               Menú
             </Text>
             <View style={{ width: 24 }} />
@@ -391,7 +335,7 @@ export default function OrganizerProfile() {
             ))}
           </View>
 
-          {/* FOOTER INFERIOR DEL MENÚ MÓVIL */}
+          {/* FOOTER DEL MENÚ MÓVIL */}
           <View
             style={{
               flexDirection: "row",
@@ -440,7 +384,7 @@ export default function OrganizerProfile() {
         </View>
       )}
 
-      {/* === CONTENIDO PERFIL === */}
+      {/* CONTENIDO PERFIL */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -475,7 +419,6 @@ export default function OrganizerProfile() {
             Perfil
           </Text>
 
-          {/* Icono organizador */}
           <View
             style={{
               position: "relative",
@@ -512,10 +455,7 @@ export default function OrganizerProfile() {
             >
               Username:
             </Text>
-            <TextInput
-              editable={editing}
-              value={form.name}
-              onChangeText={(t) => setForm({ ...form, name: t })}
+            <Text
               style={{
                 backgroundColor: "#fff",
                 borderRadius: 20,
@@ -525,17 +465,16 @@ export default function OrganizerProfile() {
                 borderWidth: 1,
                 borderColor: "#ddd",
               }}
-            />
+            >
+              {organizerData.name}
+            </Text>
 
             <Text
               style={{ fontWeight: "bold", color: "#014869", marginBottom: 5 }}
             >
               Email:
             </Text>
-            <TextInput
-              editable={editing}
-              value={form.email}
-              onChangeText={(t) => setForm({ ...form, email: t })}
+            <Text
               style={{
                 backgroundColor: "#fff",
                 borderRadius: 20,
@@ -545,48 +484,30 @@ export default function OrganizerProfile() {
                 borderWidth: 1,
                 borderColor: "#ddd",
               }}
-            />
+            >
+              {organizerData.email}
+            </Text>
 
-            <View
+            <Pressable
+              onPress={handleLogout}
               style={{
-                flexDirection: "row",
-                justifyContent: "space-around",
+                backgroundColor: "#014869",
+                paddingVertical: 10,
+                paddingHorizontal: 25,
+                borderRadius: 30,
+                alignSelf: "center",
                 marginTop: 10,
               }}
             >
-              <Pressable
-                onPress={() => (editing ? handleSave() : setEditing(true))}
-                style={{
-                  backgroundColor: "#014869",
-                  paddingVertical: 10,
-                  paddingHorizontal: 25,
-                  borderRadius: 30,
-                }}
-              >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                  {editing ? "Guardar" : "Editar"}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={handleLogout}
-                style={{
-                  backgroundColor: "#014869",
-                  paddingVertical: 10,
-                  paddingHorizontal: 25,
-                  borderRadius: 30,
-                }}
-              >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                  Cerrar Sesión
-                </Text>
-              </Pressable>
-            </View>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                Cerrar Sesión
+              </Text>
+            </Pressable>
           </View>
         </View>
       </ScrollView>
 
-      {/* === FOOTER === */}
+      {/* FOOTER */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAboutUs}

@@ -1,4 +1,3 @@
-// frontend/src/screens/AdminEventDetail.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -18,9 +17,8 @@ import { getSession } from "../services/sessionManager";
 import { useNavigation } from "@react-navigation/native";
 
 const API_BASE =
-  Platform.OS === "android"
-    ? "http://192.168.18.19:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+
 const API_URL = `${API_BASE}/api/events`;
 const COMMENTS_URL = `${API_BASE}/api/comments`;
 
@@ -42,7 +40,7 @@ export default function AdminEventDetail({ route }) {
     loadAdmin();
   }, []);
 
-  // === Cargar evento y valoraciones ===
+  //  Cargar evento y valoraciones
   useEffect(() => {
     const loadEvent = async () => {
       try {
@@ -123,7 +121,9 @@ export default function AdminEventDetail({ route }) {
   const shareTwitter = () => {
     if (!event) return;
     const msg = `¡Mira este evento! ${event.title} - ${event.location}`;
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(msg)}`;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      msg
+    )}`;
     Linking.openURL(url);
   };
 
@@ -131,7 +131,7 @@ export default function AdminEventDetail({ route }) {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* === BARRA SUPERIOR IGUAL QUE ADMIN.JS (sin buscador) === */}
+      {/*  BARRA SUPERIOR  */}
       <View
         style={{
           flexDirection: "row",
@@ -180,7 +180,7 @@ export default function AdminEventDetail({ route }) {
           </View>
         </View>
 
-        {/* Iconos derecha */}
+        {/* Iconos */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable
             onPress={goToNotifications}
@@ -401,7 +401,7 @@ export default function AdminEventDetail({ route }) {
             </View>
           </View>
 
-          {/* === VALORACIONES === */}
+          {/* VALORACIONES  */}
           <View style={{ marginTop: 20 }}>
             {comments.length > 0 ? (
               comments.map((c, i) => (
@@ -439,7 +439,7 @@ export default function AdminEventDetail({ route }) {
             )}
           </View>
 
-          {/* === COMPARTIR === */}
+          {/* COMPARTIR */}
           <View
             style={{
               alignItems: "flex-end",
@@ -460,7 +460,7 @@ export default function AdminEventDetail({ route }) {
         </View>
       )}
 
-      {/* === MODAL COMPARTIR === */}
+      {/* MODAL COMPARTIR */}
       <Modal visible={shareVisible} transparent animationType="fade">
         <View
           style={{
@@ -503,7 +503,9 @@ export default function AdminEventDetail({ route }) {
                 marginBottom: 8,
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>WhatsApp</Text>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                WhatsApp
+              </Text>
             </Pressable>
             <Pressable
               onPress={() => {
@@ -530,7 +532,7 @@ export default function AdminEventDetail({ route }) {
         </View>
       </Modal>
 
-      {/* === FOOTER === */}
+      {/* FOOTER  */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAboutUs}

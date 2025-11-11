@@ -6,17 +6,16 @@ import {
   Pressable,
   Image,
   ScrollView,
+  KeyboardAvoidingView,
   Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import DropDownPicker from "react-native-dropdown-picker";
+import { Picker } from "@react-native-picker/picker";
 import { useNavigation } from "@react-navigation/native";
 
-const API_URL =
-  Platform.OS === "android"
-    ? "http://192.168.18.19:5000/api/events"
-    : "http://localhost:5000/api/events";
+/** URL base del backend (solo móvil) */
+const API_URL = "http://10.0.2.2:5000/api/events";
 
 export default function AddEvent() {
   const navigation = useNavigation();
@@ -31,75 +30,61 @@ export default function AddEvent() {
     image_url: "",
   });
 
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  /**Obtener token de sesión guardado */
   const getSessionToken = async () => {
     try {
-      if (Platform.OS === "web") {
-        const session = JSON.parse(localStorage.getItem("USER_SESSION"));
-        return session?.token || null;
-      } else {
-        const sessionString = await AsyncStorage.getItem("USER_SESSION");
-        const session = sessionString ? JSON.parse(sessionString) : null;
-        return session?.token || null;
-      }
+      const sessionString = await AsyncStorage.getItem("USER_SESSION");
+      const session = sessionString ? JSON.parse(sessionString) : null;
+      return session?.token || null;
     } catch {
       return null;
     }
   };
 
+  /** Elegir imagen desde la galería y subirla */
   const pickImage = async () => {
-    try {
-      const permission =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (permission.status !== "granted") {
-        alert("⚠️ Se necesita acceso a tus fotos");
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permission.status !== "granted") {
+      alert("⚠️ Se necesita acceso a tus fotos");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const token = await getSessionToken();
+      if (!token) {
+        alert("❌ No se encontró sesión activa");
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
+      const formData = new FormData();
+      formData.append("image", {
+        uri,
+        type: "image/jpeg",
+        name: "imagen.jpg",
       });
 
-      if (!result.canceled) {
-        const uri = result.assets[0].uri;
-        const token = await getSessionToken();
-        if (!token) {
-          alert("❌ No se encontró sesión activa");
-          return;
-        }
+      const res = await fetch(`${API_URL}/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
 
-        const formData = new FormData();
-        if (Platform.OS === "web") {
-          const blob = await (await fetch(uri)).blob();
-          formData.append("image", blob, "imagen.jpg");
-        } else {
-          formData.append("image", {
-            uri,
-            type: "image/jpeg",
-            name: "imagen.jpg",
-          });
-        }
-
-        const res = await fetch(`${API_URL}/upload`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
-
-        if (!res.ok) throw new Error("Error al subir la imagen");
-        const data = await res.json();
-        setForm({ ...form, image_url: data.image_url });
-      }
-    } catch (err) {
-      alert("❌ Error al subir la imagen");
+      const data = await res.json();
+      setForm({ ...form, image_url: data.image_url });
     }
   };
 
+  /** Crear evento */
   const handleSubmit = async () => {
     const required = [
       "title",
@@ -144,7 +129,10 @@ export default function AddEvent() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#F8F8F8" }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: "#F8F8F8" }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
       {/* CABECERA */}
       <View
         style={{
@@ -176,9 +164,11 @@ export default function AddEvent() {
 
       {/* FORMULARIO */}
       <ScrollView
-        style={{ paddingHorizontal: 25, marginTop: 150 }}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        style={{ paddingHorizontal: 25, marginTop: 20 }}
+        contentContainerStyle={{ paddingBottom: 150 }}
+        showsVerticalScrollIndicator={false}
       >
+        {/* Título */}
         <Text style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}>
           Título del Evento:
         </Text>
@@ -211,6 +201,7 @@ export default function AddEvent() {
           />
         </View>
 
+        {/* Descripción */}
         <Text style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}>
           Descripción:
         </Text>
@@ -230,8 +221,9 @@ export default function AddEvent() {
           }}
         />
 
-        {/* FILA Fecha / Lugar */}
+        {/* Fecha y Lugar */}
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+          {/* Fecha */}
           <View style={{ width: "48%" }}>
             <Text
               style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}
@@ -268,6 +260,7 @@ export default function AddEvent() {
             </View>
           </View>
 
+          {/* Lugar */}
           <View style={{ width: "48%" }}>
             <Text
               style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}
@@ -304,81 +297,77 @@ export default function AddEvent() {
           </View>
         </View>
 
-        {/* FILA Hora / Categoría */}
-        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-          <View style={{ width: "48%" }}>
-            <Text
-              style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}
-            >
-              Hora:
-            </Text>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: "#fff",
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: "#ddd",
-                paddingHorizontal: 10,
-                marginBottom: 12,
-              }}
-            >
-              <Image
-                source={require("../assets/iconos/reloj.png")}
-                style={{
-                  width: 16,
-                  height: 16,
-                  tintColor: "#014869",
-                  marginRight: 8,
-                }}
-              />
-              <TextInput
-                value={form.hour}
-                onChangeText={(t) => setForm({ ...form, hour: t })}
-                placeholder="HH:MM"
-                style={{ flex: 1, height: 40 }}
-              />
-            </View>
-          </View>
-
-          <View style={{ width: "48%", zIndex: open ? 9999 : 1 }}>
-            <Text
-              style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}
-            >
-              Categoría:
-            </Text>
-            <DropDownPicker
-              open={open}
-              value={form.category}
-              items={[
-                { label: "Deporte", value: "deporte" },
-                { label: "Concurso y Taller", value: "concurso" },
-                { label: "Cultura e Historia", value: "cultura" },
-                { label: "Arte y Música", value: "arte" },
-              ]}
-              setOpen={setOpen}
-              setValue={(callback) =>
-                setForm((prev) => ({
-                  ...prev,
-                  category: callback(prev.category),
-                }))
-              }
-              style={{
-                backgroundColor: "#fff",
-                borderColor: "#ddd",
-                borderRadius: 10,
-                height: 40,
-              }}
-              dropDownContainerStyle={{
-                borderColor: "#ddd",
-                elevation: 10,
-              }}
-            />
-          </View>
+        {/* Categoría */}
+        <Text style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}>
+          Categoría:
+        </Text>
+        <View
+          style={{
+            backgroundColor: "#fff",
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: "#ddd",
+            marginBottom: 12,
+            justifyContent: "center",
+            height: 60,
+          }}
+        >
+          <Picker
+            selectedValue={form.category}
+            onValueChange={(value) => setForm({ ...form, category: value })}
+            dropdownIconColor="#014869"
+            style={{
+              height: 60,
+              color: "#014869",
+              fontSize: 16,
+              justifyContent: "center",
+            }}
+            itemStyle={{
+              fontSize: 16,
+              color: "#014869",
+            }}
+          >
+            <Picker.Item label="Deporte" value="deporte" />
+            <Picker.Item label="Concurso y Taller" value="concurso" />
+            <Picker.Item label="Cultura e Historia" value="cultura" />
+            <Picker.Item label="Arte y Música" value="arte" />
+          </Picker>
         </View>
 
-        {/* IMAGEN */}
+        {/* Hora */}
+        <Text style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}>
+          Hora:
+        </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: "#fff",
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: "#ddd",
+            paddingHorizontal: 10,
+            marginBottom: 12,
+          }}
+        >
+          <Image
+            source={require("../assets/iconos/reloj.png")}
+            style={{
+              width: 16,
+              height: 16,
+              tintColor: "#014869",
+              marginRight: 8,
+            }}
+          />
+          <TextInput
+            value={form.hour}
+            onChangeText={(t) => setForm({ ...form, hour: t })}
+            placeholder="HH:MM"
+            style={{ flex: 1, height: 40 }}
+          />
+        </View>
+
+        {/* Imagen */}
         <View
           style={{
             borderWidth: 1,
@@ -414,7 +403,7 @@ export default function AddEvent() {
           )}
         </View>
 
-        {/* BOTÓN */}
+        {/* Botón Crear evento */}
         <View style={{ alignItems: "center", marginTop: 30 }}>
           <Pressable
             onPress={handleSubmit}
@@ -442,6 +431,6 @@ export default function AddEvent() {
           </Pressable>
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

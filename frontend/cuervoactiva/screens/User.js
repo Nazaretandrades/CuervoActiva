@@ -1,4 +1,3 @@
-// frontend/src/screens/User.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -18,9 +17,8 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
 const API_BASE =
-  Platform.OS === "android"
-    ? "http://192.168.18.19:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+
 const API_URL = `${API_BASE}/api/events`;
 const FAVORITES_URL = `${API_BASE}/api/favorites`;
 
@@ -36,7 +34,7 @@ export default function User() {
   const [menuAnim] = useState(new Animated.Value(-250));
   const [hoveredCategory, setHoveredCategory] = useState(null);
 
-  /** === Sesión === */
+  /** Sesión  */
   const getSessionToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -52,7 +50,7 @@ export default function User() {
     }
   };
 
-  /** === Navegaciones === */
+  /** Navegaciones */
   const goToProfile = () => {
     if (Platform.OS !== "web") toggleMenu();
     navigation.navigate("UserProfile");
@@ -91,7 +89,7 @@ export default function User() {
   const goToNotifications = () => navigation.navigate("UserNotifications");
   const goToCalendar = () => navigation.navigate("Calendar");
 
-  /** === Usuario === */
+  /** Usuario */
   const getUserName = async () => {
     try {
       let session;
@@ -115,7 +113,7 @@ export default function User() {
     }
   };
 
-  /** === Cargar datos === */
+  /** Cargar datos */
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -146,7 +144,7 @@ export default function User() {
     loadData();
   }, []);
 
-  /** === Filtro === */
+  /** Filtro */
   useEffect(() => {
     let data = events;
     if (selectedCategory !== "all") {
@@ -164,7 +162,7 @@ export default function User() {
     setFiltered(data);
   }, [search, selectedCategory, events]);
 
-  /** === Menú === */
+  /** Menú */
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -182,7 +180,7 @@ export default function User() {
     }
   };
 
-  /** === Favoritos === */
+  /** Favoritos */
   const toggleFavorite = async (eventId) => {
     try {
       const token = await getSessionToken();
@@ -208,7 +206,7 @@ export default function User() {
     }
   };
 
-  /** === Cabecera WEB (sin cambios) === */
+  /** Cabecera WEB */
   const renderTopBarWeb = () => (
     <View
       style={{
@@ -309,7 +307,7 @@ export default function User() {
       </View>
     </View>
   );
-  /** === Cabecera MÓVIL — igual que en web: icono, Usuario, nombre, notificaciones y menú === */
+  /** Cabecera MÓVIL */
   const renderTopBarMobile = () => (
     <View
       style={{
@@ -360,7 +358,7 @@ export default function User() {
           />
         </Pressable>
 
-        {/* ☰ Menú */}
+        {/* Menú */}
         <Pressable onPress={toggleMenu}>
           <Image
             source={
@@ -375,8 +373,7 @@ export default function User() {
     </View>
   );
 
-  /** === Menú lateral web === */
-  /** === Menú lateral web (igual que Organizer.js) === */
+  /** Menú lateral web  */
   const renderWebMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
@@ -425,7 +422,7 @@ export default function User() {
       </>
     );
 
-  /** === Menú móvil (idéntico a tu ejemplo) === */
+  /** Menú móvil */
   const renderMobileMenu = () =>
     Platform.OS !== "web" &&
     menuVisible && (
@@ -442,7 +439,7 @@ export default function User() {
           paddingTop: 50,
         }}
       >
-        {/* 🔙 Header */}
+        {/* Header */}
         <View
           style={{
             flexDirection: "row",
@@ -543,8 +540,8 @@ export default function User() {
             flexDirection: "row",
             justifyContent: "space-around",
             alignItems: "center",
-            borderTopWidth: 2, // ← antes era 1
-            borderTopColor: "#01486999", // un poco más visible
+            borderTopWidth: 2,
+            borderTopColor: "#01486999",
             paddingVertical: 14,
             backgroundColor: "#fff",
           }}
@@ -571,7 +568,7 @@ export default function User() {
       </View>
     );
 
-  /** === Render === */
+  /** Render */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", position: "relative" }}>
       <Header hideAuthButtons />
@@ -579,9 +576,9 @@ export default function User() {
       {renderWebMenu()}
       {renderMobileMenu()}
 
-      {/* === CONTENIDO === */}
+      {/*  CONTENIDO  */}
       {Platform.OS === "web" ? (
-        /* ====================== WEB (SIN CAMBIOS) ====================== */
+        /* WEB*/
         <View
           style={{
             flex: 1,
@@ -593,7 +590,7 @@ export default function User() {
             minHeight: "calc(100vh - 200px)",
           }}
         >
-          {/* === CATEGORÍAS === */}
+          {/* CATEGORÍAS  */}
           <View
             style={{
               backgroundColor: "#f4f6f7",
@@ -688,7 +685,7 @@ export default function User() {
             ))}
           </View>
 
-          {/* === LISTADO DE EVENTOS === */}
+          {/* LISTADO DE EVENTOS  */}
           <View
             style={{
               backgroundColor: "#f4f6f7",
@@ -791,7 +788,7 @@ export default function User() {
           </View>
         </View>
       ) : (
-        /* ====================== MÓVIL (APP) ====================== */
+        /* MÓVIL  */
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
@@ -966,7 +963,7 @@ export default function User() {
         </ScrollView>
       )}
 
-      {/* === FOOTER FIJO EN WEB === */}
+      {/* FOOTER FIJO EN WEB */}
       {Platform.OS === "web" && (
         <View
           style={{

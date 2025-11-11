@@ -1,4 +1,3 @@
-// frontend/src/screens/CulturaHistoria.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -46,7 +45,7 @@ export default function CulturaHistoria() {
     loadSession();
   }, []);
 
-  // === Navegaciones ===
+  //  Navegaciones
   const goToProfile = () =>
     role === "admin"
       ? nav.navigate("AdminProfile")
@@ -67,7 +66,7 @@ export default function CulturaHistoria() {
   const goToCalendar = () => nav.navigate("Calendar");
   const goToHomeUser = () => nav.navigate("User");
 
-  // === Menú lateral ===
+  // Menú lateral
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -90,7 +89,7 @@ export default function CulturaHistoria() {
     }
   };
 
-  /** === CABECERA USER === */
+  /**  CABECERA USER  */
   const renderUserTopBar = () => (
     <View
       style={{
@@ -158,7 +157,7 @@ export default function CulturaHistoria() {
     </View>
   );
 
-  /** === CABECERA ORGANIZER === */
+  /**  CABECERA ORGANIZER  */
   const renderOrganizerTopBar = () => (
     <View
       style={{
@@ -187,7 +186,6 @@ export default function CulturaHistoria() {
             source={require("../assets/iconos/user.png")}
             style={{ width: 24, height: 24, tintColor: "#fff" }}
           />
-          {/* 🔸 Icono del lápiz encima */}
           <Image
             source={require("../assets/iconos/lapiz.png")}
             style={{
@@ -241,7 +239,7 @@ export default function CulturaHistoria() {
     </View>
   );
 
-  /** === CABECERA ADMIN === */
+  /** CABECERA ADMIN */
   const renderAdminTopBar = () => (
     <View
       style={{
@@ -334,7 +332,7 @@ export default function CulturaHistoria() {
     </View>
   );
 
-  /** === MENÚ LATERAL WEB === */
+  /** MENÚ LATERAL WEB */
   const renderWebMenu = () => {
     if (!menuVisible || Platform.OS !== "web") return null;
 
@@ -417,7 +415,7 @@ export default function CulturaHistoria() {
     );
   };
 
-  // === CONTENIDO ===
+  // CONTENIDO
   return (
     <View style={styles.pageContainer}>
       <Header hideAuthButtons />
@@ -428,7 +426,7 @@ export default function CulturaHistoria() {
 
       {renderWebMenu()}
 
-      {/* === MENÚ MÓVIL (igual que en Contacto.js) === */}
+      {/* MENÚ MÓVIL (igual que en Contacto.js) */}
       {Platform.OS !== "web" &&
         menuVisible &&
         (role === "organizer" ? (
@@ -506,7 +504,7 @@ export default function CulturaHistoria() {
   );
 }
 
-// === Eventos con texto ampliado ===
+// Eventos
 const events = [
   {
     title: "Feria de El Cuervo de Sevilla",

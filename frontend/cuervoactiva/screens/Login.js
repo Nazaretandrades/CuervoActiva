@@ -30,7 +30,7 @@ export default function Login() {
   const { width } = Dimensions.get("window");
   const isMobile = width < 768;
 
-  /** === Mostrar mensajes visuales === */
+  /** Mostrar mensajes visuales */
   const showToast = (type, message) => {
     setToast({ visible: true, type, message });
     Animated.timing(fadeAnim, {
@@ -48,7 +48,7 @@ export default function Login() {
     }, 3000);
   };
 
-  /** === LOGIN === */
+  /** LOGIN */
   async function onSubmit() {
     if (!emailOrUsername.trim() || !password.trim()) {
       showToast("error", "Por favor, completa todos los campos obligatorios.");
@@ -104,7 +104,6 @@ export default function Login() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
-      {/* 🔹 Fondo decorativo */}
       <Image
         source={require("../assets/fondo.png")}
         style={{
@@ -123,7 +122,7 @@ export default function Login() {
         }}
       />
 
-      {/* 🔹 HEADER */}
+      {/* HEADER */}
       {Platform.OS === "web" ? (
         <Header
           onLogin={() => navigation.navigate("Login")}
@@ -138,7 +137,7 @@ export default function Login() {
         </View>
       )}
 
-      {/* 🔹 CONTENIDO */}
+      {/* CONTENIDO */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -147,7 +146,7 @@ export default function Login() {
           paddingVertical: isMobile ? 10 : 50,
         }}
       >
-        {/* 🔸 Título */}
+        {/* Título */}
         <Text
           style={{
             fontSize: isMobile ? 24 : 28,
@@ -160,7 +159,7 @@ export default function Login() {
           Iniciar Sesión
         </Text>
 
-        {/* 🔸 FORMULARIO */}
+        {/* FORMULARIO */}
         <View
           style={{
             width: isMobile ? "85%" : "60%",
@@ -295,7 +294,7 @@ export default function Login() {
         </View>
       </ScrollView>
 
-      {/* 🔸 TOAST */}
+      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={{
@@ -303,8 +302,7 @@ export default function Login() {
             bottom: 60,
             left: "5%",
             right: "5%",
-            backgroundColor:
-              toast.type === "success" ? "#4CAF50" : "#E74C3C",
+            backgroundColor: toast.type === "success" ? "#4CAF50" : "#E74C3C",
             paddingVertical: 14,
             paddingHorizontal: 18,
             borderRadius: 12,

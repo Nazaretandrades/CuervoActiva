@@ -1,4 +1,3 @@
-// frontend/src/screens/Contacto.js
 import React, { useEffect, useState, useRef } from "react";
 import {
   View,
@@ -21,9 +20,8 @@ import OrganizerMenu from "./OrganizerMenu";
 import UserMenu from "./UserMenu";
 
 const API_BASE =
-  Platform.OS === "android"
-    ? "http://192.168.18.19:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+
 const API_URL = `${API_BASE}/api/contact`;
 
 const EMAILJS_SERVICE_ID = "service_e2ogh6c";
@@ -176,7 +174,7 @@ export default function Contacto() {
   const goToFavorites = () => nav.navigate("UserFavorites");
   const goToContact = () => nav.navigate("Contacto");
 
-  /** === CABECERA USUARIO NORMAL (idéntica a UserNotifications) === */
+  /** CABECERA USUARIO NORMAL*/
   const renderUserTopBar = () => (
     <View
       style={{
@@ -247,8 +245,7 @@ export default function Contacto() {
     </View>
   );
 
-  // === CABECERA ADMIN ===
-  // === CABECERA ADMIN ===
+  // CABECERA ADMIN
   const renderAdminTopBar = () => (
     <View style={styles.topBar}>
       <View style={styles.adminInfo}>
@@ -295,7 +292,7 @@ export default function Contacto() {
     </View>
   );
 
-  // === CABECERA ORGANIZADOR (igual que en CulturaHistoria) ===
+  // CABECERA ORGANIZADOR
   const renderOrganizerTopBar = () =>
     role === "organizer" && (
       <View
@@ -377,7 +374,7 @@ export default function Contacto() {
       </View>
     );
 
-  // === MENÚ ADMIN WEB ===
+  // MENÚ ADMIN WEB
   const renderAdminMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
@@ -409,7 +406,7 @@ export default function Contacto() {
       </>
     );
 
-  // === MENÚ ORGANIZADOR WEB ===
+  // MENÚ ORGANIZADOR WEB
   const renderOrganizerMenuWeb = () =>
     role === "organizer" &&
     Platform.OS === "web" &&
@@ -456,7 +453,7 @@ export default function Contacto() {
       </Animated.View>
     );
 
-  // === MENÚ USUARIO WEB (idéntico a UserNotifications) ===
+  // MENÚ USUARIO WEB
   const renderUserMenuWeb = () =>
     role === "user" &&
     Platform.OS === "web" &&
@@ -507,21 +504,21 @@ export default function Contacto() {
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
-      {/* === CABECERA SEGÚN ROL === */}
+      {/* CABECERA SEGÚN ROL */}
       {role === "admin"
         ? renderAdminTopBar()
         : role === "organizer"
         ? renderOrganizerTopBar()
         : renderUserTopBar()}
 
-      {/* === MENÚ WEB SEGÚN ROL === */}
+      {/* MENÚ WEB SEGÚN ROL */}
       {role === "admin"
         ? renderAdminMenu()
         : role === "organizer"
         ? renderOrganizerMenuWeb()
         : renderUserMenuWeb()}
 
-      {/* === MENÚ MÓVIL === */}
+      {/* MENÚ MÓVIL */}
       {Platform.OS !== "web" &&
         menuVisible &&
         (role === "organizer" ? (
@@ -641,7 +638,7 @@ export default function Contacto() {
   );
 }
 
-// === ESTILOS ===
+// ESTILOS
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",

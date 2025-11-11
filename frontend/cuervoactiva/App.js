@@ -1,11 +1,10 @@
-// frontend/App.js
 import React, { useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { ActivityIndicator, View, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// 🔹 Pantallas
+// Pantallas
 import Intro from "./screens/Intro";
 import Login from "./screens/Login";
 import Register from "./screens/Register";
@@ -36,12 +35,12 @@ import EditEvent from "./screens/EditEvent";
 
 const Stack = createStackNavigator();
 
-// 🧭 Configuración de linking (para navegación web)
+// Configuración de linking
 const linking = {
   prefixes: [
     "http://localhost:19006",
     "http://localhost:5000",
-    "https://tusitio.com",
+    //"https://tusitio.com", PONER LA URL CUANDO ESTÉ DESPLEGADA
   ],
   config: {
     screens: {
@@ -78,10 +77,10 @@ const linking = {
 
 export default function App() {
   const [initialRoute, setInitialRoute] = useState("Intro");
-  const [loading, setLoading] = useState(Platform.OS === "web"); // Solo carga inicial en web
+  const [loading, setLoading] = useState(Platform.OS === "web");
 
   useEffect(() => {
-    // ✅ Solo comprobar sesión en web
+    // Solo comprobar sesión en web
     if (Platform.OS === "web") {
       const checkSession = async () => {
         try {
@@ -105,12 +104,12 @@ export default function App() {
 
       checkSession();
     } else {
-      // 📱 En móvil arranca directamente desde Intro (como antes)
+      // En móvil arranca directamente desde Intro
       setInitialRoute("Intro");
     }
   }, []);
 
-  // 🌀 Pantalla de carga SOLO en web
+  // Pantalla de carga SOLO en web
   if (loading && Platform.OS === "web") {
     return (
       <View
@@ -152,7 +151,10 @@ export default function App() {
           name="OrganizerNotifications"
           component={OrganizerNotifications}
         />
-        <Stack.Screen name="AdminNotifications" component={AdminNotifications} />
+        <Stack.Screen
+          name="AdminNotifications"
+          component={AdminNotifications}
+        />
         <Stack.Screen name="UserNotifications" component={UserNotifications} />
         <Stack.Screen name="UserFavorites" component={UserFavorites} />
         <Stack.Screen name="AdminUsers" component={AdminUsers} />

@@ -1,4 +1,3 @@
-// frontend/src/screens/OrganizerEventDetail.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -17,12 +16,11 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { getSession } from "../services/sessionManager";
 import { useNavigation } from "@react-navigation/native";
-import OrganizerMenu from "./OrganizerMenu"; // ✅ añadido para menú móvil
+import OrganizerMenu from "./OrganizerMenu";
 
 const API_BASE =
-  Platform.OS === "android"
-    ? "http://192.168.18.19:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+
 const API_URL = `${API_BASE}/api/events`;
 const COMMENTS_URL = `${API_BASE}/api/comments`;
 
@@ -138,7 +136,7 @@ export default function OrganizerEventDetail({ route }) {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* === CABECERA ORGANIZADOR === */}
+      {/* CABECERA ORGANIZADOR */}
       <View
         style={{
           flexDirection: "row",
@@ -190,18 +188,11 @@ export default function OrganizerEventDetail({ route }) {
           </View>
         </View>
 
-        {/* Iconos derecha */}
+        {/* Iconos */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable onPress={goToNotifications} style={{ marginRight: 20 }}>
             <Image
               source={require("../assets/iconos/bell3.png")}
-              style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
-            />
-          </Pressable>
-
-          <Pressable onPress={goToCalendar} style={{ marginRight: 20 }}>
-            <Image
-              source={require("../assets/iconos/calendar-organizador.png")}
               style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
             />
           </Pressable>
@@ -219,7 +210,7 @@ export default function OrganizerEventDetail({ route }) {
         </View>
       </View>
 
-      {/* === MENÚ LATERAL (web) === */}
+      {/* MENÚ LATERAL (web) */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -276,12 +267,12 @@ export default function OrganizerEventDetail({ route }) {
         </>
       )}
 
-      {/* ✅ MENÚ MÓVIL (añadido) */}
+      {/* MENÚ MÓVIL*/}
       {Platform.OS !== "web" && menuVisible && (
         <OrganizerMenu onClose={toggleMenu} />
       )}
 
-      {/* === DETALLE EVENTO === */}
+      {/* DETALLE EVENTO */}
       {event && (
         <ScrollView
           style={{
@@ -319,7 +310,7 @@ export default function OrganizerEventDetail({ route }) {
             <Image
               source={{
                 uri: event.image_url.startsWith("http")
-                  ? event.image_url.replace("localhost", "192.168.18.19")
+                  ? event.image_url.replace("localhost", "10.0.2.2")
                   : `${API_BASE}${
                       event.image_url.startsWith("/") ? "" : "/"
                     }${event.image_url.replace(/\\/g, "/")}`,
@@ -512,7 +503,9 @@ export default function OrganizerEventDetail({ route }) {
                 marginBottom: 8,
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>WhatsApp</Text>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                WhatsApp
+              </Text>
             </Pressable>
             <Pressable
               onPress={() => {

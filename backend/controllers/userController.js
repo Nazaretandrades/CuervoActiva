@@ -8,13 +8,16 @@ exports.registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
+    // Verifico si el correo ya está registrado
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(400).json({ error: "El correo ya está registrado" });
 
+    // Solo permito roles válidos, por defecto 'user'
     const allowedRoles = ["user", "organizer", "admin"];
     const finalRole = allowedRoles.includes(role) ? role : "user";
 
+    // Encripto la contraseña antes de guardar
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({
       name,
@@ -23,7 +26,7 @@ exports.registerUser = async (req, res) => {
       role: finalRole,
     });
 
-    // 📢 Notificación para admin
+    // Creo una notificación para el admin cuando se registra un nuevo usuario
     const adminUser = await User.findOne({ role: "admin" });
     if (adminUser) {
       await Notification.create({
@@ -36,12 +39,14 @@ exports.registerUser = async (req, res) => {
       });
     }
 
+    // Genero el token JWT
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
+    // Devuelvo los datos básicos del usuario junto con el token
     res.status(201).json({
       id: user._id,
       name: user.name,
@@ -58,20 +63,26 @@ exports.registerUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // Permito iniciar sesión usando el email o el nombre de usuario
     const user = await User.findOne({
       $or: [{ email }, { name: email }],
     });
+
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
 
+    // Comparo la contraseña ingresada con la almacenada
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ error: "Contraseña incorrecta" });
 
+    // Genero el token de autenticación
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
+    // Devuelvo los datos del usuario y su token
     res.json({
       id: user._id,
       name: user.name,
@@ -87,10 +98,14 @@ exports.loginUser = async (req, res) => {
 // === PERFIL ===
 exports.getProfile = async (req, res) => {
   try {
+    // Busco el perfil del usuario logueado, incluyendo favoritos y eventos asistidos
     const user = await User.findById(req.user.id).populate(
       "favorites attendedEvents"
     );
+
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    // Devuelvo toda la información del perfil
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -100,9 +115,11 @@ exports.getProfile = async (req, res) => {
 // === ADMIN: VER TODOS LOS USUARIOS ===
 exports.getAllUsers = async (req, res) => {
   try {
+    // Listo todos los usuarios excepto los administradores
     const users = await User.find({ role: { $ne: "admin" } }).select(
       "_id name email role"
     );
+
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -112,10 +129,11 @@ exports.getAllUsers = async (req, res) => {
 // === ADMIN: ELIMINAR USUARIO ===
 exports.deleteUser = async (req, res) => {
   try {
+    // Verifico que el usuario a eliminar exista
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
 
-    // 🔎 Confirmar que el admin existe
+    // Busco un admin para notificarle la eliminación
     const adminUser = await User.findOne({ role: "admin" });
     if (adminUser) {
       console.log("📢 Creando notificación de eliminación...");
@@ -132,7 +150,7 @@ exports.deleteUser = async (req, res) => {
       console.warn("⚠️ No se encontró usuario con rol 'admin'");
     }
 
-    // 🗑️ Ahora sí, eliminamos el usuario
+    // Elimino el usuario definitivamente
     await user.deleteOne();
 
     res.json({ message: "Usuario eliminado correctamente" });
@@ -141,35 +159,3 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
-
-// === ACTUALIZAR PERFIL DE USUARIO ===
-exports.updateProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
-
-    const { name, email, password } = req.body;
-
-    if (name) user.name = name;
-    if (email) user.email = email;
-    if (password) {
-      const hashed = await bcrypt.hash(password, 10);
-      user.password = hashed;
-    }
-
-    await user.save();
-    res.json({
-      message: "Perfil actualizado correctamente",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-

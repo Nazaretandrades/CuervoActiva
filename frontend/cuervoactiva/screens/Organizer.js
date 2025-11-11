@@ -17,11 +17,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import DropDownPicker from "react-native-dropdown-picker";
-import { useNavigation, useFocusEffect } from "@react-navigation/native"; // ✅ añadido useFocusEffect
-
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 const API_URL =
   Platform.OS === "android"
-    ? "http://192.168.18.19:5000/api/events"
+    ? "http://10.0.2.2:5000/api/events"
     : "http://localhost:5000/api/events";
 
 export default function Organizer() {
@@ -102,7 +101,6 @@ export default function Organizer() {
     getUserName();
   }, []);
 
-  // ✅ NUEVO: recarga automáticamente los eventos al volver a esta pantalla
   useFocusEffect(
     React.useCallback(() => {
       fetchOrganizerEvents();
@@ -157,7 +155,7 @@ export default function Organizer() {
     navigation.navigate("EditEvent", { eventData: event });
   };
 
-  // === CABECERA ===
+  // CABECERA
   const renderTopBar = () => (
     <View
       style={{
@@ -208,7 +206,7 @@ export default function Organizer() {
         </View>
       </View>
 
-      {/* === BUSCADOR === */}
+      {/* BUSCADOR */}
       <View
         style={{
           flexDirection: "row",
@@ -241,7 +239,7 @@ export default function Organizer() {
         />
       </View>
 
-      {/* === ICONOS DERECHA === */}
+      {/* ICONOS DERECHA */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         {/* Notificaciones */}
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
@@ -341,7 +339,7 @@ export default function Organizer() {
 
         if (!res.ok) throw new Error("Error al subir la imagen");
         const data = await res.json();
-        setForm({ ...form, image_url: data.image_url }); // ✅ URL pública
+        setForm({ ...form, image_url: data.image_url });
         showBanner("🖼️ Imagen subida correctamente", "#33ADB5");
       }
     } catch (err) {
@@ -350,7 +348,7 @@ export default function Organizer() {
     }
   };
 
-  // === Crear o editar evento ===
+  // Crear o editar evento
   const handleSubmit = async () => {
     const required = [
       "title",
@@ -415,14 +413,14 @@ export default function Organizer() {
     }
   };
 
-  // === MODO MÓVIL ===
+  // MODO MÓVIL
   if (Platform.OS !== "web") {
     return (
       <View style={{ flex: 1, backgroundColor: "#fff" }}>
         <Header hideAuthButtons />
         {renderTopBar()}
 
-        {/* === LISTADO === */}
+        {/* LISTADO */}
         <View
           style={{
             paddingHorizontal: 20,
@@ -500,7 +498,7 @@ export default function Organizer() {
           )}
         </View>
 
-        {/* === BOTÓN FLOTANTE === */}
+        {/* BOTÓN FLOTANTE */}
         <Pressable
           onPress={goToAddEvent}
           style={{
@@ -522,7 +520,7 @@ export default function Organizer() {
           />
         </Pressable>
 
-        {/* === MENÚ MÓVIL === */}
+        {/* MENÚ MÓVIL */}
         {menuVisible && (
           <View
             style={{
@@ -677,7 +675,7 @@ export default function Organizer() {
     );
   }
 
-  // === MODO WEB ===
+  // MODO WEB
   return (
     <View
       style={{
@@ -689,7 +687,7 @@ export default function Organizer() {
     >
       <Header hideAuthButtons />
       {renderTopBar()}
-      {/* === MENÚ WEB === */}
+      {/* MENÚ WEB */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <Animated.View
@@ -734,7 +732,7 @@ export default function Organizer() {
           </Animated.View>
         </>
       )}
-      {/* === CONTENIDO PRINCIPAL === */}
+      {/* CONTENIDO PRINCIPAL */}
       <View
         style={{
           flex: 1,
@@ -745,7 +743,7 @@ export default function Organizer() {
           paddingBottom: 40,
         }}
       >
-        {/* === Lista de eventos === */}
+        {/* Lista de eventos */}
         <View
           style={{
             width: "25%",
@@ -810,7 +808,7 @@ export default function Organizer() {
           </ScrollView>
         </View>
 
-        {/* === FORMULARIO === */}
+        {/* FORMULARIO */}
         <ScrollView
           style={{
             flex: 1,
@@ -1010,7 +1008,7 @@ export default function Organizer() {
         </ScrollView>
       </View>
 
-      {/* === FOOTER === */}
+      {/* FOOTER */}
       <View
         style={{
           position: "fixed",
@@ -1027,7 +1025,7 @@ export default function Organizer() {
         />
       </View>
 
-      {/* === BANNER === */}
+      {/* BANNER */}
       {bannerMessage !== "" && (
         <Animated.View
           style={{

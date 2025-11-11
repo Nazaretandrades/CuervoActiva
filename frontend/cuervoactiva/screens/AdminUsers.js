@@ -1,4 +1,3 @@
-// frontend/src/screens/AdminUsers.js
 import React, { useEffect, useState, useRef } from "react";
 import {
   View,
@@ -17,9 +16,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 
 const API_BASE =
-  Platform.OS === "android"
-    ? "http://192.168.18.19:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+
 const API_URL = `${API_BASE}/api/users`;
 
 export default function AdminUsers() {
@@ -29,7 +27,7 @@ export default function AdminUsers() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  // === TOAST (igual al login) ===
+  //  TOAST (igual al login)
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -50,7 +48,7 @@ export default function AdminUsers() {
     }, 3000);
   };
 
-  // === MODAL DE CONFIRMACIÓN ===
+  //  MODAL DE CONFIRMACIÓN
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
@@ -64,7 +62,7 @@ export default function AdminUsers() {
     setConfirmVisible(false);
   };
 
-  // === SESIÓN ===
+  //  SESIÓN
   const getSession = async () => {
     try {
       if (Platform.OS === "web") {
@@ -78,7 +76,7 @@ export default function AdminUsers() {
     }
   };
 
-  // === CARGAR USUARIOS ===
+  //  CARGAR USUARIOS
   const loadUsers = async () => {
     try {
       const session = await getSession();
@@ -104,7 +102,7 @@ export default function AdminUsers() {
     loadUsers();
   }, []);
 
-  // === NAVEGACIONES ===
+  // NAVEGACIONES
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -114,7 +112,7 @@ export default function AdminUsers() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
 
-  // === ELIMINAR USUARIO ===
+  // ELIMINAR USUARIO
   const handleDelete = async () => {
     if (!userToDelete) return;
     try {
@@ -136,7 +134,7 @@ export default function AdminUsers() {
     }
   };
 
-  // === MENÚ LATERAL ===
+  //  MENÚ LATERAL
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -154,7 +152,7 @@ export default function AdminUsers() {
     }
   };
 
-  // === CABECERA ADMIN IGUAL QUE CULTURA ===
+  //  CABECERA ADMIN IGUAL QUE CULTURA
   const renderAdminTopBar = () => (
     <View style={styles.topBar}>
       {/* Perfil Admin */}
@@ -203,7 +201,7 @@ export default function AdminUsers() {
     </View>
   );
 
-  // === MENÚ LATERAL ===
+  //  MENÚ LATERAL
   const renderAdminMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
@@ -212,10 +210,7 @@ export default function AdminUsers() {
           <View style={styles.overlay} />
         </TouchableWithoutFeedback>
         <Animated.View
-          style={[
-            styles.sideMenu,
-            { transform: [{ translateX: menuAnim }] },
-          ]}
+          style={[styles.sideMenu, { transform: [{ translateX: menuAnim }] }]}
         >
           {[
             { label: "Perfil", action: goToProfile },
@@ -276,7 +271,7 @@ export default function AdminUsers() {
         </View>
       </ScrollView>
 
-      {/* === MODAL DE CONFIRMACIÓN === */}
+      {/*  MODAL DE CONFIRMACIÓN  */}
       {confirmVisible && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -284,7 +279,10 @@ export default function AdminUsers() {
               ¿Seguro que deseas eliminar este usuario?
             </Text>
             <View style={styles.modalButtons}>
-              <Pressable onPress={closeConfirmModal} style={styles.cancelButton}>
+              <Pressable
+                onPress={closeConfirmModal}
+                style={styles.cancelButton}
+              >
                 <Text style={{ color: "#333", fontWeight: "bold" }}>
                   Cancelar
                 </Text>
@@ -299,14 +297,13 @@ export default function AdminUsers() {
         </View>
       )}
 
-      {/* === TOAST === */}
+      {/*  TOAST  */}
       {toast.visible && (
         <Animated.View
           style={[
             styles.toast,
             {
-              backgroundColor:
-                toast.type === "success" ? "#4CAF50" : "#E74C3C",
+              backgroundColor: toast.type === "success" ? "#4CAF50" : "#E74C3C",
               opacity: fadeAnim,
             },
           ]}
@@ -371,7 +368,7 @@ const styles = StyleSheet.create({
     maxWidth: 1300,
     alignSelf: "center",
     boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-    marginTop: 20
+    marginTop: 20,
   },
   userCard: {
     flexDirection: "row",
@@ -462,7 +459,7 @@ const styles = StyleSheet.create({
   },
 
   // Toast
-    // Toast
+  // Toast
   toast: {
     position: "absolute",
     bottom: 100, // 🔼 antes 40 → ahora más arriba para no tapar el footer
