@@ -35,7 +35,6 @@ router.post("/login", loginUser);
  */
 router.get("/profile", auth, getProfile);
 
-
 /**
  * RUTA: GET /api/users
  * Devuelve la lista de todos los usuarios (excepto los administradores).
