@@ -190,9 +190,17 @@ export default function OrganizerEventDetail({ route }) {
 
         {/* Iconos */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Pressable onPress={goToNotifications} style={{ marginRight: 20 }}>
+          <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
             <Image
               source={require("../assets/iconos/bell3.png")}
+              style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+            />
+          </Pressable>
+
+          {/* NUEVO ICONO DEL CALENDARIO */}
+          <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+            <Image
+              source={require("../assets/iconos/calendar-organizador.png")}
               style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
             />
           </Pressable>
@@ -209,7 +217,7 @@ export default function OrganizerEventDetail({ route }) {
           </Pressable>
         </View>
       </View>
-
+      
       {/* MENÚ LATERAL (web) */}
       {Platform.OS === "web" && menuVisible && (
         <>
