@@ -1,40 +1,63 @@
-//Importamos Express para poder usar el sistema de enrutamiento
 const express = require("express");
-
-//Creamos una nueva instancia de router
 const router = express.Router();
 
-//Importamos las funciones (controladores) que contienen la lógica principal
-//de cada ruta relacionada con usuarios
+// Importamos las funciones del controlador que manejan la lógica de los usuarios
 const {
   registerUser,
   loginUser,
   getProfile,
+  getAllUsers,
+  deleteUser,
+  updateProfile,
 } = require("../controllers/userController");
 
-//Importamos los middlewares de autenticación y autorización
+// Importamos los middlewares de autenticación y control de roles
 const { auth, authorizeRoles } = require("../middlewares/authMiddleware");
 
 /**
  * RUTA: POST /api/users/register
- * Permite registrar un nuevo usuario en la aplicación.
+ * Registra un nuevo usuario en el sistema.
+ * - Ruta pública (no requiere autenticación).
  */
 router.post("/register", registerUser);
 
 /**
  * RUTA: POST /api/users/login
- * Permite que un usuario registrado inicie sesión.
+ * Inicia sesión con correo o nombre de usuario y contraseña.
+ * - Ruta pública.
  */
 router.post("/login", loginUser);
 
 /**
  * RUTA: GET /api/users/profile
  * Devuelve la información del perfil del usuario autenticado.
+ * - Requiere autenticación.
  */
 router.get("/profile", auth, getProfile);
 
 /**
+ * RUTA: PUT /api/users/profile
+ * Permite al usuario autenticado actualizar sus datos personales (nombre, email o contraseña).
+ * - Requiere autenticación.
+ */
+router.put("/profile", auth, updateProfile);
+
+/**
+ * RUTA: GET /api/users
+ * Devuelve la lista de todos los usuarios (excepto los administradores).
+ * - Solo accesible para administradores.
+ */
+router.get("/", auth, authorizeRoles("admin"), getAllUsers);
+
+/**
+ * RUTA: DELETE /api/users/:id
+ * Permite a un administrador eliminar un usuario del sistema.
+ * - Solo accesible para administradores.
+ */
+router.delete("/:id", auth, authorizeRoles("admin"), deleteUser);
+
+/**
  * Exportamos el router
- * Esto permite importar este archivo desde "server.js"
+ * Esto permite que este archivo sea importado en "server.js" o en el enrutador principal.
  */
 module.exports = router;

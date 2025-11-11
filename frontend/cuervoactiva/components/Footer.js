@@ -1,90 +1,197 @@
-//FOOTER
+import React, { useState } from "react";
+import { View, Text, Pressable, Image, Platform, Linking } from "react-native";
 
-//1) Importamos los módulos necesarios de React Native
-import React from "react";
-import { View, Text, Pressable } from "react-native";
+/**
+ * Componente: Footer
+ * Pie de página reutilizable para la aplicación.
+ * Muestra enlaces legales ("Privacidad", "Condiciones", "Sobre Nosotros"),
+ * idioma actual y accesos a redes sociales.
+ */
+export default function Footer({
+  onAboutPress,
+  onPrivacyPress,
+  onConditionsPress,
+}) {
+  /**
+   * Función: openLink
+   * Abre un enlace externo en el navegador del dispositivo.
+   * Se usa para las redes sociales del proyecto.
+   */
+  const openLink = async (url) => {
+    try {
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error("Error al abrir el enlace:", error);
+    }
+  };
 
-//2) Definimos el componente funcional Footer
-export default function Footer() {
+  // Estados para manejar efectos de hover (solo en versión web)
+  const [hoveredLink, setHoveredLink] = useState(null);
+  const [hoveredIcon, setHoveredIcon] = useState(null);
+
   return (
-    //Contenedor principal del footer
     <View
       style={{
-        paddingHorizontal: 20,    
-        paddingVertical: 10,       
-        borderTopWidth: 1,         
-        borderTopColor: "#ddd",    
-        backgroundColor: "#fff",   
+        width: "100%",
+        backgroundColor: "#f5f5f5",
+        borderTopWidth: 1,
+        borderTopColor: "#ddd",
+        paddingVertical: 12,
+        paddingHorizontal: 28,
       }}
     >
-      {/*Estructura principal: fila con dos bloques (izquierda y derecha) */}
+      {/* Contenedor principal del footer */}
       <View
         style={{
-          flexDirection: "row",            
-          alignItems: "center",            
-          justifyContent: "space-between", 
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "nowrap",
         }}
       >
-        {/*IZQUIERDA: Copyright + enlaces */}
-        <View
-          style={{
-            flexDirection: "row",     
-            alignItems: "center",     
-            flexWrap: "wrap",         
-          }}
-        >
-          {/*Texto de copyright */}
-          <Text style={{ marginRight: 8 }}>© 2025 CuervoActiva, Inc.</Text>
-
-          {/*Enlaces del footer */}
-          <Pressable style={{ marginHorizontal: 6 }}>
-            <Text>Privacidad</Text>
-          </Pressable>
-
-          <Pressable style={{ marginHorizontal: 6 }}>
-            <Text>Condiciones</Text>
-          </Pressable>
-
-          <Pressable style={{ marginHorizontal: 6 }}>
-            <Text>Sobre Nosotros</Text>
-          </Pressable>
-        </View>
-
-        {/*DERECHA: Idioma + iconos de redes */}
+        {/* SECCIÓN IZQUIERDA — Enlaces legales */}
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
+            flexWrap: "nowrap",
           }}
         >
-          {/*Idioma */}
-          <Pressable style={{ paddingHorizontal: 6 }}>
-            <Text>Español (ES)</Text>
+          {/* Marca y año */}
+          <Text style={{ color: "#555", fontSize: 12, marginRight: 10 }}>
+            © 2025 CuervoActiva, Inc.
+          </Text>
+
+          {/* Enlace: Política de Privacidad */}
+          <Pressable
+            onPress={onPrivacyPress}
+            onHoverIn={() => setHoveredLink("privacidad")}
+            onHoverOut={() => setHoveredLink(null)}
+            style={{ marginHorizontal: 6, cursor: "pointer" }}
+          >
+            <Text
+              style={{
+                color: hoveredLink === "privacidad" ? "#222" : "#555",
+                fontSize: 12,
+                textDecorationLine:
+                  hoveredLink === "privacidad" ? "underline" : "none",
+                textDecorationColor: "#222",
+                transition: "all 0.2s ease-in-out",
+              }}
+            >
+              Privacidad
+            </Text>
           </Pressable>
 
-          {/*Redes sociales — FB, IG, X (Twitter) */}
-          <Pressable style={{ paddingHorizontal: 6 }}>
-            <Text>FB</Text>
+          {/* Enlace: Condiciones de uso */}
+          <Pressable
+            onPress={onConditionsPress}
+            onHoverIn={() => setHoveredLink("condiciones")}
+            onHoverOut={() => setHoveredLink(null)}
+            style={{ marginHorizontal: 6, cursor: "pointer" }}
+          >
+            <Text
+              style={{
+                color: hoveredLink === "condiciones" ? "#222" : "#555",
+                fontSize: 12,
+                textDecorationLine:
+                  hoveredLink === "condiciones" ? "underline" : "none",
+                textDecorationColor: "#222",
+                transition: "all 0.2s ease-in-out",
+              }}
+            >
+              Condiciones
+            </Text>
           </Pressable>
-          <Pressable style={{ paddingHorizontal: 6 }}>
-            <Text>IG</Text>
+
+          {/* Enlace: Sobre Nosotros */}
+          <Pressable
+            onPress={onAboutPress}
+            onHoverIn={() => setHoveredLink("sobre")}
+            onHoverOut={() => setHoveredLink(null)}
+            style={{ marginHorizontal: 6, cursor: "pointer" }}
+          >
+            <Text
+              style={{
+                color: hoveredLink === "sobre" ? "#222" : "#555",
+                fontSize: 12,
+                textDecorationLine:
+                  hoveredLink === "sobre" ? "underline" : "none",
+                textDecorationColor: "#222",
+                transition: "all 0.2s ease-in-out",
+              }}
+            >
+              Sobre Nosotros
+            </Text>
           </Pressable>
-          <Pressable style={{ paddingHorizontal: 6 }}>
-            <Text>X</Text>
-          </Pressable>
+        </View>
+
+        {/* SECCIÓN DERECHA — Idioma + redes sociales */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          {/* Selector de idioma (actualmente fijo en Español) */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginRight: 10,
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/mundo.png")}
+              style={{
+                width: 15,
+                height: 15,
+                marginRight: 5,
+                tintColor: "#666",
+              }}
+            />
+            <Text style={{ color: "#555", fontSize: 12 }}>Español (ES)</Text>
+          </View>
+
+          {/* Íconos de redes sociales */}
+          {[
+            {
+              id: "facebook",
+              icon: require("../assets/iconos/facebook.png"),
+              url: "https://www.facebook.com/cuervoactiva",
+            },
+            {
+              id: "twitter",
+              icon: require("../assets/iconos/twitter.png"),
+              url: "https://x.com/cuervoactiva",
+            },
+            {
+              id: "instagram",
+              icon: require("../assets/iconos/instagram.png"),
+              url: "https://www.instagram.com/cuervoactiva",
+            },
+          ].map((item) => (
+            <Pressable
+              key={item.id}
+              onPress={() => openLink(item.url)}
+              onHoverIn={() => setHoveredIcon(item.id)}
+              onHoverOut={() => setHoveredIcon(null)}
+              style={{
+                marginHorizontal: 6,
+                cursor: "pointer",
+                transform:
+                  hoveredIcon === item.id ? [{ scale: 1.15 }] : [{ scale: 1 }],
+                transition: "all 0.2s ease-in-out",
+              }}
+            >
+              <Image
+                source={item.icon}
+                style={{
+                  width: 18,
+                  height: 18,
+                  tintColor: hoveredIcon === item.id ? "#000" : "#444",
+                  opacity: hoveredIcon === item.id ? 1 : 0.8,
+                }}
+              />
+            </Pressable>
+          ))}
         </View>
       </View>
     </View>
   );
 }
-
-// =========================================================
-// 🧠 RESUMEN DEL COMPONENTE
-// =========================================================
-// Este componente crea un pie de página (footer) con:
-// - Una barra superior gris que lo separa del contenido
-// - Información de derechos de autor y enlaces informativos
-// - En la derecha, un selector de idioma y enlaces a redes sociales
-//
-// Se usa en la parte inferior de pantallas como Register, Intro, etc.
-// =========================================================

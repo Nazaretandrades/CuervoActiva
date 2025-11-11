@@ -1,14 +1,15 @@
 const mongoose = require("mongoose");
 
 /**
- * Esquema "Notification"
- * Este modelo almacena las notificaciones que se envían a los usuarios.
+ * Esquema de Notificaciones
+ * Este modelo representa las notificaciones que recibe un usuario dentro del sistema,
+ * ya sea por creación de eventos, valoraciones, favoritos, etc.
  */
 const notificationSchema = new mongoose.Schema(
   {
     /**
      * user
-     * Usuario que recibe la notificación.
+     * Referencia al usuario que recibirá la notificación.
      */
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -18,7 +19,7 @@ const notificationSchema = new mongoose.Schema(
 
     /**
      * message
-     * Texto descriptivo de la notificación que se muestra al usuario.
+     * Texto principal de la notificación.
      */
     message: {
       type: String,
@@ -27,7 +28,8 @@ const notificationSchema = new mongoose.Schema(
 
     /**
      * read
-     * Indica si el usuario ya ha visto o no la notificación.
+     * Indica si el usuario ya leyó la notificación.
+     * Por defecto, se marca como "false".
      */
     read: {
       type: Boolean,
@@ -36,7 +38,7 @@ const notificationSchema = new mongoose.Schema(
 
     /**
      * event
-     * Referencia al evento asociado (si aplica).
+     * (Opcional) Referencia al evento asociado a la notificación.
      */
     event: {
       type: mongoose.Schema.Types.ObjectId,
@@ -45,7 +47,7 @@ const notificationSchema = new mongoose.Schema(
 
     /**
      * type
-     * Tipo o categoría de la notificación.
+     * Tipo de notificación (por ejemplo: "event_created", "rating_added", etc.).
      */
     type: {
       type: String,
@@ -53,7 +55,7 @@ const notificationSchema = new mongoose.Schema(
 
     /**
      * dateKey
-     * Clave de fecha simplificada (en formato "YYYY-MM-DD").
+     * Clave única por fecha que ayuda a evitar notificaciones duplicadas en el mismo día.
      */
     dateKey: {
       type: String,
@@ -62,22 +64,18 @@ const notificationSchema = new mongoose.Schema(
   {
     /**
      * timestamps
-     * Añade automáticamente:
-     *  - "createdAt": fecha de creación
-     *  - "updatedAt": última vez que se modificó la notificación
+     * Crea automáticamente los campos:
+     * - createdAt → fecha en que se creó la notificación
+     * - updatedAt → fecha en que se actualizó
      */
     timestamps: true,
   }
 );
 
 /**
- * Índice único compuesto
- *
- * Este índice garantiza que un mismo usuario "no reciba dos notificaciones
- * del mismo tipo" relacionadas con el mismo evento en la misma fecha ("dateKey").
- * Ejemplo:
- * Si el usuario 123 tiene un recordatorio "reminder_1day" para el evento 456
- * en el día "2025-10-14", no podrá generarse otro igual.
+ * Índice compuesto
+ * Evita duplicar notificaciones iguales (mismo usuario, evento, tipo y fecha).
+ * Se usa `sparse: true` para permitir algunos campos nulos sin romper la unicidad.
  */
 notificationSchema.index(
   { user: 1, event: 1, type: 1, dateKey: 1 },
@@ -85,7 +83,7 @@ notificationSchema.index(
 );
 
 /**
- * Exportación del modelo
- * Crea (o reutiliza) la colección "notifications" en MongoDB.
+ * Exporto el modelo "Notification" basado en el esquema anterior.
+ * MongoDB creará automáticamente la colección "notifications".
  */
 module.exports = mongoose.model("Notification", notificationSchema);

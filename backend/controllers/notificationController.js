@@ -1,27 +1,45 @@
-const Notification = require('../models/notification');
+import Notification from "../models/notification.js";
 
-//Listar notificaciones del usuario
-exports.listNotifications = async (req, res) => {
+// Listar todas las notificaciones del usuario autenticado
+export const listNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({ user: req.user.id });
+    // Busco las notificaciones que pertenecen al usuario actual
+    const notifications = await Notification.find({ user: req.user.id })
+      .populate("event", "title") // Traigo el título del evento relacionado
+      .sort({ createdAt: -1 }); // Ordeno de más reciente a más antigua
+
+    // Devuelvo la lista completa de notificaciones
     res.json(notifications);
   } catch (err) {
+    // Si algo falla, devuelvo el error con código 500
     res.status(500).json({ error: err.message });
   }
 };
 
-//Marcar notificación como leída
-exports.markAsRead = async (req, res) => {
+// Eliminar una notificación completamente
+export const deleteNotification = async (req, res) => {
   try {
-    const notification = await Notification.findById(req.params.id);
-    if (!notification) return res.status(404).json({ error: 'Notificación no encontrada' });
+    // Busco la notificación por su ID
+    const notif = await Notification.findById(req.params.id);
 
-    if (notification.user.toString() !== req.user.id) return res.status(403).json({ error: 'No autorizado' });
+    // Si no existe, devuelvo error 404
+    if (!notif)
+      return res.status(404).json({ error: "Notificación no encontrada" });
 
-    notification.read = true;
-    await notification.save();
-    res.json(notification);
+    // Verifico que la notificación pertenezca al usuario autenticado
+    if (notif.user.toString() !== req.user.id)
+      return res.status(403).json({ error: "No autorizado" });
+
+    // Si todo está bien, elimino la notificación definitivamente
+    await Notification.deleteOne({ _id: notif._id });
+
+    // Confirmo la eliminación con un mensaje de éxito
+    res.json({
+      success: true,
+      message: "Notificación eliminada permanentemente",
+    });
   } catch (err) {
+    // Manejo de errores del servidor
     res.status(500).json({ error: err.message });
   }
 };

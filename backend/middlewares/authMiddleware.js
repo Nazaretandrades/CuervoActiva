@@ -1,66 +1,69 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/user');
+const jwt = require("jsonwebtoken");
+const User = require("../models/user");
 
-
-/**
- * Middleware "auth"
- * Comprueba si el usuario está autenticado mediante un token JWT.
- */
+// Middleware de autenticación (verifica el token JWT)
 const auth = async (req, res, next) => {
   let token;
 
-  //1) Verifica que el header Authorization exista y empiece con "Bearer"
+  // Verifico si el header de autorización está presente y usa el formato "Bearer ..."
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
+    req.headers.authorization.startsWith("Bearer")
   ) {
     try {
-      //2) Extrae el token (quita la palabra "Bearer")
-      token = req.headers.authorization.split(' ')[1];
+      // Extraigo el token del header
+      token = req.headers.authorization.split(" ")[1];
+      if (!token) {
+        return res.status(401).json({ error: "Token no proporcionado" });
+      }
 
-      //3) Verifica y decodifica el token con la clave secreta
-      //Esto obtiene el payload que  incluye el "id" del usuario.
+      // Verifico que el token sea válido
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      //4) Busca al usuario en la base de datos usando el id del token
-      //y elimina el campo de contraseña del resultado por seguridad.
-      req.user = await User.findById(decoded.id).select('-password');
+      // Busco al usuario asociado al token
+      const user = await User.findById(decoded.id).select("-password");
+      if (!user) {
+        console.error("❌ Usuario no encontrado con ID:", decoded.id);
+        return res.status(401).json({ error: "Usuario no encontrado" });
+      }
 
-      //5) Llama a next() → el control pasa al siguiente middleware o ruta
-      next();
+      // Asigno la info del usuario al objeto `req` para usarla en las rutas protegidas
+      req.user = user;
+      console.log("✅ Usuario autenticado:", user.email, "-", user.role);
+
+      next(); // Paso al siguiente middleware o controlador
     } catch (err) {
-      // Si el token es inválido o ha expirado, devuelve error 401
-      return res.status(401).json({ error: 'Token inválido' });
+      console.error("❌ Error autenticando token:", err.message);
+      return res.status(401).json({ error: "Token inválido o expirado" });
     }
   } else {
-    //Si no hay header Authorization o no empieza con Bearer, error 401
-    return res.status(401).json({ error: 'Token faltante' });
+    // Si no hay header de autorización, devuelvo error
+    return res.status(401).json({ error: "Token faltante" });
   }
 };
 
-/**
- * Middleware "authorizeRoles"
- * Sirve para restringir el acceso de ciertas rutas solo a roles específicos.
- * 
- * Se usa junto con "auth".
- *
- * Solo los usuarios cuyo "req.user.role" coincida con alguno de los roles permitidos
- * podrán continuar, los demás recibirán un error 403.
- */
+// Middleware para restringir acceso según rol
 const authorizeRoles = (...roles) => {
   return (req, res, next) => {
-    //1) Comprueba que el rol del usuario esté dentro de los roles permitidos
-    if (!roles.includes(req.user.role)) {
-      //2) Si no tiene el rol, devuelve error 403 (Forbidden)
-      return res
-        .status(403)
-        .json({ error: 'No tienes permisos para realizar esta acción' });
+    // Verifico que el usuario esté autenticado
+    if (!req.user) {
+      return res.status(401).json({ error: "No autenticado" });
     }
 
-    //3) Si pasa la verificación, continúa con la ejecución normal
+    // Compruebo si el rol del usuario está dentro de los permitidos
+    if (!roles.includes(req.user.role)) {
+      console.error(
+        `🚫 Usuario ${req.user.email} no autorizado (rol: ${req.user.role})`
+      );
+      return res
+        .status(403)
+        .json({ error: "No tienes permisos para realizar esta acción" });
+    }
+
+    // Si pasa todas las validaciones, continúa con la solicitud
     next();
   };
 };
 
-//Exportamos ambos middlewares para usarlos en las rutas
+// Exporto ambos middlewares para usarlos en las rutas
 module.exports = { auth, authorizeRoles };

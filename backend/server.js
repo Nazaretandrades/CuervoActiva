@@ -1,51 +1,72 @@
-//PUNTO DE ENTRADA DEL BACKEND
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import connectDB from "./config/db.js";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
-//1) Importamos las dependencias necesarias
-const express = require("express"); //Framework web para crear el servidor y las rutas
-const cors = require("cors"); //Permite que el frontend se comunique con el backend (CORS)
-const connectDB = require("./config/db"); //Función para conectar con MongoDB
-require("dotenv").config(); //Carga las variables de entorno desde el archivo .env
+// Obtenemos __dirname en entorno ESM (ya que no está disponible por defecto)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-//2) Inicializamos la aplicación Express
+// Cargamos las variables de entorno desde el archivo .env
+dotenv.config();
+
+// Inicializamos la aplicación Express
 const app = express();
 
-//3) Middlewares globales
-//Habilitamos CORS
-//Esto permite que el frontend pueda hacer peticiones HTTP a este servidor sin ser bloqueado.
+// Middlewares base
+// cors() → permite peticiones desde diferentes orígenes (útil para frontend móvil o web)
+// express.json() → interpreta el cuerpo de las peticiones en formato JSON
 app.use(cors());
-
-//Middleware para interpretar datos JSON
-//Permite que Express lea el cuerpo (body) de las peticiones en formato JSON.
 app.use(express.json());
 
-//4)Conexión a la base de datos
-//Llamamos a la función que conecta a MongoDB usando Mongoose.
-//Esta función está definida en /config/db.js
+// Conectamos con la base de datos MongoDB
 connectDB();
 
-//5) Definición de rutas principales
-//RUTAS DE USUARIOS — Registro, Login, Perfil
-app.use("/api/users", require("./routes/userRoutes"));
+// Verificamos si la carpeta 'uploads' existe; si no, la creamos automáticamente
+const uploadsPath = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+  console.log("📂 Carpeta 'uploads' creada automáticamente en", uploadsPath);
+}
 
-//RUTAS DE EVENTOS — Crear, listar, editar y eliminar eventos
-app.use("/api/events", require("./routes/eventRoutes"));
+// Servimos la carpeta 'uploads' como pública
+// Esto permite acceder a imágenes y archivos subidos desde el navegador o apps móviles
+app.use("/uploads", express.static(uploadsPath));
 
-//RUTAS DE COMENTARIOS — Agregar y listar comentarios de los eventos
-app.use("/api/comments", require("./routes/commentRoutes"));
+// Importamos y registramos las rutas principales de la API
+import userRoutes from "./routes/userRoutes.js";
+import eventRoutes from "./routes/eventRoutes.js";
+import commentRoutes from "./routes/commentRoutes.js";
+import favoriteRoutes from "./routes/favoriteRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import culturalRoutes from "./routes/culturalRoutes.js";
+import contactRoutes from "./routes/contactRoutes.js";
 
-//RUTAS DE FAVORITOS — Agregar, quitar y listar eventos favoritos
-app.use("/api/favorites", require("./routes/favoriteRoutes"));
+// Asociamos las rutas a sus respectivos endpoints
+app.use("/api/users", userRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/favorites", favoriteRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/cultural", culturalRoutes);
+app.use("/api/contact", contactRoutes);
 
-//RUTAS DE NOTIFICACIONES — Mostrar recordatorios y marcarlas como leídas
-app.use("/api/notifications", require("./routes/notificationRoutes"));
+// Middleware de ruta no encontrada (404)
+// Se ejecuta si ninguna ruta anterior coincide con la petición
+app.use((req, res) => {
+  res.status(404).json({ error: "Ruta no encontrada", path: req.originalUrl });
+});
 
-//RUTAS CULTURALES — Listar artículos, noticias o secciones culturales
-app.use("/api/cultural", require("./routes/culturalRoutes"));
-
-//6) Puerto y arranque del servidor
-//Definimos el puerto en el que se ejecutará el servidor.
+// Configuración del servidor
 const PORT = process.env.PORT || 5000;
+const LOCAL_IP = process.env.LOCAL_IP || "192.168.18.19"; // Ajusta esta IP según tu red local
 
-//Iniciamos el servidor escuchando el puerto definido.
-//Cuando esté en ejecución correctamente, mostrará un mensaje en la consola.
-app.listen(PORT, () => console.log(`🚀 Servidor corriendo en puerto ${PORT}`));
+// Iniciamos el servidor y mostramos las URLs de acceso
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("🚀 Servidor corriendo correctamente:");
+  console.log(`💻 Web: http://localhost:${PORT}`);
+  console.log(`📱 Android (red local): http://${LOCAL_IP}:${PORT}`);
+});

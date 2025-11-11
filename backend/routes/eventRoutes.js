@@ -1,57 +1,98 @@
-//Importamos Express para poder crear un router de rutas
 const express = require("express");
-
-//Creamos una instancia de Router, que nos permite definir las rutas de este módulo
 const router = express.Router();
 
-//Importamos las funciones (controladores) que manejarán la lógica de cada ruta
-//Cada una de estas funciones se encarga de interactuar con la base de datos
-//(buscar, crear, editar o eliminar eventos)
+// Importamos las funciones del controlador que manejan la lógica de los eventos
 const {
   listEvents,
+  listOrganizerEvents,
   getEvent,
   createEvent,
   updateEvent,
   deleteEvent,
 } = require("../controllers/eventController");
 
-//Importamos los middlewares de autenticación y autorización
-//- "auth" → verifica si el usuario está autenticado mediante un token JWT
-//- "authorizeRoles" → restringe el acceso a ciertos roles (admin, organizer, etc.)
+// Importamos los middlewares de autenticación y control de roles
 const { auth, authorizeRoles } = require("../middlewares/authMiddleware");
+
+// Middleware para la carga de imágenes de eventos
+const upload = require("../middlewares/uploadMiddleware");
+
+/**
+ * RUTA: POST /api/events/upload
+ * Permite a los organizadores subir una imagen para su evento.
+ * - Requiere autenticación.
+ * - Solo disponible para usuarios con rol "organizer".
+ * - Devuelve la URL pública de la imagen subida.
+ */
+router.post(
+  "/upload",
+  auth,
+  authorizeRoles("organizer"),
+  upload.single("image"),
+  (req, res) => {
+    if (!req.file) return res.status(400).json({ error: "No se subió imagen" });
+
+    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${
+      req.file.filename
+    }`;
+    res.json({ image_url: imageUrl });
+  }
+);
+
+/**
+ * RUTA: GET /api/events/organizer
+ * Devuelve todos los eventos creados por el organizador autenticado.
+ * - Requiere autenticación.
+ * - Solo accesible para roles "organizer" y "admin".
+ */
+router.get(
+  "/organizer",
+  auth,
+  authorizeRoles("organizer", "admin"),
+  listOrganizerEvents
+);
 
 /**
  * RUTA: GET /api/events
  * Devuelve la lista de todos los eventos disponibles.
+ * - Ruta pública (sin autenticación).
  */
 router.get("/", listEvents);
 
 /**
- *  RUTA: GET /api/events/:id
- *  Devuelve la información detallada de un evento específico según su ID.
+ * RUTA: GET /api/events/:id
+ * Devuelve el detalle de un evento específico según su ID.
+ * - Ruta pública (sin autenticación).
  */
 router.get("/:id", getEvent);
 
 /**
  * RUTA: POST /api/events
- * Crea un nuevo evento en la base de datos.
+ * Crea un nuevo evento.
+ * - Requiere autenticación.
+ * - Solo los usuarios con rol "organizer" pueden crear eventos.
  */
 router.post("/", auth, authorizeRoles("organizer"), createEvent);
 
 /**
  * RUTA: PUT /api/events/:id
- * Actualiza un evento existente según su ID.
+ * Permite editar un evento existente.
+ * - Requiere autenticación.
+ * - Los organizadores pueden editar los suyos.
+ * - Los administradores pueden editar cualquiera.
  */
-router.put("/:id", auth, authorizeRoles("admin", "organizer"), updateEvent);
+router.put("/:id", auth, authorizeRoles("organizer", "admin"), updateEvent);
 
 /**
  * RUTA: DELETE /api/events/:id
- * Elimina un evento de la base de datos.
+ * Elimina un evento.
+ * - Requiere autenticación.
+ * - Solo los administradores pueden eliminar eventos.
  */
 router.delete("/:id", auth, authorizeRoles("admin"), deleteEvent);
 
 /**
- * Exportamos el router
- * Esto permite que el archivo sea usado en "server.js"
+ * Exportación del router
+ * Este archivo se importa en el servidor principal ("server.js").
  */
 module.exports = router;

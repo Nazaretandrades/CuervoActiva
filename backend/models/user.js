@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema({
   },
 
   /**
-   *  email
+   * email
    * Correo electrónico del usuario.
    */
   email: {
