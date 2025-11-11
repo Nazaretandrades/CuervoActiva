@@ -391,6 +391,13 @@ export default function Calendar() {
                 { label: "Ver favoritos", action: goToFavorites },
                 { label: "Contacto", action: goToContact },
               ]
+            : role === "admin"
+            ? [
+                { label: "Perfil", action: goToProfile },
+                { label: "Cultura e Historia", action: goToCulturaHistoria },
+                 { label: "Ver usuarios", action: goToUsers },
+                { label: "Contacto", action: goToContact },
+              ]
             : [
                 { label: "Perfil", action: goToProfile },
                 { label: "Cultura e Historia", action: goToCulturaHistoria },

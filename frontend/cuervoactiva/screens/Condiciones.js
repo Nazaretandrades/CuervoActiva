@@ -239,6 +239,161 @@ export default function Condiciones({ navigation }) {
         ? renderOrganizerTopBar()
         : renderUserTopBar()}
 
+      {Platform.OS === "web" && menuVisible && role === "admin" && (
+        <Animated.View
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: 250,
+            height: "100%",
+            backgroundColor: "#f8f8f8",
+            padding: 20,
+            zIndex: 10,
+            transform: [{ translateX: menuAnim }],
+            boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
+          }}
+        >
+          {[
+            { label: "Perfil", action: goToProfile },
+            {
+              label: "Ver usuarios",
+              action: () => navigation.navigate("AdminUsers"),
+            },
+            {
+              label: "Cultura e Historia",
+              action: () => navigation.navigate("CulturaHistoria"),
+            },
+            {
+              label: "Contacto",
+              action: () => navigation.navigate("Contacto"),
+            },
+          ].map((item, i) => (
+            <Pressable
+              key={i}
+              onPress={() => {
+                toggleMenu();
+                item.action();
+              }}
+              style={{ marginBottom: 25 }}
+            >
+              <Text
+                style={{
+                  color: "#014869",
+                  fontSize: 18,
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+        </Animated.View>
+      )}
+
+      {Platform.OS === "web" && menuVisible && role === "organizer" && (
+        <Animated.View
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: 250,
+            height: "100%",
+            backgroundColor: "#f8f8f8",
+            padding: 20,
+            zIndex: 10,
+            transform: [{ translateX: menuAnim }],
+            boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
+          }}
+        >
+          {[
+            { label: "Perfil", action: goToProfile },
+            {
+              label: "Cultura e Historia",
+              action: () => navigation.navigate("CulturaHistoria"),
+            },
+            {
+              label: "Contacto",
+              action: () => navigation.navigate("Contacto"),
+            },
+          ].map((item, i) => (
+            <Pressable
+              key={i}
+              onPress={() => {
+                toggleMenu();
+                item.action();
+              }}
+              style={{ marginBottom: 25 }}
+            >
+              <Text
+                style={{
+                  color: "#014869",
+                  fontSize: 18,
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+        </Animated.View>
+      )}
+
+      {Platform.OS === "web" && menuVisible && role === "user" && (
+        <Animated.View
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: 250,
+            height: "100%",
+            backgroundColor: "#f8f8f8",
+            padding: 20,
+            zIndex: 10,
+            transform: [{ translateX: menuAnim }],
+            boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
+          }}
+        >
+          {[
+            { label: "Perfil", action: goToProfile },
+            {
+              label: "Cultura e Historia",
+              action: () => navigation.navigate("CulturaHistoria"),
+            },
+            {
+              label: "Ver favoritos",
+              action: () => navigation.navigate("UserFavorites"),
+            },
+            {
+              label: "Contacto",
+              action: () => navigation.navigate("Contacto"),
+            },
+          ].map((item, i) => (
+            <Pressable
+              key={i}
+              onPress={() => {
+                toggleMenu();
+                item.action();
+              }}
+              style={{ marginBottom: 25 }}
+            >
+              <Text
+                style={{
+                  color: "#014869",
+                  fontSize: 18,
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+        </Animated.View>
+      )}
+
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{

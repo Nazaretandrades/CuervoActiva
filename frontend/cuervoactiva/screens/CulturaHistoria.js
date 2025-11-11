@@ -426,7 +426,7 @@ export default function CulturaHistoria() {
 
       {renderWebMenu()}
 
-      {/* MENÚ MÓVIL (igual que en Contacto.js) */}
+      {/* MENÚ MÓVIL */}
       {Platform.OS !== "web" &&
         menuVisible &&
         (role === "organizer" ? (

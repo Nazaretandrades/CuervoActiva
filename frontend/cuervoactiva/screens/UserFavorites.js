@@ -438,10 +438,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 20,
+    backgroundColor:"#f8f8f8"
   },
   headerTitleBlue: { fontSize: 18, fontWeight: "bold", color: "#014869" },
   backIconBlue: { width: 22, height: 22, tintColor: "#014869" },
-  menuOptionsBlue: { flex: 1, paddingHorizontal: 40, gap: 30 },
+  menuOptionsBlue: { flex: 1, paddingHorizontal: 40, gap: 30,    backgroundColor: "#f8f8f8", },
   optionBlue: {
     flexDirection: "row",
     alignItems: "center",
