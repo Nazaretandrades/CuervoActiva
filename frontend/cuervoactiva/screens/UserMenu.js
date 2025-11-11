@@ -148,7 +148,7 @@ export default function UserMenu({ onClose }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f8f8f8",
     justifyContent: "space-between",
     position: "absolute",
     top: 0,

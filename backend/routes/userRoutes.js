@@ -35,12 +35,6 @@ router.post("/login", loginUser);
  */
 router.get("/profile", auth, getProfile);
 
-/**
- * RUTA: PUT /api/users/profile
- * Permite al usuario autenticado actualizar sus datos personales (nombre, email o contraseña).
- * - Requiere autenticación.
- */
-router.put("/profile", auth, updateProfile);
 
 /**
  * RUTA: GET /api/users
