@@ -1,15 +1,14 @@
-// Importamos Express para poder crear el enrutador
-import express from "express";
+const express = require("express");
 
 // Importamos las funciones del controlador que manejan la lógica de las notificaciones
-import {
+const {
   listNotifications,
   deleteNotification,
-} from "../controllers/notificationController.js";
+} = require("../controllers/notificationController");
 
 // Importamos el middleware de autenticación
 // Solo los usuarios autenticados pueden ver o eliminar sus notificaciones
-import { auth } from "../middlewares/authMiddleware.js";
+const { auth } = require("../middlewares/authMiddleware");
 
 // Creamos una nueva instancia del router
 const router = express.Router();
@@ -32,4 +31,4 @@ router.delete("/:id", auth, deleteNotification);
  * Exportamos el router
  * Esto permite importarlo y usarlo en el servidor principal ("server.js").
  */
-export default router;
+module.exports = router;
