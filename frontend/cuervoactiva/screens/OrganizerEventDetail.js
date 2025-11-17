@@ -217,7 +217,7 @@ export default function OrganizerEventDetail({ route }) {
           </Pressable>
         </View>
       </View>
-      
+
       {/* MENÚ LATERAL (web) */}
       {Platform.OS === "web" && menuVisible && (
         <>
@@ -317,11 +317,10 @@ export default function OrganizerEventDetail({ route }) {
           {event.image_url ? (
             <Image
               source={{
-                uri: event.image_url.startsWith("http")
-                  ? event.image_url.replace("localhost", "10.0.2.2")
-                  : `${API_BASE}${
-                      event.image_url.startsWith("/") ? "" : "/"
-                    }${event.image_url.replace(/\\/g, "/")}`,
+                uri:
+                  Platform.OS === "android"
+                    ? event.image_url.replace("localhost", "10.0.2.2")
+                    : event.image_url,
               }}
               style={{
                 width: "100%",

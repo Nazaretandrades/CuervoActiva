@@ -8,7 +8,6 @@ const {
   getProfile,
   getAllUsers,
   deleteUser,
-  updateProfile,
 } = require("../controllers/userController");
 
 // Importamos los middlewares de autenticación y control de roles

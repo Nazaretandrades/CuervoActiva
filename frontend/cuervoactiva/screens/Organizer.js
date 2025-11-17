@@ -964,7 +964,12 @@ export default function Organizer() {
           >
             {form.image_url ? (
               <Image
-                source={{ uri: form.image_url }}
+                source={{
+                  uri:
+                    Platform.OS === "android"
+                      ? form.image_url.replace("localhost", "10.0.2.2")
+                      : form.image_url,
+                }}
                 style={{ width: 120, height: 120, borderRadius: 12 }}
               />
             ) : (
