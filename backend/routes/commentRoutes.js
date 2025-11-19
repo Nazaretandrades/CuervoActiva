@@ -1,31 +1,30 @@
-// Importamos Express para poder usar su sistema de enrutamiento
+// routes/commentRoutes.js
 const express = require("express");
-
-// Creamos una nueva instancia de router
-// Este router manejará todas las rutas relacionadas con los comentarios de eventos.
 const router = express.Router();
 
-// Importamos las funciones (controladores) que contienen la lógica principal
-const { addComment, getComments } = require("../controllers/commentController");
-// Importamos los middlewares de autenticación y autorización
+const {
+  addComment,
+  getComments,
+  getUserRating,
+} = require("../controllers/commentController");
 const { auth, authorizeRoles } = require("../middlewares/authMiddleware");
 
 /*
- * RUTA: POST /api/comments/:eventId
- * Agrega un nuevo comentario o valoración a un evento específico.
- * - Requiere autenticación (solo usuarios logueados pueden comentar).
+ * POST /api/comments/:eventId
+ * Agrega o actualiza valoración de un usuario para un evento.
  */
 router.post("/:eventId", auth, addComment);
 
-/**
- * RUTA: GET /api/comments/:eventId
- * Obtiene todos los comentarios asociados a un evento específico.
- * - Esta ruta es pública (no requiere autenticación).
+/*
+ * GET /api/comments/user/:eventId
+ * Devuelve SOLO la valoración del usuario logueado para ese evento.
+ */
+router.get("/user/:eventId", auth, getUserRating);
+
+/*
+ * GET /api/comments/:eventId
+ * Comentarios del evento (admin / organizador).
  */
 router.get("/:eventId", getComments);
 
-/**
- * Exportación del router
- * Esto permite que este módulo sea importado y utilizado en "server.js" o en el archivo principal de rutas.
- */
 module.exports = router;

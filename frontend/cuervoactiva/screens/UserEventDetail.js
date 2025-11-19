@@ -29,7 +29,6 @@ export default function UserEventDetail() {
 
   const [event, setEvent] = useState(null);
   const [rating, setRating] = useState(0);
-  const [averageRating, setAverageRating] = useState(0);
   const [hasRated, setHasRated] = useState(false);
   const [userName, setUserName] = useState("Usuario");
   const [menuVisible, setMenuVisible] = useState(false);
@@ -53,7 +52,7 @@ export default function UserEventDetail() {
     }
   };
 
-  // Obtener usuario
+  // Obtener usuario (solo para mostrar nombre)
   const getUserInfo = async () => {
     try {
       let session;
@@ -79,7 +78,29 @@ export default function UserEventDetail() {
     }
   };
 
-  //  Cargar evento
+  const loadRatings = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const res = await fetch(`${COMMENTS_URL}/user/${eventId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      setRating(data.userRating);
+      setHasRated(true);
+    } catch (err) {
+      console.log("Error cargando valoración:", err);
+    }
+  };
+
+  // 
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -89,11 +110,13 @@ export default function UserEventDetail() {
         setEvent(dataEvent);
 
         await getUserInfo();
+        await loadRatings(); 
       } catch (err) {
         console.error("Error cargando detalle:", err);
         Alert.alert("Error", "No se pudo cargar el detalle del evento");
       }
     };
+
     if (eventId) loadData();
   }, [eventId]);
 
@@ -105,6 +128,7 @@ export default function UserEventDetail() {
         Alert.alert("Error", "Debes iniciar sesión para valorar el evento");
         return;
       }
+
       setRating(value);
       const res = await fetch(`${COMMENTS_URL}/${eventId}`, {
         method: "POST",
@@ -115,7 +139,9 @@ export default function UserEventDetail() {
         body: JSON.stringify({ rating: value }),
       });
       if (!res.ok) throw new Error("No se pudo enviar la valoración");
+
       setHasRated(true);
+      await loadRatings(); 
       Alert.alert("✅", "Tu valoración se ha registrado correctamente");
     } catch (err) {
       console.error("Error al valorar:", err);
@@ -125,11 +151,8 @@ export default function UserEventDetail() {
 
   const renderStars = (ratingValue, interactive = false) => {
     const stars = [];
-    const displayRating = interactive
-      ? hasRated
-        ? rating
-        : averageRating
-      : ratingValue;
+    const displayRating = interactive ? rating : ratingValue;
+
     for (let i = 1; i <= 5; i++) {
       stars.push(
         <Pressable
@@ -149,6 +172,7 @@ export default function UserEventDetail() {
         </Pressable>
       );
     }
+
     return <View style={{ flexDirection: "row" }}>{stars}</View>;
   };
 
@@ -649,7 +673,7 @@ export default function UserEventDetail() {
             >
               Tu valoración
             </Text>
-            {renderStars(averageRating, true)}
+            {renderStars(rating, true)}
           </View>
 
           <View
