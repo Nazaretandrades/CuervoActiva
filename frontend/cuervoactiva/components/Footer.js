@@ -153,17 +153,17 @@ export default function Footer({
             {
               id: "facebook",
               icon: require("../assets/iconos/facebook.png"),
-              url: "https://www.facebook.com/cuervoactiva",
+              url: "https://www.facebook.com/profile.php?id=61583832168012",
             },
             {
               id: "twitter",
               icon: require("../assets/iconos/twitter.png"),
-              url: "https://x.com/cuervoactiva",
+              url: "https://x.com/CuervoActiva",
             },
             {
               id: "instagram",
               icon: require("../assets/iconos/instagram.png"),
-              url: "https://www.instagram.com/cuervoactiva",
+              url: "https://www.instagram.com/p/DRb_K0SiHDa",
             },
           ].map((item) => (
             <Pressable
