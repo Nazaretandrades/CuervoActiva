@@ -45,7 +45,6 @@ export default function CulturaHistoria() {
     loadSession();
   }, []);
 
-  //  Navegaciones
   const goToProfile = () =>
     role === "admin"
       ? nav.navigate("AdminProfile")
@@ -66,7 +65,6 @@ export default function CulturaHistoria() {
   const goToCalendar = () => nav.navigate("Calendar");
   const goToHomeUser = () => nav.navigate("User");
 
-  // Menú lateral
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -89,7 +87,6 @@ export default function CulturaHistoria() {
     }
   };
 
-  /**  CABECERA USER  */
   const renderUserTopBar = () => (
     <View
       style={{
@@ -157,7 +154,6 @@ export default function CulturaHistoria() {
     </View>
   );
 
-  /**  CABECERA ORGANIZER  */
   const renderOrganizerTopBar = () => (
     <View
       style={{
@@ -239,7 +235,6 @@ export default function CulturaHistoria() {
     </View>
   );
 
-  /** CABECERA ADMIN */
   const renderAdminTopBar = () => (
     <View
       style={{
@@ -332,7 +327,6 @@ export default function CulturaHistoria() {
     </View>
   );
 
-  /** MENÚ LATERAL WEB */
   const renderWebMenu = () => {
     if (!menuVisible || Platform.OS !== "web") return null;
 
@@ -415,7 +409,6 @@ export default function CulturaHistoria() {
     );
   };
 
-  // CONTENIDO
   return (
     <View style={styles.pageContainer}>
       <Header hideAuthButtons />
@@ -426,7 +419,6 @@ export default function CulturaHistoria() {
 
       {renderWebMenu()}
 
-      {/* MENÚ MÓVIL */}
       {Platform.OS !== "web" &&
         menuVisible &&
         (role === "organizer" ? (
@@ -504,7 +496,6 @@ export default function CulturaHistoria() {
   );
 }
 
-// Eventos
 const events = [
   {
     title: "Feria de El Cuervo de Sevilla",

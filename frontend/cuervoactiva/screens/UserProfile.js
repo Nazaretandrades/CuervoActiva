@@ -14,8 +14,7 @@ import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_BASE =
-  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+
 
 export default function UserProfile() {
   const navigation = useNavigation();
@@ -23,7 +22,6 @@ export default function UserProfile() {
   const [menuAnim] = useState(new Animated.Value(-250));
   const [userData, setUserData] = useState({ name: "Usuario", email: "" });
 
-  /** Cargar usuario logueado */
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -45,7 +43,6 @@ export default function UserProfile() {
     loadUser();
   }, []);
 
-  /** Cerrar sesión */
   const handleLogout = async () => {
     try {
       if (Platform.OS === "web") {
@@ -59,7 +56,6 @@ export default function UserProfile() {
     }
   };
 
-  /** Navegaciones */
   const goToProfile = () => navigation.navigate("UserProfile");
   const goToNotifications = () => navigation.navigate("UserNotifications");
   const goToFavorites = () => navigation.navigate("UserFavorites");
@@ -71,7 +67,6 @@ export default function UserProfile() {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToHome = () => navigation.navigate("User");
 
-  /** Menú lateral */
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -94,7 +89,6 @@ export default function UserProfile() {
     }
   };
 
-  /** CABECERA */
   const renderTopBar = () => (
     <View
       style={{
@@ -106,7 +100,6 @@ export default function UserProfile() {
         backgroundColor: "#fff",
       }}
     >
-      {/* Perfil Usuario */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
@@ -135,7 +128,6 @@ export default function UserProfile() {
         </View>
       </View>
 
-      {/* Iconos */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
@@ -167,13 +159,11 @@ export default function UserProfile() {
     </View>
   );
 
-  /** Render principal */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
       {renderTopBar()}
 
-      {/* MENÚ WEB */}
       {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
@@ -218,7 +208,6 @@ export default function UserProfile() {
         </Animated.View>
       )}
 
-      {/* MENÚ MÓVIL */}
       {menuVisible && Platform.OS !== "web" && (
         <View
           style={{
@@ -324,7 +313,6 @@ export default function UserProfile() {
             ))}
           </View>
 
-          {/* Barra inferior */}
           <View
             style={{
               position: "absolute",
@@ -362,7 +350,6 @@ export default function UserProfile() {
         </View>
       )}
 
-      {/* CONTENIDO PERFIL */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,

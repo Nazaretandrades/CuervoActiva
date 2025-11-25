@@ -26,7 +26,6 @@ export default function OrganizerNotifications({ navigation }) {
     type: "info",
   });
 
-  // Toast visual
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
     setTimeout(
@@ -35,7 +34,6 @@ export default function OrganizerNotifications({ navigation }) {
     );
   };
 
-  // Obtener usuario logueado
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -52,7 +50,6 @@ export default function OrganizerNotifications({ navigation }) {
     loadUser();
   }, []);
 
-  // Cargar notificaciones
   useEffect(() => {
     const loadNotifications = async () => {
       try {
@@ -80,7 +77,6 @@ export default function OrganizerNotifications({ navigation }) {
     loadNotifications();
   }, []);
 
-  // Marcar como leída y eliminar
   const markAsRead = async (id) => {
     try {
       const session =
@@ -105,7 +101,6 @@ export default function OrganizerNotifications({ navigation }) {
     }
   };
 
-  // Navegaciones
   const goToProfile = () => navigation.navigate("OrganizerProfile");
   const goToNotifications = () => navigation.navigate("OrganizerNotifications");
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
@@ -116,7 +111,6 @@ export default function OrganizerNotifications({ navigation }) {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToHomeOrganizador = () => navigation.navigate("Organizer");
 
-  // Menú lateral / móvil
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible((prev) => !prev);
@@ -138,7 +132,6 @@ export default function OrganizerNotifications({ navigation }) {
     }
   };
 
-  // CABECERA IGUAL A ORGANIZER
   const renderTopBar = () => (
     <View
       style={{
@@ -150,7 +143,6 @@ export default function OrganizerNotifications({ navigation }) {
         backgroundColor: "#fff",
       }}
     >
-      {/* Perfil organizador */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
@@ -189,7 +181,6 @@ export default function OrganizerNotifications({ navigation }) {
         </View>
       </View>
 
-      {/* Iconos derecha */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
@@ -226,7 +217,6 @@ export default function OrganizerNotifications({ navigation }) {
       <Header hideAuthButtons />
       {renderTopBar()}
 
-      {/* NUEVO MENÚ WEB */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <Animated.View
@@ -272,7 +262,6 @@ export default function OrganizerNotifications({ navigation }) {
         </>
       )}
 
-      {/* CONTENIDO SCROLL CON FOOTER FIJO */}
       <View
         style={{
           flex: 1,
@@ -340,7 +329,6 @@ export default function OrganizerNotifications({ navigation }) {
         </ScrollView>
       </View>
 
-      {/* MENÚ MÓVIL */}
       {menuVisible && Platform.OS !== "web" && (
         <View
           style={{
@@ -354,7 +342,6 @@ export default function OrganizerNotifications({ navigation }) {
             justifyContent: "space-between",
           }}
         >
-          {/* CABECERA DEL MENÚ MÓVIL */}
           <View
             style={{
               flexDirection: "row",
@@ -379,7 +366,6 @@ export default function OrganizerNotifications({ navigation }) {
             <View style={{ width: 24 }} />
           </View>
 
-          {/* OPCIONES DEL MENÚ MÓVIL */}
           <View
             style={{
               flex: 1,
@@ -445,7 +431,6 @@ export default function OrganizerNotifications({ navigation }) {
             ))}
           </View>
 
-          {/* FOOTER INFERIOR DEL MENÚ MÓVIL */}
           <View
             style={{
               flexDirection: "row",
@@ -494,7 +479,6 @@ export default function OrganizerNotifications({ navigation }) {
         </View>
       )}
 
-      {/* FOOTER FIJO */}
       {Platform.OS === "web" && (
         <View
           style={{
@@ -514,7 +498,6 @@ export default function OrganizerNotifications({ navigation }) {
         </View>
       )}
 
-      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={{

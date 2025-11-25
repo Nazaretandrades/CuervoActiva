@@ -1,4 +1,3 @@
-// frontend/src/screens/Organizer.js
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -9,7 +8,6 @@ import {
   Platform,
   ScrollView,
   Animated,
-  TouchableWithoutFeedback,
   FlatList,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -155,7 +153,6 @@ export default function Organizer() {
     navigation.navigate("EditEvent", { eventData: event });
   };
 
-  // CABECERA
   const renderTopBar = () => (
     <View
       style={{
@@ -167,7 +164,6 @@ export default function Organizer() {
         backgroundColor: "#fff",
       }}
     >
-      {/* Perfil organizador */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
@@ -206,7 +202,6 @@ export default function Organizer() {
         </View>
       </View>
 
-      {/* BUSCADOR */}
       <View
         style={{
           flexDirection: "row",
@@ -239,9 +234,7 @@ export default function Organizer() {
         />
       </View>
 
-      {/* ICONOS DERECHA */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
-        {/* Notificaciones */}
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
             source={require("../assets/iconos/bell3.png")}
@@ -249,7 +242,6 @@ export default function Organizer() {
           />
         </Pressable>
 
-        {/* Calendario solo en web */}
         {Platform.OS === "web" && (
           <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
             <Image
@@ -259,7 +251,6 @@ export default function Organizer() {
           </Pressable>
         )}
 
-        {/* Menú */}
         <Pressable onPress={toggleMenu}>
           <Image
             source={
@@ -348,7 +339,6 @@ export default function Organizer() {
     }
   };
 
-  // Crear o editar evento
   const handleSubmit = async () => {
     const required = [
       "title",
@@ -413,14 +403,12 @@ export default function Organizer() {
     }
   };
 
-  // MODO MÓVIL
   if (Platform.OS !== "web") {
     return (
       <View style={{ flex: 1, backgroundColor: "#fff" }}>
         <Header hideAuthButtons />
         {renderTopBar()}
 
-        {/* LISTADO */}
         <View
           style={{
             paddingHorizontal: 20,
@@ -498,7 +486,6 @@ export default function Organizer() {
           )}
         </View>
 
-        {/* BOTÓN FLOTANTE */}
         <Pressable
           onPress={goToAddEvent}
           style={{
@@ -520,7 +507,6 @@ export default function Organizer() {
           />
         </Pressable>
 
-        {/* MENÚ MÓVIL */}
         {menuVisible && (
           <View
             style={{
@@ -675,7 +661,6 @@ export default function Organizer() {
     );
   }
 
-  // MODO WEB
   return (
     <View
       style={{
@@ -687,7 +672,6 @@ export default function Organizer() {
     >
       <Header hideAuthButtons />
       {renderTopBar()}
-      {/* MENÚ WEB */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <Animated.View
@@ -732,7 +716,6 @@ export default function Organizer() {
           </Animated.View>
         </>
       )}
-      {/* CONTENIDO PRINCIPAL */}
       <View
         style={{
           flex: 1,
@@ -743,7 +726,6 @@ export default function Organizer() {
           paddingBottom: 40,
         }}
       >
-        {/* Lista de eventos */}
         <View
           style={{
             width: "25%",
@@ -808,7 +790,6 @@ export default function Organizer() {
           </ScrollView>
         </View>
 
-        {/* FORMULARIO */}
         <ScrollView
           style={{
             flex: 1,
@@ -1013,7 +994,6 @@ export default function Organizer() {
         </ScrollView>
       </View>
 
-      {/* FOOTER */}
       <View
         style={{
           position: "fixed",
@@ -1030,7 +1010,6 @@ export default function Organizer() {
         />
       </View>
 
-      {/* BANNER */}
       {bannerMessage !== "" && (
         <Animated.View
           style={{

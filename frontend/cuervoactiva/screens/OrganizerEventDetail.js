@@ -280,7 +280,6 @@ export default function OrganizerEventDetail({ route }) {
         <OrganizerMenu onClose={toggleMenu} />
       )}
 
-      {/* DETALLE EVENTO */}
       {event && (
         <ScrollView
           style={{
@@ -313,157 +312,306 @@ export default function OrganizerEventDetail({ route }) {
             </Text>
           </View>
 
-          {/* Imagen */}
-          {event.image_url ? (
-            <Image
-              source={{
-                uri:
-                  Platform.OS === "android"
-                    ? event.image_url.replace("localhost", "10.0.2.2")
-                    : event.image_url,
-              }}
-              style={{
-                width: "100%",
-                height: 250,
-                borderRadius: 8,
-                marginBottom: 20,
-              }}
-              resizeMode="cover"
-            />
-          ) : null}
-
-          {/* Descripción */}
-          <Text
-            style={{
-              color: "#014869",
-              fontWeight: "bold",
-              fontSize: 15,
-              marginBottom: 6,
-            }}
-          >
-            Descripción
-          </Text>
-          <Text
-            style={{
-              color: "#333",
-              fontSize: 14,
-              textAlign: "justify",
-              lineHeight: 20,
-            }}
-          >
-            {event.description}
-          </Text>
-
-          {/* Estado */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "flex-end",
-              marginTop: 20,
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: "#2ECC71",
-                borderRadius: 25,
-                paddingVertical: 7,
-                paddingHorizontal: 18,
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
-              <Text
+          {/* ==============================
+         VERSIÓN WEB (ESTILO FINAL)
+       ============================== */}
+          {Platform.OS === "web" ? (
+            <>
+              {/* GRID 2 COLUMNAS */}
+              <View
                 style={{
-                  color: "#fff",
-                  fontSize: 16,
-                  marginRight: 6,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  gap: 20,
                 }}
               >
-                ✔
-              </Text>
-              <Text
-                style={{
-                  color: "#fff",
-                  fontWeight: "bold",
-                  fontSize: 13,
-                }}
-              >
-                Habilitado
-              </Text>
-            </View>
-          </View>
+                {/* IMAGEN IZQUIERDA */}
+                <Image
+                  source={{
+                    uri:
+                      Platform.OS === "android"
+                        ? event.image_url.replace("localhost", "10.0.2.2")
+                        : event.image_url,
+                  }}
+                  style={{
+                    width: "50%",
+                    height: 250,
+                    borderRadius: 8,
+                  }}
+                  resizeMode="cover"
+                />
 
-          {/* Valoraciones */}
-          <View style={{ marginTop: 25 }}>
-            <Text
-              style={{
-                fontWeight: "bold",
-                color: "#014869",
-                marginBottom: 8,
-                fontSize: 14,
-              }}
-            >
-              Valoraciones de usuarios
-            </Text>
-            {comments.length > 0 ? (
-              <ScrollView
-                style={{
-                  maxHeight: 160,
-                  backgroundColor: "#f9f9f9",
-                  borderRadius: 8,
-                  padding: 10,
-                }}
-              >
-                {comments.map((c, i) => (
-                  <View
-                    key={i}
+                {/* DESCRIPCIÓN DERECHA */}
+                <View style={{ width: "48%" }}>
+                  <Text
                     style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "center",
+                      color: "#014869",
+                      fontWeight: "bold",
+                      fontSize: 15,
                       marginBottom: 8,
-                      borderBottomWidth: 0.5,
-                      borderBottomColor: "#ddd",
-                      paddingBottom: 4,
                     }}
                   >
-                    <Text
-                      style={{
-                        color: "#014869",
-                        fontWeight: "600",
-                        flex: 1,
-                      }}
-                    >
-                      {c.user?.name || "Usuario"}
-                    </Text>
-                    {renderStars(c.rating)}
-                  </View>
-                ))}
-              </ScrollView>
-            ) : (
-              <Text style={{ color: "#777", fontStyle: "italic" }}>
-                Sin valoraciones aún.
-              </Text>
-            )}
-          </View>
+                    Descripción
+                  </Text>
+                  <Text
+                    style={{
+                      color: "#333",
+                      fontSize: 14,
+                      textAlign: "justify",
+                      lineHeight: 20,
+                    }}
+                  >
+                    {event.description}
+                  </Text>
+                </View>
+              </View>
+              {/* ESTADO + COMPARTIR (WEB) */}
+              <View
+                style={{
+                  width: "100%",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: 30,
+                  gap: 20,
+                }}
+              >
+                {/* Estado */}
+                <View
+                  style={{
+                    backgroundColor:
+                      new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
+                    borderRadius: 25,
+                    paddingVertical: 7,
+                    paddingHorizontal: 18,
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontWeight: "bold",
+                      fontSize: 13,
+                    }}
+                  >
+                    {new Date(event.date) > new Date()
+                      ? "Habilitado"
+                      : "Deshabilitado"}
+                  </Text>
+                </View>
 
-          {/* Compartir */}
-          <View
-            style={{
-              alignItems: "flex-end",
-              marginTop: 15,
-            }}
-          >
-            <Pressable
-              onPress={() => setShareVisible(true)}
-              style={Platform.OS === "web" ? { cursor: "pointer" } : {}}
-            >
-              <Image
-                source={require("../assets/iconos/compartir.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
-              />
-            </Pressable>
-          </View>
+                {/* Compartir */}
+                <Pressable onPress={() => setShareVisible(true)}>
+                  <Image
+                    source={require("../assets/iconos/compartir.png")}
+                    style={{ width: 26, height: 26, tintColor: "#014869" }}
+                  />
+                </Pressable>
+              </View>
+
+              {/* VALORACIONES - IGUAL A SEGUNDA IMAGEN */}
+              <View style={{ marginTop: 25 }}>
+                <Text
+                  style={{
+                    fontWeight: "bold",
+                    color: "#014869",
+                    marginBottom: 8,
+                    fontSize: 14,
+                  }}
+                >
+                  Valoraciones de usuarios
+                </Text>
+
+                <ScrollView
+                  style={{
+                    maxHeight: 160,
+                    backgroundColor: "#f9f9f9",
+                    borderRadius: 8,
+                    padding: 10,
+                  }}
+                >
+                  {comments.length > 0 ? (
+                    comments.map((c, i) => (
+                      <View
+                        key={i}
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: 8,
+                          borderBottomWidth: 0.5,
+                          borderBottomColor: "#ddd",
+                          paddingBottom: 4,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "#014869",
+                            fontWeight: "600",
+                            flex: 1,
+                          }}
+                        >
+                          {c.user?.name || "Usuario"}
+                        </Text>
+
+                        {renderStars(c.rating)}
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={{ color: "#777", fontStyle: "italic" }}>
+                      Sin valoraciones aún.
+                    </Text>
+                  )}
+                </ScrollView>
+              </View>
+            </>
+          ) : (
+            <>
+              {/* Imagen */}
+              {event.image_url ? (
+                <Image
+                  source={{
+                    uri:
+                      Platform.OS === "android"
+                        ? event.image_url.replace("localhost", "10.0.2.2")
+                        : event.image_url,
+                  }}
+                  style={{
+                    width: "100%",
+                    height: 250,
+                    borderRadius: 8,
+                    marginBottom: 20,
+                  }}
+                  resizeMode="cover"
+                />
+              ) : null}
+
+              <Text
+                style={{
+                  color: "#014869",
+                  fontWeight: "bold",
+                  fontSize: 15,
+                  marginBottom: 6,
+                }}
+              >
+                Descripción
+              </Text>
+
+              <Text
+                style={{
+                  color: "#333",
+                  fontSize: 14,
+                  textAlign: "justify",
+                  lineHeight: 20,
+                }}
+              >
+                {event.description}
+              </Text>
+
+              <View
+                style={{
+                  width: "100%",
+                  flexDirection: "row",
+                  justifyContent: "space-between", 
+                  alignItems: "center",
+                  marginTop: 15,
+                  gap: 15,
+                }}
+              >
+                {/* Estado */}
+                <View
+                  style={{
+                    backgroundColor:
+                      new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
+                    borderRadius: 25,
+                    paddingVertical: 7,
+                    paddingHorizontal: 18,
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontWeight: "bold",
+                      fontSize: 13,
+                    }}
+                  >
+                    {new Date(event.date) > new Date()
+                      ? "Habilitado"
+                      : "Deshabilitado"}
+                  </Text>
+                </View>
+
+                {/* Compartir */}
+                <Pressable onPress={() => setShareVisible(true)}>
+                  <Image
+                    source={require("../assets/iconos/compartir.png")}
+                    style={{ width: 26, height: 26, tintColor: "#014869" }}
+                  />
+                </Pressable>
+              </View>
+
+              {/* Valoraciones */}
+              <View style={{ marginTop: 25 }}>
+                <Text
+                  style={{
+                    fontWeight: "bold",
+                    color: "#014869",
+                    marginBottom: 8,
+                    fontSize: 14,
+                  }}
+                >
+                  Valoraciones de usuarios
+                </Text>
+
+                {comments.length > 0 ? (
+                  <ScrollView
+                    nestedScrollEnabled={true}
+                    style={{
+                      maxHeight: 120,
+                      backgroundColor: "#f9f9f9",
+                      borderRadius: 8,
+                      padding: 10,
+                    }}
+                  >
+                    {comments.map((c, i) => (
+                      <View
+                        key={i}
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: 8,
+                          borderBottomWidth: 0.5,
+                          borderBottomColor: "#ddd",
+                          paddingBottom: 4,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "#014869",
+                            fontWeight: "600",
+                            flex: 1,
+                          }}
+                        >
+                          {c.user?.name || "Usuario"}
+                        </Text>
+
+                        {renderStars(c.rating)}
+                      </View>
+                    ))}
+                  </ScrollView>
+                ) : (
+                  <Text style={{ color: "#777", fontStyle: "italic" }}>
+                    Sin valoraciones aún.
+                  </Text>
+                )}
+              </View>
+            </>
+          )}
         </ScrollView>
       )}
 

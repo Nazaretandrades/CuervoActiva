@@ -16,9 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
-import UserMenu from "./UserMenu";
 
-/**  CONFIG API  */
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
@@ -368,7 +366,6 @@ export default function Calendar() {
       <Header hideAuthButtons />
       {renderTopBar()}
 
-      {/* MENÚ LATERAL (WEB) */}
       {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
@@ -431,7 +428,6 @@ export default function Calendar() {
       {Platform.OS !== "web" &&
         menuVisible &&
         (role === "organizer" ? (
-          // MENÚ MÓVIL DEL ORGANIZADOR
           <View
             style={{
               position: "absolute",
@@ -444,7 +440,6 @@ export default function Calendar() {
               justifyContent: "space-between",
             }}
           >
-            {/* CABECERA */}
             <View
               style={{
                 flexDirection: "row",
@@ -473,7 +468,6 @@ export default function Calendar() {
               <View style={{ width: 24 }} />
             </View>
 
-            {/* OPCIONES */}
             <View
               style={{
                 flex: 1,
@@ -543,7 +537,6 @@ export default function Calendar() {
               ))}
             </View>
 
-            {/* FOOTER INFERIOR */}
             <View
               style={{
                 flexDirection: "row",
@@ -592,7 +585,6 @@ export default function Calendar() {
             </View>
           </View>
         ) : (
-          //MENÚ MÓVIL DEL USUARIO
           <View style={styles.mobileMenu}>
             <View style={styles.mobileMenuHeader}>
               <Pressable onPress={toggleMenu}>
@@ -698,7 +690,6 @@ export default function Calendar() {
           </View>
         ))}
 
-      {/* CALENDARIO */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -776,7 +767,6 @@ export default function Calendar() {
           ))}
         </View>
 
-        {/* PANEL DETALLE (WEB / MÓVIL) */}
         {Platform.OS === "web" ? (
           selectedKey &&
           selectedEvents.length > 0 && (
@@ -867,7 +857,6 @@ export default function Calendar() {
   );
 }
 
-/** Helpers */
 function labelFromCategory(cat) {
   const v = (cat || "").toLowerCase();
   switch (v) {
@@ -901,7 +890,6 @@ function renderDateTitle(key) {
   return `${d}  ${weekNamesLong[date.getDay()]}`;
 }
 
-/** Styles */
 const styles = StyleSheet.create({
   mobileMenu: {
     position: "absolute",

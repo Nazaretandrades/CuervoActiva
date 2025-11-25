@@ -39,7 +39,6 @@ export default function OrganizerMenu({ onClose }) {
 
   return (
     <View style={styles.container}>
-      {/*  CABECERA */}
       <View style={styles.header}>
         <Pressable onPress={onClose}>
           <Image
@@ -51,7 +50,6 @@ export default function OrganizerMenu({ onClose }) {
         <View style={{ width: 24 }} />
       </View>
 
-      {/* OPCIONES DEL MENÚ */}
       <View style={styles.menuOptions}>
         <Pressable style={styles.option} onPress={goToAbout}>
           <View style={styles.optionLeft}>
@@ -96,7 +94,6 @@ export default function OrganizerMenu({ onClose }) {
         </Pressable>
       </View>
 
-      {/* BARRA INFERIOR */}
       {Platform.OS !== "web" && (
         <View style={styles.bottomBar}>
           <Pressable onPress={goToHomeOrganizador}>

@@ -87,7 +87,6 @@ export default function Register() {
         }}
       />
 
-      {/* HEADER */}
       {Platform.OS === "web" ? (
         <Header
           onLogin={() => navigation.navigate("Login")}
@@ -102,7 +101,6 @@ export default function Register() {
         </View>
       )}
 
-      {/* CONTENIDO */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -111,7 +109,6 @@ export default function Register() {
           paddingVertical: isMobile ? 25 : 50,
         }}
       >
-        {/* Título */}
         <Text
           style={{
             fontSize: isMobile ? 22 : 28,
@@ -124,7 +121,6 @@ export default function Register() {
           Crear cuenta
         </Text>
 
-        {/* FORMULARIO */}
         <View
           style={{
             width: isMobile ? "85%" : "60%",
@@ -140,7 +136,6 @@ export default function Register() {
             alignItems: "center",
           }}
         >
-          {/* Email */}
           <View
             style={{
               flexDirection: "row",
@@ -179,7 +174,6 @@ export default function Register() {
             />
           </View>
 
-          {/* Nombre de usuario */}
           <View
             style={{
               flexDirection: "row",
@@ -216,7 +210,6 @@ export default function Register() {
             />
           </View>
 
-          {/* Rol */}
           <View
             style={{
               flexDirection: "row",
@@ -263,7 +256,6 @@ export default function Register() {
             </View>
           </View>
 
-          {/* Contraseña */}
           <View
             style={{
               flexDirection: "row",
@@ -311,7 +303,6 @@ export default function Register() {
             </Pressable>
           </View>
 
-          {/* Botón */}
           <Pressable
             onPress={onSubmit}
             disabled={loading}
@@ -343,7 +334,6 @@ export default function Register() {
         </View>
       </ScrollView>
 
-      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={{

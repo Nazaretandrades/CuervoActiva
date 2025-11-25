@@ -10,30 +10,19 @@ import {
   Animated,
 } from "react-native";
 
-/**
- * Componente: HeroBanner
- * Carrusel animado que muestra imágenes destacadas del pueblo o eventos culturales.
- * Se adapta automáticamente a web y móvil, con efectos de transición y texto superpuesto.
- */
+
 export default function HeroBanner() {
-  // Detectamos el ancho de la pantalla para ajustar el tamaño del carrusel
   const { width: screenWidth } = useWindowDimensions();
   const [containerWidth, setContainerWidth] = useState(screenWidth);
 
-  // Control del índice actual de la imagen mostrada
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Referencia al FlatList (para controlar el scroll programáticamente)
   const flatListRef = useRef(null);
 
-  // Animaciones (solo se aplican en móvil)
-  const fadeAnim = useRef(new Animated.Value(0)).current; // Opacidad
-  const translateAnim = useRef(new Animated.Value(20)).current; // Movimiento vertical
+  const fadeAnim = useRef(new Animated.Value(0)).current; 
+  const translateAnim = useRef(new Animated.Value(20)).current; 
 
-  /**
-   * Array de imágenes que se muestran en el carrusel
-   * (importadas desde los assets locales del proyecto)
-   */
+
   const slides = [
     require("../assets/romeria.jpg"),
     require("../assets/patrona_feria.jpg"),
@@ -43,11 +32,7 @@ export default function HeroBanner() {
     require("../assets/ciclismo.jpg"),
   ];
 
-  /**
-   * handleNext()
-   * Avanza automáticamente a la siguiente imagen del carrusel.
-   * Si llega al final, vuelve al principio.
-   */
+
   const handleNext = () => {
     const nextIndex = (currentIndex + 1) % slides.length;
     flatListRef.current?.scrollToOffset({
@@ -56,14 +41,10 @@ export default function HeroBanner() {
     });
     setCurrentIndex(nextIndex);
 
-    // Dispara animación en móviles
     if (Platform.OS !== "web") triggerAnimation();
   };
 
-  /**
-   * triggerAnimation()
-   * Ejecuta la animación de entrada del texto (fade + movimiento).
-   */
+
   const triggerAnimation = () => {
     fadeAnim.setValue(0);
     translateAnim.setValue(20);
@@ -82,16 +63,11 @@ export default function HeroBanner() {
     ]).start();
   };
 
-  /**
-   * 🔹 Efecto inicial: ejecuta animación al montar el componente
-   */
+
   useEffect(() => {
     if (Platform.OS !== "web") triggerAnimation();
   }, []);
 
-  /**
-   * Intervalo automático del carrusel (cada 4 segundos cambia la imagen)
-   */
   useEffect(() => {
     const interval = setInterval(() => {
       handleNext();
@@ -99,14 +75,8 @@ export default function HeroBanner() {
     return () => clearInterval(interval);
   }, [currentIndex]);
 
-  /**
-   * renderItem()
-   * Renderiza cada slide del carrusel.
-   * Se diferencia entre versión web (mayor tamaño, texto lateral)
-   * y móvil (texto centrado y animado).
-   */
+
   const renderItem = ({ item }) => {
-    // 💻 VERSIÓN WEB
     if (Platform.OS === "web") {
       return (
         <View
@@ -120,7 +90,6 @@ export default function HeroBanner() {
             overflow: "hidden",
           }}
         >
-          {/* Fondo difuminado */}
           <Image
             source={item}
             style={styles.blurredBackground}
@@ -128,7 +97,6 @@ export default function HeroBanner() {
             resizeMode="cover"
           />
 
-          {/* Imagen principal */}
           <Image
             source={item}
             style={{
@@ -140,10 +108,8 @@ export default function HeroBanner() {
             }}
           />
 
-          {/* Capa semitransparente encima de la imagen */}
           <View style={styles.overlay} />
 
-          {/* Texto superpuesto */}
           <View style={styles.content}>
             <View style={{ maxWidth: "70%" }}>
               <Text style={styles.title}>CUERVO ACTIVA</Text>
@@ -157,7 +123,6 @@ export default function HeroBanner() {
       );
     }
 
-    // 📱 VERSIÓN MÓVIL
     return (
       <View
         style={{
@@ -170,7 +135,6 @@ export default function HeroBanner() {
           overflow: "hidden",
         }}
       >
-        {/* Fondo difuminado */}
         <Image
           source={item}
           style={styles.blurredBackground}
@@ -178,7 +142,6 @@ export default function HeroBanner() {
           resizeMode="cover"
         />
 
-        {/* Imagen principal */}
         <Image
           source={item}
           style={{
@@ -190,10 +153,8 @@ export default function HeroBanner() {
           }}
         />
 
-        {/* Capa semitransparente oscura */}
         <View style={styles.overlay} />
 
-        {/* Texto animado con fade + desplazamiento */}
         <Animated.View
           style={{
             position: "absolute",
@@ -236,11 +197,7 @@ export default function HeroBanner() {
     );
   };
 
-  /**
-   * FlatList
-   * Componente que renderiza el carrusel horizontal de imágenes.
-   * Está configurado para hacer scroll automático sin interacción del usuario.
-   */
+
   return (
     <View
       style={{ width: "100%", overflow: "hidden" }}
@@ -257,7 +214,7 @@ export default function HeroBanner() {
         snapToAlignment="center"
         snapToInterval={containerWidth}
         showsHorizontalScrollIndicator={false}
-        scrollEnabled={false} // Bloquea scroll manual
+        scrollEnabled={false} 
         getItemLayout={(_, index) => ({
           length: containerWidth,
           offset: containerWidth * index,
@@ -275,10 +232,6 @@ export default function HeroBanner() {
   );
 }
 
-/**
- * Estilos generales
- * Se aplican tanto a móvil como a web.
- */
 const styles = StyleSheet.create({
   blurredBackground: {
     position: "absolute",

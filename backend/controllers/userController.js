@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Notification = require("../models/notification");
 
-// === REGISTRO DE USUARIO ===
+// REGISTRO DE USUARIO 
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -59,7 +59,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// === LOGIN ===
+// LOGIN 
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -95,7 +95,7 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// === PERFIL ===
+// PERFIL 
 exports.getProfile = async (req, res) => {
   try {
     // Busco el perfil del usuario logueado, incluyendo favoritos y eventos asistidos
@@ -112,7 +112,7 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// === ADMIN: VER TODOS LOS USUARIOS ===
+// ADMIN: VER TODOS LOS USUARIOS 
 exports.getAllUsers = async (req, res) => {
   try {
     // Listo todos los usuarios excepto los administradores
@@ -126,7 +126,7 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-// === ADMIN: ELIMINAR USUARIO ===
+// ADMIN: ELIMINAR USUARIO 
 exports.deleteUser = async (req, res) => {
   try {
     // Verifico que el usuario a eliminar exista

@@ -47,8 +47,4 @@ const culturalSchema = new mongoose.Schema(
   }
 );
 
-/**
- * Exportamos el modelo "CulturalSection".
- * MongoDB creará la colección `culturalsections` automáticamente.
- */
 module.exports = mongoose.model("CulturalSection", culturalSchema);

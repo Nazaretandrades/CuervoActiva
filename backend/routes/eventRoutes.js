@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-// Importamos las funciones del controlador que manejan la lógica de los eventos
 const {
   listEvents,
   listOrganizerEvents,

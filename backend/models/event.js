@@ -85,10 +85,4 @@ const eventSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
-/**
- * Exportación del modelo
- * Crea (o reutiliza) la colección "events" en MongoDB.
- * Permite hacer consultas como:
- */
 module.exports = mongoose.model("Event", eventSchema);

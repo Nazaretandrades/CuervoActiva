@@ -48,8 +48,4 @@ const commentSchema = new mongoose.Schema(
   }
 );
 
-/**
- * Exportamos el modelo "Comment" basado en el esquema anterior.
- * Esto crea la colección "comments" en MongoDB.
- */
 module.exports = mongoose.model("Comment", commentSchema);

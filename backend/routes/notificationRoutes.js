@@ -27,8 +27,4 @@ router.get("/", auth, listNotifications);
  */
 router.delete("/:id", auth, deleteNotification);
 
-/**
- * Exportamos el router
- * Esto permite importarlo y usarlo en el servidor principal ("server.js").
- */
 module.exports = router;

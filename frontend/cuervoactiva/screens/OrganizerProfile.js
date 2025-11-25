@@ -14,9 +14,6 @@ import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_BASE =
-  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
-
 export default function OrganizerProfile() {
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
@@ -26,7 +23,6 @@ export default function OrganizerProfile() {
     email: "",
   });
 
-  // Cargar usuario logueado
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -49,7 +45,6 @@ export default function OrganizerProfile() {
     loadUser();
   }, []);
 
-  // Cerrar sesión
   const handleLogout = async () => {
     try {
       if (Platform.OS === "web") {
@@ -63,7 +58,6 @@ export default function OrganizerProfile() {
     }
   };
 
-  // Navegaciones
   const goToProfile = () => navigation.navigate("OrganizerProfile");
   const goToNotifications = () => navigation.navigate("OrganizerNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -73,7 +67,6 @@ export default function OrganizerProfile() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
 
-  // Menú lateral
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -96,7 +89,6 @@ export default function OrganizerProfile() {
     }
   };
 
-  // CABECERA
   const renderTopBar = () => (
     <View
       style={{
@@ -108,7 +100,6 @@ export default function OrganizerProfile() {
         backgroundColor: "#fff",
       }}
     >
-      {/* Perfil organizador */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
@@ -149,7 +140,6 @@ export default function OrganizerProfile() {
         </View>
       </View>
 
-      {/* Iconos derecha */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
@@ -186,7 +176,6 @@ export default function OrganizerProfile() {
       <Header hideAuthButtons />
       {renderTopBar()}
 
-      {/* MENÚ WEB */}
       {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
@@ -230,7 +219,6 @@ export default function OrganizerProfile() {
         </Animated.View>
       )}
 
-      {/* MENÚ MÓVIL */}
       {menuVisible && Platform.OS !== "web" && (
         <View
           style={{
@@ -244,7 +232,6 @@ export default function OrganizerProfile() {
             justifyContent: "space-between",
           }}
         >
-          {/* CABECERA DEL MENÚ MÓVIL */}
           <View
             style={{
               flexDirection: "row",
@@ -269,7 +256,6 @@ export default function OrganizerProfile() {
             <View style={{ width: 24 }} />
           </View>
 
-          {/* OPCIONES DEL MENÚ MÓVIL */}
           <View
             style={{
               flex: 1,
@@ -335,7 +321,6 @@ export default function OrganizerProfile() {
             ))}
           </View>
 
-          {/* FOOTER DEL MENÚ MÓVIL */}
           <View
             style={{
               flexDirection: "row",
@@ -384,7 +369,6 @@ export default function OrganizerProfile() {
         </View>
       )}
 
-      {/* CONTENIDO PERFIL */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -507,7 +491,6 @@ export default function OrganizerProfile() {
         </View>
       </ScrollView>
 
-      {/* FOOTER */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAboutUs}

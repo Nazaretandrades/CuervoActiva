@@ -12,7 +12,6 @@ import { useNavigation } from "@react-navigation/native";
 export default function UserMenu({ onClose }) {
   const navigation = useNavigation();
 
-  // Navegaciones
   const goToAbout = () => {
     onClose();
     navigation.navigate("SobreNosotros");
@@ -44,7 +43,6 @@ export default function UserMenu({ onClose }) {
 
   return (
     <View style={styles.container}>
-      {/* CABECERA */}
       <View style={styles.header}>
         <Pressable onPress={onClose} style={{ marginRight: 15 }}>
           <Image
@@ -57,7 +55,6 @@ export default function UserMenu({ onClose }) {
         <View style={{ width: 24 }} />
       </View>
 
-      {/* OPCIONES DEL MENÚ */}
       <View style={styles.menuOptions}>
         <Pressable style={styles.option} onPress={goToAbout}>
           <View style={styles.optionLeft}>
@@ -116,7 +113,6 @@ export default function UserMenu({ onClose }) {
         </Pressable>
       </View>
 
-      {/* BARRA INFERIOR */}
       {Platform.OS !== "web" && (
         <View style={styles.bottomBar}>
           <Pressable onPress={goToHome}>

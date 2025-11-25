@@ -20,7 +20,6 @@ export default function Condiciones({ navigation }) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  /** Obtener sesión */
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -44,7 +43,6 @@ export default function Condiciones({ navigation }) {
     loadSession();
   }, []);
 
-  /** Navegaciones comunes */
   const goToProfile = () =>
     role === "admin"
       ? navigation.navigate("AdminProfile")
@@ -64,7 +62,6 @@ export default function Condiciones({ navigation }) {
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToAbout = () => navigation.navigate("SobreNosotros");
 
-  /** Alternar menú lateral */
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -86,7 +83,6 @@ export default function Condiciones({ navigation }) {
     }
   };
 
-  /** CABECERAS */
   const renderUserTopBar = () => (
     <View style={styles.topBar}>
       <View style={styles.profileContainer}>
@@ -229,7 +225,6 @@ export default function Condiciones({ navigation }) {
       </View>
     );
 
-  /** CONTENIDO */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
@@ -417,7 +412,6 @@ export default function Condiciones({ navigation }) {
           Condiciones de Uso
         </Text>
 
-        {/* CONTENEDOR IGUALADO EN ALTURA */}
         <View
           style={{
             flexDirection: Platform.OS === "web" ? "row" : "column",
@@ -528,7 +522,6 @@ posible.`,
   );
 }
 
-/** ESTILOS */
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",

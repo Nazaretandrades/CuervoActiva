@@ -33,7 +33,6 @@ export default function AdminNotifications({ navigation }) {
     );
   };
 
-  // Obtener usuario logueado
   useEffect(() => {
     try {
       const session = JSON.parse(localStorage.getItem("USER_SESSION"));
@@ -44,7 +43,6 @@ export default function AdminNotifications({ navigation }) {
     }
   }, []);
 
-  // Cargar notificaciones
   useEffect(() => {
     const loadNotifications = async () => {
       try {
@@ -69,7 +67,6 @@ export default function AdminNotifications({ navigation }) {
     loadNotifications();
   }, []);
 
-  // Marcar como leída y eliminar de la BD
   const markAsRead = async (id) => {
     try {
       const session = JSON.parse(localStorage.getItem("USER_SESSION"));
@@ -82,7 +79,6 @@ export default function AdminNotifications({ navigation }) {
 
       if (!res.ok) throw new Error("Error al marcar como leída");
 
-      // Eliminar del estado
       setNotifications((prev) => prev.filter((n) => n._id !== id));
 
       showToast("✅ Notificación marcada como leída correctamente.", "success");
@@ -92,7 +88,6 @@ export default function AdminNotifications({ navigation }) {
     }
   };
 
-  //  Navegaciones
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -103,7 +98,6 @@ export default function AdminNotifications({ navigation }) {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToUsers = () => navigation.navigate("AdminUsers");
 
-  // Menú lateral
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -125,7 +119,6 @@ export default function AdminNotifications({ navigation }) {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* CABECERA ADMIN */}
       <View
         style={{
           flexDirection: "row",
@@ -199,7 +192,6 @@ export default function AdminNotifications({ navigation }) {
         </View>
       </View>
 
-      {/* MENÚ LATERAL */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -257,7 +249,6 @@ export default function AdminNotifications({ navigation }) {
         </>
       )}
 
-      {/* LISTA DE NOTIFICACIONES */}
       <View style={{ flex: 1, padding: 24, backgroundColor: "#f5f6f7" }}>
         <Text
           style={{
@@ -312,7 +303,6 @@ export default function AdminNotifications({ navigation }) {
         </ScrollView>
       </View>
 
-      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={{

@@ -14,7 +14,4 @@ const router = express.Router();
  */
 router.post("/", sendContactMessage);
 
-/**
- * Exportación del router
- */
 module.exports = router;

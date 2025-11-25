@@ -30,7 +30,6 @@ export default function Login() {
   const { width } = Dimensions.get("window");
   const isMobile = width < 768;
 
-  /** Mostrar mensajes visuales */
   const showToast = (type, message) => {
     setToast({ visible: true, type, message });
     Animated.timing(fadeAnim, {
@@ -48,7 +47,6 @@ export default function Login() {
     }, 3000);
   };
 
-  /** LOGIN */
   async function onSubmit() {
     if (!emailOrUsername.trim() || !password.trim()) {
       showToast("error", "Por favor, completa todos los campos obligatorios.");
@@ -122,7 +120,6 @@ export default function Login() {
         }}
       />
 
-      {/* HEADER */}
       {Platform.OS === "web" ? (
         <Header
           onLogin={() => navigation.navigate("Login")}
@@ -137,7 +134,6 @@ export default function Login() {
         </View>
       )}
 
-      {/* CONTENIDO */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -146,7 +142,6 @@ export default function Login() {
           paddingVertical: isMobile ? 10 : 50,
         }}
       >
-        {/* Título */}
         <Text
           style={{
             fontSize: isMobile ? 24 : 28,
@@ -159,7 +154,6 @@ export default function Login() {
           Iniciar Sesión
         </Text>
 
-        {/* FORMULARIO */}
         <View
           style={{
             width: isMobile ? "85%" : "60%",
@@ -175,7 +169,6 @@ export default function Login() {
             alignItems: "center",
           }}
         >
-          {/* Email o Usuario */}
           <View
             style={{
               flexDirection: "row",
@@ -214,7 +207,6 @@ export default function Login() {
             />
           </View>
 
-          {/* Contraseña */}
           <View
             style={{
               flexDirection: "row",
@@ -262,7 +254,6 @@ export default function Login() {
             </Pressable>
           </View>
 
-          {/* Botón */}
           <Pressable
             onPress={onSubmit}
             disabled={loading}
@@ -294,7 +285,6 @@ export default function Login() {
         </View>
       </ScrollView>
 
-      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={{

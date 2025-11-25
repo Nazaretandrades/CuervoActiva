@@ -1,4 +1,4 @@
-//PUNTO DE ENTRADA PRINCIPALL DE LA APP EXPO
+// PUNTO DE ENTRADA PRINCIPAL DE LA APP EXPO
 
 //1) Importamos la función que registra el componente raíz en Expo
 import { registerRootComponent } from "expo";

@@ -197,7 +197,6 @@ export default function Admin() {
     }
   };
 
-  // Navegación
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -207,7 +206,6 @@ export default function Admin() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
 
-  // Menú
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -232,7 +230,6 @@ export default function Admin() {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* Barra superior */}
       <View
         style={{
           flexDirection: "row",
@@ -413,7 +410,6 @@ export default function Admin() {
         </>
       )}
 
-      {/* Contenido principal */}
       <View
         style={{
           flex: 1,
@@ -561,7 +557,6 @@ export default function Admin() {
           </>
         ) : (
           <>
-            {/* === FORMULARIO EDICIÓN (rediseñado visualmente, sin tocar funcionalidad) === */}
             <Text
               style={{
                 fontWeight: "bold",
@@ -728,7 +723,6 @@ export default function Admin() {
         )}
       </View>
 
-      {/* Modal confirmación */}
       <Modal transparent visible={modalVisible} animationType="fade">
         <View
           style={{
@@ -812,7 +806,6 @@ export default function Admin() {
         </View>
       </Modal>
 
-      {/* Toast */}
       {toast.visible && (
         <Animated.View
           style={{
@@ -844,7 +837,6 @@ export default function Admin() {
         </Animated.View>
       )}
 
-      {/* Footer */}
       {Platform.OS === "web" ? (
         <View
           style={{

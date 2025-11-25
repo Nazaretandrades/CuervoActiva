@@ -9,14 +9,12 @@ import Footer from "../components/Footer";
 export default function Intro() {
   const navigation = useNavigation();
 
-  // Asegura fondo blanco también en web (body)
   useEffect(() => {
     if (Platform.OS === "web") {
       document.body.style.backgroundColor = "#ffffff";
     }
   }, []);
 
-  // Guarda flag de que el usuario ya vio el intro
   const handleSeenIntro = async (nextScreen) => {
     try {
       await AsyncStorage.setItem("SEEN_INTRO", "true");
@@ -29,7 +27,6 @@ export default function Intro() {
 
   return (
     <View className="flex-1 bg-[#ffffff] justify-between">
-      {/* HEADER */}
       {Platform.OS === "web" ? (
         <Header
           onLogin={() => handleSeenIntro("Login")}
@@ -44,7 +41,6 @@ export default function Intro() {
         </SafeAreaView>
       )}
 
-      {/* CONTENIDO PRINCIPAL */}
       <View className="flex-1 bg-[#ffffff]">
         <ScrollView
           contentContainerStyle={{

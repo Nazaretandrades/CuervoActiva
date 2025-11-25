@@ -12,20 +12,20 @@ exports.addComment = async (req, res) => {
     if (!req.user || !req.user.id)
       return res.status(401).json({ error: "Usuario no autenticado" });
 
-    const userId = req.user.id; // mongoose genera .id a partir de _id
+    const userId = req.user.id; 
     const eventId = req.params.eventId;
 
-    // 1️⃣ Verificar si ya existe una valoración del mismo usuario para este evento
+    // 1 Verificar si ya existe una valoración del mismo usuario para este evento
     let existing = await Comment.findOne({ user: userId, event: eventId });
 
     let comment;
 
     if (existing) {
-      // 2️⃣ Si existe → ACTUALIZAR
+      // 2️ Si existe -> ACTUALIZAR
       existing.rating = rating;
       comment = await existing.save();
     } else {
-      // 3️⃣ Si NO existe → CREAR
+      // 3️ Si NO existe -> CREAR
       comment = await Comment.create({
         user: userId,
         event: eventId,
@@ -33,7 +33,7 @@ exports.addComment = async (req, res) => {
       });
     }
 
-    // 4️⃣ Notificar al organizador igual que antes
+    // 4 Notificar al organizador igual que antes
     const event = await Event.findById(eventId).populate("createdBy");
 
     if (event && event.createdBy) {
@@ -77,7 +77,7 @@ exports.getComments = async (req, res) => {
   }
 };
 
-// 🔹 SOLO la valoración del usuario logueado
+// Valoración del usuario logueado
 exports.getUserRating = async (req, res) => {
   try {
     if (!req.user || !req.user.id)

@@ -20,7 +20,6 @@ export default function PoliticaPrivacidad({ navigation }) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  /** Cargar sesión */
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -44,7 +43,6 @@ export default function PoliticaPrivacidad({ navigation }) {
     loadSession();
   }, []);
 
-  /** Navegaciones */
   const goToProfile = () =>
     role === "admin"
       ? navigation.navigate("AdminProfile")
@@ -67,7 +65,6 @@ export default function PoliticaPrivacidad({ navigation }) {
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToAbout = () => navigation.navigate("SobreNosotros");
 
-  /** Menú lateral animado */
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -89,7 +86,6 @@ export default function PoliticaPrivacidad({ navigation }) {
     }
   };
 
-  /** Cabecera USUARIO NORMAL*/
   const renderUserTopBar = () => (
     <View
       style={{
@@ -101,7 +97,6 @@ export default function PoliticaPrivacidad({ navigation }) {
         backgroundColor: "#fff",
       }}
     >
-      {/* Perfil Usuario */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
@@ -128,7 +123,6 @@ export default function PoliticaPrivacidad({ navigation }) {
         </View>
       </View>
 
-      {/* Iconos derecha */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
@@ -160,7 +154,6 @@ export default function PoliticaPrivacidad({ navigation }) {
     </View>
   );
 
-  /** Cabecera ADMIN*/
   const renderAdminTopBar = () => (
     <View style={styles.topBar}>
       <View style={styles.adminInfo}>
@@ -207,7 +200,6 @@ export default function PoliticaPrivacidad({ navigation }) {
     </View>
   );
 
-  /** Cabecera ORGANIZADOR */
   const renderOrganizerTopBar = () =>
     role === "organizer" && (
       <View
@@ -220,7 +212,6 @@ export default function PoliticaPrivacidad({ navigation }) {
           backgroundColor: "#fff",
         }}
       >
-        {/* Perfil organizador */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View
             style={{
@@ -259,7 +250,6 @@ export default function PoliticaPrivacidad({ navigation }) {
           </View>
         </View>
 
-        {/* Iconos derecha */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
             <Image
@@ -291,7 +281,6 @@ export default function PoliticaPrivacidad({ navigation }) {
       </View>
     );
 
-  /** Menú ADMIN  */
   const renderAdminMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
@@ -323,7 +312,6 @@ export default function PoliticaPrivacidad({ navigation }) {
       </>
     );
 
-  /** Menú ORGANIZADOR */
   const renderOrganizerMenuWeb = () =>
     role === "organizer" &&
     Platform.OS === "web" &&
@@ -370,7 +358,6 @@ export default function PoliticaPrivacidad({ navigation }) {
       </Animated.View>
     );
 
-  /** Menú USUARIO (web) */
   const renderUserMenuWeb = () =>
     role === "user" &&
     Platform.OS === "web" &&
@@ -421,7 +408,6 @@ export default function PoliticaPrivacidad({ navigation }) {
       </Animated.View>
     );
 
-  /** Render principal */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", position: "relative" }}>
       <Header hideAuthButtons />
@@ -579,7 +565,6 @@ export default function PoliticaPrivacidad({ navigation }) {
   );
 }
 
-// ESTILOS
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
