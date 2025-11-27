@@ -75,6 +75,7 @@ export default function OrganizerEventDetail({ route }) {
   const goToContact = () => navigation.navigate("Contacto");
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
+  const goToOrganizer = () => navigation.navigate("Organizer");
 
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
@@ -188,8 +189,17 @@ export default function OrganizerEventDetail({ route }) {
           </View>
         </View>
 
-        {/* Iconos */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable
+            onPress={() => navigation.navigate("Organizer")}
+            style={{ marginRight: 18 }}
+          >
+            <Image
+              source={require("../assets/iconos/add-organizador.png")}
+              style={{ width: 24, height: 30, tintColor: "#F3B23F" }}
+            />
+          </Pressable>
+
           <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
             <Image
               source={require("../assets/iconos/bell3.png")}
@@ -197,7 +207,6 @@ export default function OrganizerEventDetail({ route }) {
             />
           </Pressable>
 
-          {/* NUEVO ICONO DEL CALENDARIO */}
           <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
             <Image
               source={require("../assets/iconos/calendar-organizador.png")}
@@ -311,13 +320,8 @@ export default function OrganizerEventDetail({ route }) {
               {event.title}
             </Text>
           </View>
-
-          {/* ==============================
-         VERSIÓN WEB (ESTILO FINAL)
-       ============================== */}
           {Platform.OS === "web" ? (
             <>
-              {/* GRID 2 COLUMNAS */}
               <View
                 style={{
                   flexDirection: "row",
@@ -326,7 +330,6 @@ export default function OrganizerEventDetail({ route }) {
                   gap: 20,
                 }}
               >
-                {/* IMAGEN IZQUIERDA */}
                 <Image
                   source={{
                     uri:
@@ -341,8 +344,6 @@ export default function OrganizerEventDetail({ route }) {
                   }}
                   resizeMode="cover"
                 />
-
-                {/* DESCRIPCIÓN DERECHA */}
                 <View style={{ width: "48%" }}>
                   <Text
                     style={{
@@ -514,7 +515,7 @@ export default function OrganizerEventDetail({ route }) {
                 style={{
                   width: "100%",
                   flexDirection: "row",
-                  justifyContent: "space-between", 
+                  justifyContent: "space-between",
                   alignItems: "center",
                   marginTop: 15,
                   gap: 15,

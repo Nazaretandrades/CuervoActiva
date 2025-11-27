@@ -159,3 +159,60 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+
+// ADMIN: CREAR USUARIO MANUALMENTE
+exports.createUserByAdmin = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    const existing = await User.findOne({ email });
+    if (existing)
+      return res.status(400).json({ error: "El correo ya existe" });
+
+    const allowedRoles = ["user", "organizer"];
+    const finalRole = allowedRoles.includes(role) ? role : "user";
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      name,
+      email,
+      password: hashed,
+      role: finalRole,
+    });
+
+    res.status(201).json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+// ADMIN: EDITAR USUARIO
+exports.updateUserByAdmin = async (req, res) => {
+  try {
+    const { name, email, role, password } = req.body;
+
+    const user = await User.findById(req.params.id);
+    if (!user)
+      return res.status(404).json({ error: "Usuario no encontrado" });
+
+    user.name = name || user.name;
+    user.email = email || user.email;
+
+    if (password) {
+      user.password = await bcrypt.hash(password, 10);
+    }
+
+    const allowedRoles = ["user", "organizer"];
+    if (allowedRoles.includes(role)) user.role = role;
+
+    await user.save();
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+

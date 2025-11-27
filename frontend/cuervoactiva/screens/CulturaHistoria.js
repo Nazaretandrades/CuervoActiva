@@ -527,6 +527,36 @@ const events = [
     description:
       "Las Fiestas Patronales en honor a la Virgen del Rosario son el broche de oro del calendario festivo de El Cuervo. Durante varios días, el municipio se llena de alegría, fe y tradición. Las calles se adornan con flores y banderines, y los vecinos participan en misas, procesiones y actos religiosos en los que la patrona recorre el pueblo entre aplausos y vítores. Junto a las actividades religiosas, el programa incluye conciertos, pasacalles, competiciones deportivas y actividades culturales para todas las edades. Es un tiempo de reencuentros, en el que muchos cuerveños que viven fuera regresan para celebrar junto a familiares y amigos. Las fiestas patronales son un reflejo del amor y la devoción del pueblo por su Virgen, símbolo de esperanza, unión y orgullo local.",
   },
+  {
+    title: "Cabalgata de Reyes Magos",
+    image: require("../assets/cabalgatas.jpg"),
+    description:
+      "Cada 5 de enero, El Cuervo celebra su tradicional Cabalgata de Reyes Magos, en la que Melchor, Gaspar y Baltasar recorren las calles del municipio lanzando caramelos y regalos a los niños. Carrozas decoradas por asociaciones locales, música, animación y un ambiente familiar convierten este desfile en uno de los días más especiales del año.",
+  },
+  {
+    title: "Encendido del Alumbrado y Mercadillo de Navidad",
+    image: require("../assets/alumbrado_navidad.jpg"),
+    description:
+      "El encendido del alumbrado navideño marca el inicio de la Navidad en El Cuervo. Se acompaña de un mercadillo con artesanía local, actividades infantiles, actuaciones musicales y visitas de personajes navideños. Es un evento esperado que reúne a familias y asociaciones del municipio.",
+  },
+  {
+    title: "Verano Cultural – Noches al Fresquito",
+    image: require("../assets/cine.jpg"),
+    description:
+      "Durante los meses de verano, el Ayuntamiento organiza el programa 'Verano Cultural', que incluye noches de cine al aire libre, conciertos, teatro, actividades infantiles y espectáculos. Estas veladas, celebradas en plazas y espacios abiertos, fomentan la convivencia y el ocio para todas las edades.",
+  },
+  {
+    title: "Concurso de Saetas",
+    image: require("../assets/saetas.jpg"),
+    description:
+      "En la época de Cuaresma, El Cuervo acoge el Concurso de Saetas, un certamen donde saeteros locales y de municipios cercanos interpretan este canto tradicional lleno de emoción y devoción. Es un evento cultural muy significativo que realza la importancia del flamenco religioso en la localidad.",
+  },
+  {
+    title: "Día de Andalucía",
+    image: require("../assets/andalucia.jpg"),
+    description:
+      "El 28 de febrero, El Cuervo celebra el Día de Andalucía con actos institucionales, actuaciones de música y danza, actividades escolares, degustaciones populares y convivencia ciudadana. Es una jornada festiva en la que se pone en valor la identidad andaluza y la participación comunitaria.",
+  },
 ];
 
 const styles = StyleSheet.create({

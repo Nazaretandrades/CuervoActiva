@@ -6,7 +6,13 @@ const { getDateKey } = require("../utils/dateKey");
 // Listar todos los eventos (para usuarios normales)
 exports.listEvents = async (req, res) => {
   try {
-    const events = await Event.find();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const events = await Event.find({
+      date: { $gte: today },
+    });
+
     res.json(events);
   } catch (err) {
     console.error("❌ Error al listar eventos:", err);
@@ -20,7 +26,14 @@ exports.listOrganizerEvents = async (req, res) => {
     if (!req.user || !req.user.id)
       return res.status(401).json({ error: "Usuario no autenticado" });
 
-    const events = await Event.find({ createdBy: req.user.id });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const events = await Event.find({
+      createdBy: req.user.id,
+      date: { $gte: today },
+    });
+
     res.json(events);
   } catch (err) {
     console.error("❌ Error en listOrganizerEvents:", err);
@@ -32,8 +45,7 @@ exports.listOrganizerEvents = async (req, res) => {
 exports.getEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
-    if (!event)
-      return res.status(404).json({ error: "Evento no encontrado" });
+    if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
     res.json(event);
   } catch (err) {
@@ -45,11 +57,25 @@ exports.getEvent = async (req, res) => {
 // Crear un evento
 exports.createEvent = async (req, res) => {
   try {
-    if (req.user.role !== "organizer")
+    if (!["organizer", "admin"].includes(req.user.role))
       return res.status(403).json({ error: "No autorizado" });
 
     let { title, description, date, hour, location, category, image_url } =
       req.body;
+
+    if (!title)
+      return res.status(400).json({ error: "El título es obligatorio" });
+    if (!description)
+      return res.status(400).json({ error: "La descripción es obligatoria" });
+    if (!date)
+      return res.status(400).json({ error: "La fecha es obligatoria" });
+    if (!hour) return res.status(400).json({ error: "La hora es obligatoria" });
+    if (!location)
+      return res.status(400).json({ error: "La ubicación es obligatoria" });
+    if (!category)
+      return res.status(400).json({ error: "La categoría es obligatoria" });
+    if (!image_url)
+      return res.status(400).json({ error: "La imagen es obligatoria" });
 
     if (typeof date === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
       const [dd, mm, yyyy] = date.split("/").map(Number);
@@ -115,8 +141,7 @@ exports.createEvent = async (req, res) => {
 exports.updateEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
-    if (!event)
-      return res.status(404).json({ error: "Evento no encontrado" });
+    if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
     let { date } = req.body;
 
@@ -171,8 +196,7 @@ exports.updateEvent = async (req, res) => {
 exports.deleteEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
-    if (!event)
-      return res.status(404).json({ error: "Evento no encontrado" });
+    if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
     if (req.user.role !== "admin")
       return res.status(403).json({ error: "No autorizado" });

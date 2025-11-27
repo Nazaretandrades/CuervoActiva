@@ -340,18 +340,49 @@ export default function Organizer() {
   };
 
   const handleSubmit = async () => {
-    const required = [
-      "title",
-      "description",
-      "date",
-      "hour",
-      "location",
-      "category",
-      "image_url",
-    ];
-    const missing = required.filter((f) => !form[f]?.trim());
-    if (missing.length > 0) {
-      showBanner("⚠️ Completa todos los campos antes de continuar", "#f1c40f");
+
+    if (!form.title.trim()) {
+      showBanner("El título es obligatorio", "#e67e22");
+      return;
+    }
+
+    if (!form.description.trim()) {
+      showBanner("La descripción es obligatoria", "#e67e22");
+      return;
+    }
+
+    if (!form.date.trim()) {
+      showBanner("La fecha es obligatoria", "#e67e22");
+      return;
+    }
+
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(form.date)) {
+      showBanner("La fecha debe tener formato DD/MM/YYYY", "#e67e22");
+      return;
+    }
+
+    if (!form.hour.trim()) {
+      showBanner("La hora es obligatoria", "#e67e22");
+      return;
+    }
+
+    if (!/^\d{2}:\d{2}$/.test(form.hour)) {
+      showBanner("La hora debe tener formato HH:MM", "#e67e22");
+      return;
+    }
+
+    if (!form.location.trim()) {
+      showBanner("La ubicación es obligatoria", "#e67e22");
+      return;
+    }
+
+    if (!form.category.trim()) {
+      showBanner("La categoría es obligatoria", "#e67e22");
+      return;
+    }
+
+    if (!form.image_url.trim()) {
+      showBanner("Debes añadir una imagen", "#e67e22");
       return;
     }
 

@@ -181,7 +181,20 @@ export default function AdminEventDetail({ route }) {
         </View>
 
         {/* Iconos */}
+
         <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Pressable
+            onPress={() => navigation.navigate("Admin")}
+            style={{
+              marginRight: 20,
+              ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/add-administrador.png")}
+              style={{ width: 26, height: 30, tintColor: "#0094A2" }}
+            />
+          </Pressable>
           <Pressable
             onPress={goToNotifications}
             style={{

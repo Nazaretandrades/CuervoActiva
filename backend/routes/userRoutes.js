@@ -1,13 +1,15 @@
 const express = require("express");
 const router = express.Router();
 
-// Importamos las funciones del controlador que manejan la lógica de los usuarios
+// Importamos TODAS las funciones del controlador que manejan la lógica de los usuarios
 const {
   registerUser,
   loginUser,
   getProfile,
   getAllUsers,
   deleteUser,
+  createUserByAdmin,
+  updateUserByAdmin,
 } = require("../controllers/userController");
 
 // Importamos los middlewares de autenticación y control de roles
@@ -47,5 +49,27 @@ router.get("/", auth, authorizeRoles("admin"), getAllUsers);
  * - Solo accesible para administradores.
  */
 router.delete("/:id", auth, authorizeRoles("admin"), deleteUser);
+
+/**
+ * RUTA: POST /api/users/admin-create
+ * Crear usuario manualmente desde el panel admin.
+ */
+router.post(
+  "/admin-create",
+  auth,
+  authorizeRoles("admin"),
+  createUserByAdmin
+);
+
+/**
+ * RUTA: PUT /api/users/admin-update/:id
+ * Editar usuario desde el panel admin.
+ */
+router.put(
+  "/admin-update/:id",
+  auth,
+  authorizeRoles("admin"),
+  updateUserByAdmin
+);
 
 module.exports = router;

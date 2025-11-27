@@ -26,7 +26,7 @@ const upload = require("../middlewares/uploadMiddleware");
 router.post(
   "/upload",
   auth,
-  authorizeRoles("organizer"),
+  authorizeRoles("organizer", "admin"),
   upload.single("image"),
   (req, res) => {
     if (!req.file) return res.status(400).json({ error: "No se subió imagen" });
@@ -71,7 +71,7 @@ router.get("/:id", getEvent);
  * - Requiere autenticación.
  * - Solo los usuarios con rol "organizer" pueden crear eventos.
  */
-router.post("/", auth, authorizeRoles("organizer"), createEvent);
+router.post("/", auth, authorizeRoles("organizer", "admin"), createEvent);
 
 /**
  * RUTA: PUT /api/events/:id

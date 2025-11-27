@@ -82,22 +82,53 @@ export default function AddEvent() {
   };
 
   const handleSubmit = async () => {
-    const required = [
-      "title",
-      "description",
-      "date",
-      "hour",
-      "location",
-      "category",
-      "image_url",
-    ];
-    const missing = required.filter((f) => !form[f]?.trim());
-    if (missing.length > 0) {
-      alert("⚠️ Completa todos los campos antes de continuar");
+    if (!form.title.trim()) {
+      alert("⚠️ El título es obligatorio");
+      return;
+    }
+
+    if (!form.description.trim()) {
+      alert("⚠️ La descripción es obligatoria");
+      return;
+    }
+
+    if (!form.date.trim()) {
+      alert("⚠️ La fecha es obligatoria");
+      return;
+    }
+
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(form.date)) {
+      alert("⚠️ La fecha debe tener formato DD/MM/YYYY");
+      return;
+    }
+
+    if (!form.hour.trim()) {
+      alert("⚠️ La hora es obligatoria");
+      return;
+    }
+
+    if (!/^\d{2}:\d{2}$/.test(form.hour)) {
+      alert("⚠️ La hora debe tener formato HH:MM");
+      return;
+    }
+
+    if (!form.location.trim()) {
+      alert("⚠️ La ubicación es obligatoria");
+      return;
+    }
+
+    if (!form.category.trim()) {
+      alert("⚠️ La categoría es obligatoria");
+      return;
+    }
+
+    if (!form.image_url.trim()) {
+      alert("⚠️ Debes añadir una imagen");
       return;
     }
 
     setLoading(true);
+
     try {
       const token = await getSessionToken();
       if (!token) {
@@ -114,10 +145,13 @@ export default function AddEvent() {
         body: JSON.stringify(form),
       });
 
-      if (!res.ok) throw new Error("Error al crear evento");
+      if (!res.ok) {
+        throw new Error("Error al crear evento");
+      }
+
       alert("🎉 Evento creado con éxito");
       navigation.goBack();
-    } catch {
+    } catch (err) {
       alert("❌ No se pudo crear el evento");
     } finally {
       setLoading(false);

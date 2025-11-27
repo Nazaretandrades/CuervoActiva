@@ -3,11 +3,12 @@ import {
   View,
   Text,
   Image,
-  Pressable,
   ScrollView,
+  Pressable,
+  Platform,
   Animated,
   TouchableWithoutFeedback,
-  Platform,
+  TextInput,
   StyleSheet,
 } from "react-native";
 import Header from "../components/HeaderIntro";
@@ -30,6 +31,31 @@ export default function AdminUsers() {
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  // Modal eliminar usuario
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
+  // 🔹 Modales crear / editar usuario
+  const [createVisible, setCreateVisible] = useState(false);
+  const [editVisible, setEditVisible] = useState(false);
+
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "user",
+  });
+
+  const [editUser, setEditUser] = useState({
+    id: "",
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "user",
+  });
+
   const showToast = (type, message) => {
     setToast({ visible: true, type, message });
     Animated.timing(fadeAnim, {
@@ -46,9 +72,6 @@ export default function AdminUsers() {
       }).start(() => setToast({ visible: false, type: "", message: "" }));
     }, 3000);
   };
-
-  const [confirmVisible, setConfirmVisible] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
 
   const openConfirmModal = (userId) => {
     setUserToDelete(userId);
@@ -146,6 +169,143 @@ export default function AdminUsers() {
     }
   };
 
+  // 🔹 Abrir / cerrar modal CREAR usuario
+  const openCreateModal = () => {
+    setNewUser({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "user",
+    });
+    setCreateVisible(true);
+  };
+
+  const closeCreateModal = () => setCreateVisible(false);
+
+  // 🔹 Abrir / cerrar modal EDITAR usuario
+  const openEditModal = (user) => {
+    setEditUser({
+      id: user._id,
+      name: user.name || "",
+      email: user.email || "",
+      password: "",
+      confirmPassword: "",
+      role: user.role || "user",
+    });
+    setEditVisible(true);
+  };
+
+  const closeEditModal = () => setEditVisible(false);
+
+  // 🔹 Crear usuario (POST /api/users/admin-create)
+  const submitCreateUser = async () => {
+    if (!newUser.name.trim() || !newUser.email.trim() || !newUser.password) {
+      showToast("error", "Nombre, email y contraseña son obligatorios");
+      return;
+    }
+
+    if (newUser.password !== newUser.confirmPassword) {
+      showToast("error", "Las contraseñas no coinciden");
+      return;
+    }
+
+    try {
+      const session = await getSession();
+      const token = session?.token;
+
+      const res = await fetch(`${API_URL}/admin-create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: newUser.name,
+          email: newUser.email,
+          password: newUser.password,
+          role: newUser.role,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast("error", data.error || "Error al crear el usuario");
+        return;
+      }
+
+      // Añadimos el usuario a la lista sin perder los demás
+      setUsers((prev) => [...prev, data]);
+      closeCreateModal();
+      showToast("success", "✅ Usuario creado correctamente");
+    } catch (err) {
+      showToast("error", "❌ Error al crear el usuario");
+    }
+  };
+
+  // 🔹 Editar usuario (PUT /api/users/admin-update/:id)
+  const submitEditUser = async () => {
+    if (!editUser.name.trim() || !editUser.email.trim()) {
+      showToast("error", "Nombre y email son obligatorios");
+      return;
+    }
+
+    if (editUser.password || editUser.confirmPassword) {
+      if (!editUser.password || !editUser.confirmPassword) {
+        showToast(
+          "error",
+          "Si cambias la contraseña, rellena ambos campos de contraseña"
+        );
+        return;
+      }
+      if (editUser.password !== editUser.confirmPassword) {
+        showToast("error", "Las contraseñas no coinciden");
+        return;
+      }
+    }
+
+    try {
+      const session = await getSession();
+      const token = session?.token;
+
+      const payload = {
+        name: editUser.name,
+        email: editUser.email,
+        role: editUser.role,
+      };
+      if (editUser.password) {
+        payload.password = editUser.password;
+      }
+
+      const res = await fetch(`${API_URL}/admin-update/${editUser.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast("error", data.error || "Error al actualizar el usuario");
+        return;
+      }
+
+      // Actualizamos en la lista
+      setUsers((prev) =>
+        prev.map((u) => (u._id === data._id ? data : u))
+      );
+
+      closeEditModal();
+      showToast("success", "✅ Usuario actualizado correctamente");
+    } catch (err) {
+      showToast("error", "❌ Error al actualizar el usuario");
+    }
+  };
+
   const renderAdminTopBar = () => (
     <View style={styles.topBar}>
       {/* Perfil Admin */}
@@ -238,20 +398,54 @@ export default function AdminUsers() {
           paddingVertical: 40,
         }}
       >
-        <Text style={styles.title}>Usuarios</Text>
+        {/* Título + botón crear */}
+        <View
+          style={{
+            width: "90%",
+            maxWidth: 1300,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Text style={styles.title}>Usuarios</Text>
+
+          <Pressable onPress={openCreateModal} style={styles.createButton}>
+            <Text style={styles.createButtonText}>+ Crear usuario</Text>
+          </Pressable>
+        </View>
 
         <View style={styles.userContainer}>
           <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator>
             {users.length > 0 ? (
               users.map((u) => (
                 <View key={u._id} style={styles.userCard}>
-                  <Text style={styles.userName}>{u.name}</Text>
-                  <Pressable onPress={() => openConfirmModal(u._id)}>
-                    <Image
-                      source={require("../assets/iconos/papelera.png")}
-                      style={styles.trashIcon}
-                    />
-                  </Pressable>
+                  <View>
+                    <Text style={styles.userName}>{u.name}</Text>
+                    <Text style={styles.userEmail}>{u.email}</Text>
+                    <Text style={styles.userRole}>
+                      Rol: {u.role === "organizer" ? "Organizador" : "Usuario"}
+                    </Text>
+                  </View>
+
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Pressable
+                      onPress={() => openEditModal(u)}
+                      style={{ marginRight: 14 }}
+                    >
+                      <Image
+                        source={require("../assets/iconos/editar.png")}
+                        style={styles.editIcon}
+                      />
+                    </Pressable>
+
+                    <Pressable onPress={() => openConfirmModal(u._id)}>
+                      <Image
+                        source={require("../assets/iconos/papelera.png")}
+                        style={styles.trashIcon}
+                      />
+                    </Pressable>
+                  </View>
                 </View>
               ))
             ) : (
@@ -261,6 +455,7 @@ export default function AdminUsers() {
         </View>
       </ScrollView>
 
+      {/* MODAL CONFIRMAR ELIMINAR */}
       {confirmVisible && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -286,12 +481,216 @@ export default function AdminUsers() {
         </View>
       )}
 
+      {/* MODAL CREAR USUARIO */}
+      {createVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalText}>Crear usuario</Text>
+
+            <TextInput
+              placeholder="Nombre"
+              placeholderTextColor="#999"
+              value={newUser.name}
+              onChangeText={(t) => setNewUser((p) => ({ ...p, name: t }))}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Email"
+              placeholderTextColor="#999"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={newUser.email}
+              onChangeText={(t) => setNewUser((p) => ({ ...p, email: t }))}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Contraseña"
+              placeholderTextColor="#999"
+              secureTextEntry
+              value={newUser.password}
+              onChangeText={(t) => setNewUser((p) => ({ ...p, password: t }))}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Repetir contraseña"
+              placeholderTextColor="#999"
+              secureTextEntry
+              value={newUser.confirmPassword}
+              onChangeText={(t) =>
+                setNewUser((p) => ({ ...p, confirmPassword: t }))
+              }
+              style={styles.input}
+            />
+
+            <Text style={styles.label}>Rol</Text>
+            <View style={styles.roleRow}>
+              <Pressable
+                onPress={() =>
+                  setNewUser((p) => ({ ...p, role: "user" }))
+                }
+                style={[
+                  styles.roleOption,
+                  newUser.role === "user" && styles.roleOptionSelected,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleOptionText,
+                    newUser.role === "user" && styles.roleOptionTextSelected,
+                  ]}
+                >
+                  Usuario
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() =>
+                  setNewUser((p) => ({ ...p, role: "organizer" }))
+                }
+                style={[
+                  styles.roleOption,
+                  newUser.role === "organizer" && styles.roleOptionSelected,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleOptionText,
+                    newUser.role === "organizer" &&
+                      styles.roleOptionTextSelected,
+                  ]}
+                >
+                  Organizador
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={[styles.modalButtons, { marginTop: 18 }]}>
+              <Pressable
+                onPress={closeCreateModal}
+                style={styles.cancelButton}
+              >
+                <Text style={{ color: "#333", fontWeight: "bold" }}>
+                  Cancelar
+                </Text>
+              </Pressable>
+              <Pressable onPress={submitCreateUser} style={styles.saveButton}>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  Crear
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* MODAL EDITAR USUARIO */}
+      {editVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalText}>Editar usuario</Text>
+
+            <TextInput
+              placeholder="Nombre"
+              placeholderTextColor="#999"
+              value={editUser.name}
+              onChangeText={(t) => setEditUser((p) => ({ ...p, name: t }))}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Email"
+              placeholderTextColor="#999"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={editUser.email}
+              onChangeText={(t) => setEditUser((p) => ({ ...p, email: t }))}
+              style={styles.input}
+            />
+
+            <Text style={styles.smallHint}>
+              Contraseña (déjala vacía si no quieres cambiarla)
+            </Text>
+            <TextInput
+              placeholder="Nueva contraseña (opcional)"
+              placeholderTextColor="#999"
+              secureTextEntry
+              value={editUser.password}
+              onChangeText={(t) => setEditUser((p) => ({ ...p, password: t }))}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Repetir nueva contraseña"
+              placeholderTextColor="#999"
+              secureTextEntry
+              value={editUser.confirmPassword}
+              onChangeText={(t) =>
+                setEditUser((p) => ({ ...p, confirmPassword: t }))
+              }
+              style={styles.input}
+            />
+
+            <Text style={styles.label}>Rol</Text>
+            <View style={styles.roleRow}>
+              <Pressable
+                onPress={() =>
+                  setEditUser((p) => ({ ...p, role: "user" }))
+                }
+                style={[
+                  styles.roleOption,
+                  editUser.role === "user" && styles.roleOptionSelected,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleOptionText,
+                    editUser.role === "user" && styles.roleOptionTextSelected,
+                  ]}
+                >
+                  Usuario
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() =>
+                  setEditUser((p) => ({ ...p, role: "organizer" }))
+                }
+                style={[
+                  styles.roleOption,
+                  editUser.role === "organizer" && styles.roleOptionSelected,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleOptionText,
+                    editUser.role === "organizer" &&
+                      styles.roleOptionTextSelected,
+                  ]}
+                >
+                  Organizador
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={[styles.modalButtons, { marginTop: 18 }]}>
+              <Pressable onPress={closeEditModal} style={styles.cancelButton}>
+                <Text style={{ color: "#333", fontWeight: "bold" }}>
+                  Cancelar
+                </Text>
+              </Pressable>
+              <Pressable onPress={submitEditUser} style={styles.saveButton}>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  Guardar
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
+
       {toast.visible && (
         <Animated.View
           style={[
             styles.toast,
             {
-              backgroundColor: toast.type === "success" ? "#4CAF50" : "#E74C3C",
+              backgroundColor:
+                toast.type === "success" ? "#4CAF50" : "#E74C3C",
               opacity: fadeAnim,
             },
           ]}
@@ -367,13 +766,32 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   userName: { color: "#fff", fontWeight: "bold", fontSize: 15 },
+  userEmail: { color: "#e0e0e0", fontSize: 13 },
+  userRole: { color: "#F3B23F", fontSize: 13, marginTop: 2 },
   trashIcon: { width: 22, height: 22, tintColor: "#fff" },
+  editIcon: { width: 22, height: 22, tintColor: "#fff" },
   noUsers: { color: "#666", textAlign: "center", marginTop: 20 },
 
   title: {
     fontSize: 22,
     fontWeight: "bold",
     color: "#014869",
+  },
+
+  createButton: {
+    backgroundColor: "#F3B23F",
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  createButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
   },
 
   sideMenu: {
@@ -411,7 +829,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 25,
     borderRadius: 15,
-    width: 320,
+    width: 340,
     alignItems: "center",
     shadowColor: "#000",
     shadowOpacity: 0.25,
@@ -441,10 +859,67 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 8,
   },
+  saveButton: {
+    backgroundColor: "#014869",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+
+  input: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 10,
+    fontSize: 14,
+    color: "#333",
+  },
+  label: {
+    alignSelf: "flex-start",
+    marginBottom: 4,
+    color: "#014869",
+    fontWeight: "600",
+  },
+  roleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 10,
+  },
+  roleOption: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 20,
+    paddingVertical: 8,
+    alignItems: "center",
+    marginHorizontal: 4,
+  },
+  roleOptionSelected: {
+    backgroundColor: "#014869",
+    borderColor: "#014869",
+  },
+  roleOptionText: {
+    color: "#014869",
+    fontWeight: "600",
+    fontSize: 13,
+  },
+  roleOptionTextSelected: {
+    color: "#fff",
+  },
+  smallHint: {
+    fontSize: 11,
+    color: "#777",
+    alignSelf: "flex-start",
+    marginBottom: 4,
+  },
 
   toast: {
     position: "absolute",
-    bottom: 100, 
+    bottom: 100,
     left: "5%",
     right: "5%",
     paddingVertical: 14,
@@ -454,12 +929,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 5,
-  },
-  toastText: {
-    color: "#fff",
-    fontWeight: "700",
-    textAlign: "center",
-    fontSize: 15,
   },
   toastText: {
     color: "#fff",
