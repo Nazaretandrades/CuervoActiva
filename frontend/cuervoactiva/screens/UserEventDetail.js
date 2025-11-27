@@ -29,14 +29,12 @@ export default function UserEventDetail() {
 
   const [event, setEvent] = useState(null);
   const [rating, setRating] = useState(0);
-  const [averageRating, setAverageRating] = useState(0);
   const [hasRated, setHasRated] = useState(false);
   const [userName, setUserName] = useState("Usuario");
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [shareVisible, setShareVisible] = useState(false);
 
-  // Obtener token
   const getToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -53,7 +51,6 @@ export default function UserEventDetail() {
     }
   };
 
-  // Obtener usuario
   const getUserInfo = async () => {
     try {
       let session;
@@ -79,7 +76,28 @@ export default function UserEventDetail() {
     }
   };
 
-  //  Cargar evento
+  const loadRatings = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const res = await fetch(`${COMMENTS_URL}/user/${eventId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      setRating(data.userRating);
+      setHasRated(true);
+    } catch (err) {
+      console.log("Error cargando valoración:", err);
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -89,15 +107,16 @@ export default function UserEventDetail() {
         setEvent(dataEvent);
 
         await getUserInfo();
+        await loadRatings();
       } catch (err) {
         console.error("Error cargando detalle:", err);
         Alert.alert("Error", "No se pudo cargar el detalle del evento");
       }
     };
+
     if (eventId) loadData();
   }, [eventId]);
 
-  // Valorar evento
   const handleRate = async (value) => {
     try {
       const token = await getToken();
@@ -105,6 +124,7 @@ export default function UserEventDetail() {
         Alert.alert("Error", "Debes iniciar sesión para valorar el evento");
         return;
       }
+
       setRating(value);
       const res = await fetch(`${COMMENTS_URL}/${eventId}`, {
         method: "POST",
@@ -115,7 +135,9 @@ export default function UserEventDetail() {
         body: JSON.stringify({ rating: value }),
       });
       if (!res.ok) throw new Error("No se pudo enviar la valoración");
+
       setHasRated(true);
+      await loadRatings();
       Alert.alert("✅", "Tu valoración se ha registrado correctamente");
     } catch (err) {
       console.error("Error al valorar:", err);
@@ -125,11 +147,8 @@ export default function UserEventDetail() {
 
   const renderStars = (ratingValue, interactive = false) => {
     const stars = [];
-    const displayRating = interactive
-      ? hasRated
-        ? rating
-        : averageRating
-      : ratingValue;
+    const displayRating = interactive ? rating : ratingValue;
+
     for (let i = 1; i <= 5; i++) {
       stars.push(
         <Pressable
@@ -149,10 +168,10 @@ export default function UserEventDetail() {
         </Pressable>
       );
     }
+
     return <View style={{ flexDirection: "row" }}>{stars}</View>;
   };
 
-  // Compartir
   const shareWhatsApp = () => {
     if (!event) return;
     const msg = `¡Mira este evento! ${event.title} - ${event.location}`;
@@ -168,7 +187,6 @@ export default function UserEventDetail() {
     Linking.openURL(url);
   };
 
-  // Navegaciones
   const goToProfile = () => navigation.navigate("UserProfile");
   const goToNotifications = () => navigation.navigate("UserNotifications");
   const goToCalendar = () => navigation.navigate("Calendar");
@@ -197,7 +215,6 @@ export default function UserEventDetail() {
     }
   };
 
-  // CABECERA WEB
   const renderTopBarWeb = () => (
     <View
       style={{
@@ -209,7 +226,6 @@ export default function UserEventDetail() {
         backgroundColor: "#fff",
       }}
     >
-      {/* Perfil Usuario */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
@@ -236,7 +252,6 @@ export default function UserEventDetail() {
         </View>
       </View>
 
-      {/* Iconos derecha */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
@@ -266,7 +281,6 @@ export default function UserEventDetail() {
     </View>
   );
 
-  // CABECERA MÓVIL
   const renderTopBarMobile = () => (
     <View
       style={{
@@ -280,7 +294,6 @@ export default function UserEventDetail() {
         backgroundColor: "#fff",
       }}
     >
-      {/* Perfil Usuario */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
@@ -307,7 +320,6 @@ export default function UserEventDetail() {
         </View>
       </View>
 
-      {/* Iconos derecha */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 16 }}>
           <Image
@@ -330,7 +342,6 @@ export default function UserEventDetail() {
     </View>
   );
 
-  // MENÚ WEB
   const renderWebMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
@@ -377,7 +388,6 @@ export default function UserEventDetail() {
       </Animated.View>
     );
 
-  // MENÚ MÓVIL
   const renderMobileMenu = () =>
     Platform.OS !== "web" &&
     menuVisible && (
@@ -519,7 +529,6 @@ export default function UserEventDetail() {
       </View>
     );
 
-  // RENDER PRINCIPAL
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
@@ -527,7 +536,6 @@ export default function UserEventDetail() {
       {renderWebMenu()}
       {renderMobileMenu()}
 
-      {/* CONTENIDO DEL DETALLE */}
       {event && (
         <ScrollView
           style={{
@@ -535,9 +543,7 @@ export default function UserEventDetail() {
             backgroundColor: "#f5f6f7",
             padding: 25,
           }}
-          contentContainerStyle={{
-            paddingBottom: 40,
-          }}
+          contentContainerStyle={{ paddingBottom: 40 }}
         >
           <View
             style={{
@@ -548,130 +554,215 @@ export default function UserEventDetail() {
               borderRadius: 3,
             }}
           >
-            <Text
-              style={{
-                color: "#fff",
-                fontWeight: "bold",
-                fontSize: 15,
-              }}
-            >
+            <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 15 }}>
               {event.title}
             </Text>
           </View>
 
-          {event.image_url ? (
-            <Image
-              source={{
-                uri: event.image_url.startsWith("http")
-                  ? event.image_url.replace(
-                      "localhost",
-                      Platform.OS === "android" ? "10.0.2.2" : "192.168.18.19"
-                    )
-                  : `${
-                      Platform.OS === "android"
-                        ? "http://10.0.2.2:5000"
-                        : "http://192.168.18.19:5000"
-                    }${
-                      event.image_url.startsWith("/") ? "" : "/"
-                    }${event.image_url.replace(/\\/g, "/")}`,
-              }}
-              style={{
-                width: "100%",
-                height: 250,
-                borderRadius: 8,
-                marginBottom: 20,
-              }}
-              resizeMode="cover"
-            />
-          ) : null}
-
-          <Text
-            style={{
-              color: "#014869",
-              fontWeight: "bold",
-              fontSize: 15,
-              marginBottom: 6,
-            }}
-          >
-            Descripción
-          </Text>
-          <Text
-            style={{
-              color: "#333",
-              fontSize: 14,
-              textAlign: "justify",
-              lineHeight: 20,
-            }}
-          >
-            {event.description}
-          </Text>
-
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "flex-end",
-              marginTop: 20,
-            }}
-          >
-            <View
-              style={{
-                backgroundColor:
-                  new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
-                borderRadius: 25,
-                paddingVertical: 7,
-                paddingHorizontal: 18,
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
-              <Text
+          {Platform.OS === "web" ? (
+            <>
+              <View
                 style={{
-                  color: "#fff",
-                  fontWeight: "bold",
-                  fontSize: 13,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  gap: 20,
+                  alignItems: "flex-start",
                 }}
               >
-                {new Date(event.date) > new Date()
-                  ? "Habilitado"
-                  : "Deshabilitado"}
-              </Text>
-            </View>
-          </View>
+                <Image
+                  source={{
+                    uri:
+                      Platform.OS === "android"
+                        ? event.image_url
+                            .replace("localhost", "10.0.2.2")
+                            .replace(/\\/g, "/")
+                        : event.image_url.replace(/\\/g, "/"),
+                  }}
+                  style={{
+                    width: "50%",
+                    height: 250,
+                    borderRadius: 8,
+                  }}
+                  resizeMode="cover"
+                />
 
-          <View style={{ marginTop: 25 }}>
-            <Text
-              style={{
-                fontWeight: "bold",
-                color: "#014869",
-                marginBottom: 8,
-                fontSize: 14,
-              }}
-            >
-              Tu valoración
-            </Text>
-            {renderStars(averageRating, true)}
-          </View>
+                <View style={{ width: "48%" }}>
+                  <Text
+                    style={{
+                      color: "#014869",
+                      fontWeight: "bold",
+                      fontSize: 15,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Descripción
+                  </Text>
 
-          <View
-            style={{
-              alignItems: "flex-end",
-              marginTop: 15,
-            }}
-          >
-            <Pressable
-              onPress={() => setShareVisible(true)}
-              style={Platform.OS === "web" ? { cursor: "pointer" } : {}}
-            >
+                  <Text
+                    style={{
+                      color: "#333",
+                      fontSize: 14,
+                      lineHeight: 20,
+                      textAlign: "justify",
+                    }}
+                  >
+                    {event.description}
+                  </Text>
+                </View>
+              </View>
+
+              <View
+                style={{
+                  marginTop: 30,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor:
+                      new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
+                    borderRadius: 25,
+                    paddingVertical: 7,
+                    paddingHorizontal: 18,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontWeight: "bold",
+                      fontSize: 13,
+                    }}
+                  >
+                    {new Date(event.date) > new Date()
+                      ? "Habilitado"
+                      : "Deshabilitado"}
+                  </Text>
+                </View>
+
+                <Pressable onPress={() => setShareVisible(true)}>
+                  <Image
+                    source={require("../assets/iconos/compartir.png")}
+                    style={{ width: 26, height: 26, tintColor: "#014869" }}
+                  />
+                </Pressable>
+              </View>
+
+              <View style={{ marginTop: 30 }}>
+                <Text
+                  style={{
+                    color: "#014869",
+                    fontWeight: "bold",
+                    marginBottom: 10,
+                    fontSize: 15,
+                  }}
+                >
+                  Tu valoración
+                </Text>
+
+                {renderStars(rating, true)}
+              </View>
+            </>
+          ) : (
+            <>
               <Image
-                source={require("../assets/iconos/compartir.png")}
-                style={{ width: 22, height: 22, tintColor: "#014869" }}
+                source={{
+                  uri:
+                    Platform.OS === "android"
+                      ? event.image_url
+                          .replace("localhost", "10.0.2.2")
+                          .replace(/\\/g, "/")
+                      : event.image_url.replace(/\\/g, "/"),
+                }}
+                style={{
+                  width: "100%",
+                  height: 250,
+                  borderRadius: 8,
+                  marginBottom: 20,
+                }}
+                resizeMode="cover"
               />
-            </Pressable>
-          </View>
+
+              <Text
+                style={{
+                  color: "#014869",
+                  fontWeight: "bold",
+                  fontSize: 15,
+                  marginBottom: 6,
+                }}
+              >
+                Descripción
+              </Text>
+
+              <Text
+                style={{
+                  color: "#333",
+                  fontSize: 14,
+                  lineHeight: 20,
+                  textAlign: "justify",
+                }}
+              >
+                {event.description}
+              </Text>
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  marginTop: 20,
+                  alignItems: "center",
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor:
+                      new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
+                    borderRadius: 25,
+                    paddingVertical: 7,
+                    paddingHorizontal: 18,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontWeight: "bold",
+                      fontSize: 13,
+                    }}
+                  >
+                    {new Date(event.date) > new Date()
+                      ? "Habilitado"
+                      : "Deshabilitado"}
+                  </Text>
+                </View>
+
+                <Pressable onPress={() => setShareVisible(true)}>
+                  <Image
+                    source={require("../assets/iconos/compartir.png")}
+                    style={{ width: 26, height: 26, tintColor: "#014869" }}
+                  />
+                </Pressable>
+              </View>
+
+              <View style={{ marginTop: 30 }}>
+                <Text
+                  style={{
+                    color: "#014869",
+                    fontWeight: "bold",
+                    marginBottom: 10,
+                    fontSize: 15,
+                  }}
+                >
+                  Tu valoración
+                </Text>
+
+                {renderStars(rating, true)}
+              </View>
+            </>
+          )}
         </ScrollView>
       )}
 
-      {/* MODAL COMPARTIR */}
       <Modal visible={shareVisible} transparent animationType="fade">
         <View
           style={{
@@ -743,7 +834,6 @@ export default function UserEventDetail() {
         </View>
       </Modal>
 
-      {/* FOOTER WEB */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAbout}

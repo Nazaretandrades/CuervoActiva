@@ -7,7 +7,6 @@ import {
   ScrollView,
   Image,
   Animated,
-  TouchableWithoutFeedback,
   Platform,
   Alert,
 } from "react-native";
@@ -34,7 +33,6 @@ export default function User() {
   const [menuAnim] = useState(new Animated.Value(-250));
   const [hoveredCategory, setHoveredCategory] = useState(null);
 
-  /** Sesión  */
   const getSessionToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -50,7 +48,6 @@ export default function User() {
     }
   };
 
-  /** Navegaciones */
   const goToProfile = () => {
     if (Platform.OS !== "web") toggleMenu();
     navigation.navigate("UserProfile");
@@ -89,7 +86,6 @@ export default function User() {
   const goToNotifications = () => navigation.navigate("UserNotifications");
   const goToCalendar = () => navigation.navigate("Calendar");
 
-  /** Usuario */
   const getUserName = async () => {
     try {
       let session;
@@ -113,7 +109,6 @@ export default function User() {
     }
   };
 
-  /** Cargar datos */
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -144,7 +139,6 @@ export default function User() {
     loadData();
   }, []);
 
-  /** Filtro */
   useEffect(() => {
     let data = events;
     if (selectedCategory !== "all") {
@@ -162,7 +156,6 @@ export default function User() {
     setFiltered(data);
   }, [search, selectedCategory, events]);
 
-  /** Menú */
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -180,7 +173,6 @@ export default function User() {
     }
   };
 
-  /** Favoritos */
   const toggleFavorite = async (eventId) => {
     try {
       const token = await getSessionToken();
@@ -206,7 +198,6 @@ export default function User() {
     }
   };
 
-  /** Cabecera WEB */
   const renderTopBarWeb = () => (
     <View
       style={{
@@ -218,7 +209,6 @@ export default function User() {
         backgroundColor: "#fff",
       }}
     >
-      {/* Perfil Usuario */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
@@ -245,7 +235,6 @@ export default function User() {
         </View>
       </View>
 
-      {/* Buscador */}
       <View
         style={{
           flexDirection: "row",
@@ -278,7 +267,6 @@ export default function User() {
         />
       </View>
 
-      {/* Iconos derecha */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
@@ -307,7 +295,6 @@ export default function User() {
       </View>
     </View>
   );
-  /** Cabecera MÓVIL */
   const renderTopBarMobile = () => (
     <View
       style={{
@@ -321,7 +308,6 @@ export default function User() {
         backgroundColor: "#fff",
       }}
     >
-      {/* Perfil Usuario */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
@@ -348,9 +334,7 @@ export default function User() {
         </View>
       </View>
 
-      {/* Iconos derecha */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
-        {/* 🔔 Notificaciones */}
         <Pressable onPress={goToNotifications} style={{ marginRight: 16 }}>
           <Image
             source={require("../assets/iconos/bell.png")}
@@ -358,7 +342,6 @@ export default function User() {
           />
         </Pressable>
 
-        {/* Menú */}
         <Pressable onPress={toggleMenu}>
           <Image
             source={
@@ -373,7 +356,6 @@ export default function User() {
     </View>
   );
 
-  /** Menú lateral web  */
   const renderWebMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
@@ -422,7 +404,6 @@ export default function User() {
       </>
     );
 
-  /** Menú móvil */
   const renderMobileMenu = () =>
     Platform.OS !== "web" &&
     menuVisible && (
@@ -439,7 +420,6 @@ export default function User() {
           paddingTop: 50,
         }}
       >
-        {/* Header */}
         <View
           style={{
             flexDirection: "row",
@@ -467,7 +447,6 @@ export default function User() {
           </Text>
         </View>
 
-        {/* Opciones */}
         <View style={{ flex: 1 }}>
           {[
             {
@@ -530,7 +509,6 @@ export default function User() {
           ))}
         </View>
 
-        {/* Barra inferior */}
         <View
           style={{
             position: "absolute",
@@ -568,7 +546,6 @@ export default function User() {
       </View>
     );
 
-  /** Render */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", position: "relative" }}>
       <Header hideAuthButtons />
@@ -576,9 +553,7 @@ export default function User() {
       {renderWebMenu()}
       {renderMobileMenu()}
 
-      {/*  CONTENIDO  */}
       {Platform.OS === "web" ? (
-        /* WEB*/
         <View
           style={{
             flex: 1,
@@ -590,7 +565,6 @@ export default function User() {
             minHeight: "calc(100vh - 200px)",
           }}
         >
-          {/* CATEGORÍAS  */}
           <View
             style={{
               backgroundColor: "#f4f6f7",
@@ -685,7 +659,6 @@ export default function User() {
             ))}
           </View>
 
-          {/* LISTADO DE EVENTOS  */}
           <View
             style={{
               backgroundColor: "#f4f6f7",
@@ -788,7 +761,6 @@ export default function User() {
           </View>
         </View>
       ) : (
-        /* MÓVIL  */
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
@@ -797,7 +769,6 @@ export default function User() {
           }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Categorías */}
           <View style={{ paddingTop: 16, paddingBottom: 10 }}>
             <Text
               style={{
@@ -870,7 +841,6 @@ export default function User() {
             ))}
           </View>
 
-          {/* Listado de eventos */}
           <View style={{ paddingTop: 6 }}>
             <Text
               style={{
@@ -963,7 +933,6 @@ export default function User() {
         </ScrollView>
       )}
 
-      {/* FOOTER FIJO EN WEB */}
       {Platform.OS === "web" && (
         <View
           style={{

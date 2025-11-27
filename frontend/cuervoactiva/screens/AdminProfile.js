@@ -14,16 +14,12 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
 
-const API_BASE =
-  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
-
 export default function AdminProfile() {
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [adminData, setAdminData] = useState({ name: "Admin", email: "" });
 
-  /** Cargar usuario logueado */
   useEffect(() => {
     const loadUser = () => {
       try {
@@ -41,7 +37,6 @@ export default function AdminProfile() {
     return () => window.removeEventListener("storage", loadUser);
   }, []);
 
-  /** Cerrar sesión */
   const handleLogout = async () => {
     try {
       localStorage.removeItem("USER_SESSION");
@@ -56,7 +51,6 @@ export default function AdminProfile() {
     }
   };
 
-  /** Navegaciones */
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -67,7 +61,6 @@ export default function AdminProfile() {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToUsers = () => navigation.navigate("AdminUsers");
 
-  /** Menú lateral */
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -89,7 +82,6 @@ export default function AdminProfile() {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* CABECERA */}
       <View
         style={{
           flexDirection: "row",
@@ -185,7 +177,6 @@ export default function AdminProfile() {
         </View>
       </View>
 
-      {/*MENÚ LATERAL */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -243,7 +234,6 @@ export default function AdminProfile() {
         </>
       )}
 
-      {/* CONTENIDO PERFIL */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,

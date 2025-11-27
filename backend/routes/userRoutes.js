@@ -48,8 +48,4 @@ router.get("/", auth, authorizeRoles("admin"), getAllUsers);
  */
 router.delete("/:id", auth, authorizeRoles("admin"), deleteUser);
 
-/**
- * Exportamos el router
- * Esto permite que este archivo sea importado en "server.js" o en el enrutador principal.
- */
 module.exports = router;

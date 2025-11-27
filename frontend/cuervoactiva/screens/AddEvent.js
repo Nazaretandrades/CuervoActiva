@@ -14,7 +14,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation } from "@react-navigation/native";
 
-/** URL base del backend (solo móvil) */
 const API_URL = "http://10.0.2.2:5000/api/events";
 
 export default function AddEvent() {
@@ -32,7 +31,6 @@ export default function AddEvent() {
 
   const [loading, setLoading] = useState(false);
 
-  /**Obtener token de sesión guardado */
   const getSessionToken = async () => {
     try {
       const sessionString = await AsyncStorage.getItem("USER_SESSION");
@@ -43,7 +41,6 @@ export default function AddEvent() {
     }
   };
 
-  /** Elegir imagen desde la galería y subirla */
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permission.status !== "granted") {
@@ -84,7 +81,6 @@ export default function AddEvent() {
     }
   };
 
-  /** Crear evento */
   const handleSubmit = async () => {
     const required = [
       "title",
@@ -133,7 +129,6 @@ export default function AddEvent() {
       style={{ flex: 1, backgroundColor: "#F8F8F8" }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      {/* CABECERA */}
       <View
         style={{
           flexDirection: "row",
@@ -162,13 +157,11 @@ export default function AddEvent() {
         </Text>
       </View>
 
-      {/* FORMULARIO */}
       <ScrollView
         style={{ paddingHorizontal: 25, marginTop: 20 }}
         contentContainerStyle={{ paddingBottom: 150 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Título */}
         <Text style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}>
           Título del Evento:
         </Text>
@@ -201,7 +194,6 @@ export default function AddEvent() {
           />
         </View>
 
-        {/* Descripción */}
         <Text style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}>
           Descripción:
         </Text>
@@ -221,9 +213,7 @@ export default function AddEvent() {
           }}
         />
 
-        {/* Fecha y Lugar */}
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-          {/* Fecha */}
           <View style={{ width: "48%" }}>
             <Text
               style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}
@@ -260,7 +250,6 @@ export default function AddEvent() {
             </View>
           </View>
 
-          {/* Lugar */}
           <View style={{ width: "48%" }}>
             <Text
               style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}
@@ -297,7 +286,6 @@ export default function AddEvent() {
           </View>
         </View>
 
-        {/* Categoría */}
         <Text style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}>
           Categoría:
         </Text>
@@ -334,7 +322,6 @@ export default function AddEvent() {
           </Picker>
         </View>
 
-        {/* Hora */}
         <Text style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}>
           Hora:
         </Text>
@@ -367,7 +354,6 @@ export default function AddEvent() {
           />
         </View>
 
-        {/* Imagen */}
         <View
           style={{
             borderWidth: 1,
@@ -403,7 +389,6 @@ export default function AddEvent() {
           )}
         </View>
 
-        {/* Botón Crear evento */}
         <View style={{ alignItems: "center", marginTop: 30 }}>
           <Pressable
             onPress={handleSubmit}

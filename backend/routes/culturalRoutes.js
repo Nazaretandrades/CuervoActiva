@@ -1,4 +1,3 @@
-// Importamos Express para poder usar su sistema de enrutamiento.
 const express = require("express");
 
 // Creamos una instancia del router de Express.
@@ -24,9 +23,4 @@ router.get("/", listCulturalSections);
  * - Ruta pública, no requiere autenticación.
  */
 router.get("/:id", getCulturalSection);
-
-/**
- * Exportación del router
- * Esto permite importar este módulo en "server.js" o en el enrutador principal de la aplicación.
- */
 module.exports = router;

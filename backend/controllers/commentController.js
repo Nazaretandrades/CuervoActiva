@@ -1,3 +1,4 @@
+// controllers/commentController.js
 const Comment = require("../models/comment");
 const Event = require("../models/event");
 const Notification = require("../models/notification");
@@ -8,23 +9,33 @@ exports.addComment = async (req, res) => {
   try {
     const { rating } = req.body;
 
-    // Verifico que el usuario esté autenticado antes de permitir comentar
     if (!req.user || !req.user.id)
       return res.status(401).json({ error: "Usuario no autenticado" });
 
-    // Creo el comentario con la valoración y lo asocio al evento y al usuario
-    const comment = await Comment.create({
-      user: req.user.id,
-      event: req.params.eventId,
-      rating,
-    });
+    const userId = req.user.id; 
+    const eventId = req.params.eventId;
 
-    // Busco el evento para poder notificar al organizador
-    const event = await Event.findById(req.params.eventId).populate(
-      "createdBy"
-    );
+    // 1 Verificar si ya existe una valoración del mismo usuario para este evento
+    let existing = await Comment.findOne({ user: userId, event: eventId });
 
-    // Si el evento existe y tiene un creador, le envío una notificación
+    let comment;
+
+    if (existing) {
+      // 2️ Si existe -> ACTUALIZAR
+      existing.rating = rating;
+      comment = await existing.save();
+    } else {
+      // 3️ Si NO existe -> CREAR
+      comment = await Comment.create({
+        user: userId,
+        event: eventId,
+        rating,
+      });
+    }
+
+    // 4 Notificar al organizador igual que antes
+    const event = await Event.findById(eventId).populate("createdBy");
+
     if (event && event.createdBy) {
       await Notification.findOneAndUpdate(
         {
@@ -42,33 +53,52 @@ exports.addComment = async (req, res) => {
           } ha valorado tu evento "${event.title}" con ${rating} estrellas ⭐`,
           dateKey: getDateKey(),
         },
-        // Uso upsert para crear la notificación si no existe (o actualizarla si ya está)
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
     }
 
-    // Devuelvo el comentario creado
     res.json(comment);
   } catch (err) {
-    // Si algo falla, lo muestro en consola y devuelvo el error al cliente
     console.error("❌ Error en addComment:", err);
     res.status(400).json({ error: err.message });
   }
 };
 
-// Listar valoraciones
+// Listar valoraciones (para ADMIN / ORGANIZADOR)
 exports.getComments = async (req, res) => {
   try {
-    // Obtengo todos los comentarios del evento y muestro solo el nombre del usuario
     const comments = await Comment.find({ event: req.params.eventId }).populate(
       "user",
       "name"
     );
-
-    // Devuelvo la lista completa de valoraciones
     res.json(comments);
   } catch (err) {
-    // Manejo de error general
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Valoración del usuario logueado
+exports.getUserRating = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id)
+      return res.status(401).json({ error: "Usuario no autenticado" });
+
+    const userId = req.user.id;
+    const eventId = req.params.eventId;
+
+    const ratingDoc = await Comment.findOne({ user: userId, event: eventId });
+
+    console.log("⭐ getUserRating →", {
+      userId,
+      eventId,
+      rating: ratingDoc ? ratingDoc.rating : null,
+    });
+
+    res.json({
+      userRating: ratingDoc ? ratingDoc.rating : 0,
+    });
+  } catch (err) {
+    console.error("❌ Error en getUserRating:", err);
     res.status(500).json({ error: err.message });
   }
 };

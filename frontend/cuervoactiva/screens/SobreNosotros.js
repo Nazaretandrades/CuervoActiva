@@ -23,7 +23,6 @@ export default function SobreNosotros({ navigation }) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  /** Cargar sesión */
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -48,7 +47,6 @@ export default function SobreNosotros({ navigation }) {
     loadSession();
   }, []);
 
-  /** Navegaciones */
   const goToProfile = () =>
     role === "admin"
       ? navigation.navigate("AdminProfile")
@@ -70,7 +68,6 @@ export default function SobreNosotros({ navigation }) {
   const goToAbout = () => navigation.navigate("SobreNosotros");
   const goToUsers = () => navigation.navigate("AdminUsers");
 
-  /** Menú lateral web */
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -92,7 +89,6 @@ export default function SobreNosotros({ navigation }) {
     }
   };
 
-  /** Cabecera */
   const renderTopBar = () => {
     const tint =
       role === "organizer"
@@ -209,7 +205,6 @@ export default function SobreNosotros({ navigation }) {
     );
   };
 
-  /** Menú lateral web */
   const renderMenu = () => {
     if (!menuVisible || Platform.OS !== "web") return null;
 
@@ -261,7 +256,6 @@ export default function SobreNosotros({ navigation }) {
     );
   };
 
-  /** CONTENIDO */
   const content = `Cuervo Activa es una aplicación multiplataforma creada para fomentar la participación ciudadana y la difusión cultural en el municipio de El Cuervo de Sevilla.
 Su objetivo principal es ofrecer un espacio digital donde los vecinos puedan descubrir, promover y participar en los distintos eventos, actividades y celebraciones locales de una forma sencilla, rápida y accesible.
 
@@ -365,7 +359,6 @@ Cuervo Activa busca modernizar la comunicación entre la administración y la ci
   );
 }
 
-/** ESTILOS */
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",

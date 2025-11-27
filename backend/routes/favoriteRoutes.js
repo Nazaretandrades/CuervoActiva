@@ -1,4 +1,3 @@
-// Importamos Express para poder crear un enrutador
 const express = require("express");
 
 // Creamos una instancia del router que gestionará todas las rutas relacionadas con los "favoritos"
@@ -37,8 +36,4 @@ router.delete("/:eventId", auth, removeFavorite);
  */
 router.get("/", auth, listFavorites);
 
-/**
- * Exportamos el router
- * Esto permite que el módulo sea importado en "server.js" o en el enrutador principal.
- */
 module.exports = router;

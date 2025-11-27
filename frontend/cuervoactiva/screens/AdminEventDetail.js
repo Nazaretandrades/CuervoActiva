@@ -284,11 +284,14 @@ export default function AdminEventDetail({ route }) {
 
       {/* === DETALLE EVENTO === */}
       {event && (
-        <View
+        <ScrollView
           style={{
             flex: 1,
             backgroundColor: "#f5f6f7",
             padding: 25,
+          }}
+          contentContainerStyle={{
+            paddingBottom: 40,
           }}
         >
           {/* Título */}
@@ -297,7 +300,7 @@ export default function AdminEventDetail({ route }) {
               backgroundColor: "#014869",
               paddingVertical: 10,
               paddingHorizontal: 15,
-              marginBottom: 15,
+              marginBottom: 20,
               borderRadius: 3,
             }}
           >
@@ -305,17 +308,18 @@ export default function AdminEventDetail({ route }) {
               style={{
                 color: "#fff",
                 fontWeight: "bold",
-                fontSize: 14,
+                fontSize: 15,
               }}
             >
               {event.title}
             </Text>
           </View>
 
-          {/* Contenido principal */}
+          {/* GRID 2 COLUMNAS – mismo estilo que organizador */}
           <View
             style={{
               flexDirection: "row",
+              justifyContent: "space-between",
               alignItems: "flex-start",
               gap: 20,
             }}
@@ -323,141 +327,146 @@ export default function AdminEventDetail({ route }) {
             {/* Imagen izquierda */}
             <Image
               source={{
-                uri: event.image_url.startsWith("http")
-                  ? event.image_url
-                  : `${API_BASE}${event.image_url.startsWith("/") ? "" : "/"}${
-                      event.image_url
-                    }`,
+                uri:
+                  Platform.OS === "android"
+                    ? event.image_url.replace("localhost", "10.0.2.2")
+                    : event.image_url,
               }}
               style={{
-                width: 320,
-                height: 260,
-                borderRadius: 3,
+                width: "50%",
+                height: 250,
+                borderRadius: 8,
               }}
               resizeMode="cover"
             />
 
-            {/* Texto y botón */}
-            <View style={{ flex: 1 }}>
+            {/* Descripción derecha */}
+            <View style={{ width: "48%" }}>
               <Text
                 style={{
                   color: "#014869",
                   fontWeight: "bold",
-                  marginBottom: 5,
-                  fontSize: 13,
+                  fontSize: 15,
+                  marginBottom: 8,
                 }}
               >
                 Descripción
               </Text>
+
               <Text
                 style={{
-                  fontSize: 13,
                   color: "#333",
-                  lineHeight: 18,
+                  fontSize: 14,
+                  lineHeight: 20,
                   textAlign: "justify",
                 }}
               >
                 {event.description}
               </Text>
-
-              {/* Estado habilitado */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "flex-end",
-                  marginTop: 20,
-                }}
-              >
-                <View
-                  style={{
-                    backgroundColor: "#2ECC71",
-                    borderRadius: 25,
-                    paddingVertical: 7,
-                    paddingHorizontal: 18,
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#fff",
-                      fontSize: 16,
-                      marginRight: 6,
-                    }}
-                  >
-                    ✔
-                  </Text>
-                  <Text
-                    style={{
-                      color: "#fff",
-                      fontWeight: "bold",
-                      fontSize: 13,
-                    }}
-                  >
-                    Habilitado
-                  </Text>
-                </View>
-              </View>
             </View>
           </View>
 
-          {/* VALORACIONES  */}
-          <View style={{ marginTop: 20 }}>
-            {comments.length > 0 ? (
-              comments.map((c, i) => (
-                <View
-                  key={i}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 6,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#014869",
-                      fontWeight: "bold",
-                      fontSize: 13,
-                    }}
-                  >
-                    {c.user?.name || "Usuario"}
-                  </Text>
-                  {renderStars(c.rating)}
-                </View>
-              ))
-            ) : (
+          {/* Estado + Compartir */}
+          <View
+            style={{
+              width: "100%",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: 30,
+              gap: 20,
+            }}
+          >
+            {/* Estado */}
+            <View
+              style={{
+                backgroundColor:
+                  new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
+                borderRadius: 25,
+                paddingVertical: 7,
+                paddingHorizontal: 18,
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
               <Text
                 style={{
-                  color: "#777",
-                  fontStyle: "italic",
+                  color: "#fff",
+                  fontWeight: "bold",
                   fontSize: 13,
                 }}
               >
-                Sin valoraciones aún.
+                {new Date(event.date) > new Date()
+                  ? "Habilitado"
+                  : "Deshabilitado"}
               </Text>
-            )}
-          </View>
+            </View>
 
-          {/* COMPARTIR */}
-          <View
-            style={{
-              alignItems: "flex-end",
-              marginTop: 10,
-              marginRight: 10,
-            }}
-          >
-            <Pressable
-              onPress={() => setShareVisible(true)}
-              style={Platform.OS === "web" ? { cursor: "pointer" } : {}}
-            >
+            {/* Compartir */}
+            <Pressable onPress={() => setShareVisible(true)}>
               <Image
                 source={require("../assets/iconos/compartir.png")}
-                style={{ width: 20, height: 20, tintColor: "#014869" }}
+                style={{ width: 26, height: 26, tintColor: "#014869" }}
               />
             </Pressable>
           </View>
-        </View>
+
+          {/* VALORACIONES (igual que organizador) */}
+          <View style={{ marginTop: 25 }}>
+            <Text
+              style={{
+                fontWeight: "bold",
+                color: "#014869",
+                marginBottom: 8,
+                fontSize: 14,
+              }}
+            >
+              Valoraciones de usuarios
+            </Text>
+
+            <ScrollView
+              style={{
+                maxHeight: 160,
+                backgroundColor: "#f9f9f9",
+                borderRadius: 8,
+                padding: 10,
+              }}
+            >
+              {comments.length > 0 ? (
+                comments.map((c, i) => (
+                  <View
+                    key={i}
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 8,
+                      borderBottomWidth: 0.5,
+                      borderBottomColor: "#ddd",
+                      paddingBottom: 4,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "#014869",
+                        fontWeight: "600",
+                        flex: 1,
+                      }}
+                    >
+                      {c.user?.name || "Usuario"}
+                    </Text>
+
+                    {renderStars(c.rating)}
+                  </View>
+                ))
+              ) : (
+                <Text style={{ color: "#777", fontStyle: "italic" }}>
+                  Sin valoraciones aún.
+                </Text>
+              )}
+            </ScrollView>
+          </View>
+        </ScrollView>
       )}
 
       {/* MODAL COMPARTIR */}

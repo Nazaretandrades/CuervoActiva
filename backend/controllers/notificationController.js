@@ -1,5 +1,6 @@
 const Notification = require("../models/notification");
 
+// Listar notificaciones
 exports.listNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ user: req.user.id })
@@ -12,6 +13,7 @@ exports.listNotifications = async (req, res) => {
   }
 };
 
+// Borrar notificaciones (SOLO ADMIN)
 exports.deleteNotification = async (req, res) => {
   try {
     const notif = await Notification.findById(req.params.id);

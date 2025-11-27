@@ -12,54 +12,35 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 
-/**
- * Componente: Header
- * Barra superior de la aplicación (visible tanto en web como en móvil).
- * Muestra el logotipo, botones de autenticación (login y registro)
- * y cambia el color inferior según el rol del usuario (admin, organizador, usuario).
- */
 export default function Header({
   onLogin,
   onRegister,
-  hideAuthButtons = false, // Permite ocultar los botones de autenticación si se requiere
+  hideAuthButtons = false, 
 }) {
-  const navigation = useNavigation(); // Navegación interna (React Navigation)
-  const { width } = useWindowDimensions(); // Detecta el ancho de pantalla
-  const isMobile = width < 768; // Considera "móvil" si el ancho es menor a 768px
+  const navigation = useNavigation(); 
+  const { width } = useWindowDimensions(); 
+  const isMobile = width < 768; 
 
-  // Estados para controlar efectos visuales y rol del usuario
-  const [hoverLogin, setHoverLogin] = useState(false);
-  const [hoverRegister, setHoverRegister] = useState(false);
-  const [roleColor, setRoleColor] = useState("#02486b"); // Color del borde inferior según rol
+  const [roleColor, setRoleColor] = useState("#02486b");
   const [userRole, setUserRole] = useState(null);
 
-  /**
-   * Efecto secundario: Detectar el rol del usuario logueado.
-   * Se ejecuta una vez al montar el componente.
-   * Busca la sesión almacenada (en localStorage o AsyncStorage)
-   * y determina el color decorativo del header según el rol.
-   */
   useEffect(() => {
     const loadRole = async () => {
       try {
         let session;
 
-        // Web → usamos localStorage
         if (Platform.OS === "web") {
           session = JSON.parse(localStorage.getItem("USER_SESSION"));
         } 
-        // Móvil → usamos AsyncStorage
         else {
           const sessionString = await AsyncStorage.getItem("USER_SESSION");
           session = sessionString ? JSON.parse(sessionString) : null;
         }
 
-        // Determinamos el rol (por si el formato varía entre plataformas)
         const role =
           session?.user?.role || session?.role || session?.userType || "user";
         setUserRole(role);
 
-        // Asignamos color según rol
         if (role === "admin") setRoleColor("#0094A2"); 
         else if (role === "organizer" || role === "organizador")
           setRoleColor("#F3B23F"); 
@@ -72,12 +53,6 @@ export default function Header({
     loadRole();
   }, []);
 
-  /**
-   * handleLogoPress
-   * Define la navegación al pulsar el logo:
-   * - Si no hay sesión → va a la pantalla "Intro"
-   * - Si hay sesión → redirige según el rol del usuario
-   */
   const handleLogoPress = async () => {
     try {
       let session;
@@ -88,13 +63,11 @@ export default function Header({
         session = sessionString ? JSON.parse(sessionString) : null;
       }
 
-      // Si no hay sesión activa → pantalla de introducción
       if (!session || !session.token) {
         navigation.navigate("Intro");
         return;
       }
 
-      // Si existe sesión, navegamos según el rol
       const role =
         session.user?.role || session.role || session.userType || "user";
 
@@ -107,10 +80,6 @@ export default function Header({
     }
   };
 
-  /**
-   * Estilos del componente
-   * (Definidos como objeto JS para adaptarse dinámicamente según el tamaño de pantalla)
-   */
   const styles = {
     container: {
       backgroundColor: "#02486b",
@@ -163,9 +132,6 @@ export default function Header({
     },
   };
 
-  // ===========================
-  // MODO MÓVIL
-  // ===========================
   if (Platform.OS === "android" || Platform.OS === "ios") {
     return (
       <View style={{ backgroundColor: "#fff" }}>
@@ -179,7 +145,6 @@ export default function Header({
           }}
         >
           <View style={styles.container}>
-            {/* Logo principal */}
             <Pressable
               onPress={handleLogoPress}
               style={{ flexDirection: "row", alignItems: "center" }}
@@ -192,7 +157,6 @@ export default function Header({
               </View>
             </Pressable>
 
-            {/* Botones de autenticación (opcionalmente ocultos) */}
             {!hideAuthButtons && (
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Pressable
@@ -221,19 +185,14 @@ export default function Header({
           </View>
         </SafeAreaView>
 
-        {/* Línea decorativa blanca debajo del header */}
         <View style={styles.separatorWhite} />
       </View>
     );
   }
 
-  // ===========================
-  // MODO WEB
-  // ===========================
   return (
     <>
       <View style={styles.container}>
-        {/* Logo + nombre del proyecto */}
         <Pressable
           onPress={handleLogoPress}
           style={{
@@ -248,7 +207,6 @@ export default function Header({
           <Text style={styles.title}>CUERVO ACTIVA</Text>
         </Pressable>
 
-        {/* Botones de autenticación (login / register) */}
         {!hideAuthButtons && (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <Pressable onPress={onLogin} style={styles.button}>
@@ -262,7 +220,6 @@ export default function Header({
         )}
       </View>
 
-      {/* Líneas decorativas bajo el header */}
       <View style={styles.separatorWhite} />
       <View style={styles.separatorRole} />
     </>

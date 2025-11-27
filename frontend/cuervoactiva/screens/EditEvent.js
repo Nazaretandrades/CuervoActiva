@@ -85,7 +85,6 @@ export default function EditEvent() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F8F8F8" }}>
-      {/* CABECERA */}
       <View
         style={{
           flexDirection: "row",
@@ -114,7 +113,6 @@ export default function EditEvent() {
         </Text>
       </View>
 
-      {/* FORMULARIO */}
       <ScrollView
         style={{ paddingHorizontal: 25, marginTop: 150 }}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -152,7 +150,6 @@ export default function EditEvent() {
           />
         </View>
 
-        {/* DESCRIPCIÓN */}
         <Text style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}>
           Descripción:
         </Text>
@@ -172,7 +169,6 @@ export default function EditEvent() {
           }}
         />
 
-        {/* FILA Fecha / Lugar */}
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <View style={{ width: "48%" }}>
             <Text
@@ -246,7 +242,6 @@ export default function EditEvent() {
           </View>
         </View>
 
-        {/* FILA Hora / Categoría */}
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <View style={{ width: "48%" }}>
             <Text
@@ -320,7 +315,6 @@ export default function EditEvent() {
           </View>
         </View>
 
-        {/* BOTÓN GUARDAR CAMBIOS */}
         <View style={{ alignItems: "center", marginTop: 30 }}>
           <Pressable
             onPress={handleSubmit}

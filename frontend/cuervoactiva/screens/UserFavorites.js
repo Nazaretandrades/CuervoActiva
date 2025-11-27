@@ -7,9 +7,7 @@ import {
   Platform,
   Image,
   Animated,
-  TouchableWithoutFeedback,
   Alert,
-  TextInput,
   StyleSheet,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -31,7 +29,6 @@ export default function UserFavorites() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  /** Obtener token multiplataforma */
   const getToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -48,7 +45,6 @@ export default function UserFavorites() {
     }
   };
 
-  /** Obtener nombre del usuario */
   const getUserName = async () => {
     try {
       let session;
@@ -72,12 +68,10 @@ export default function UserFavorites() {
     }
   };
 
-  /** Cargar nombre del usuario */
   useEffect(() => {
     getUserName();
   }, []);
 
-  /** Cargar favoritos */
   useEffect(() => {
     const loadFavorites = async () => {
       try {
@@ -100,7 +94,6 @@ export default function UserFavorites() {
     loadFavorites();
   }, []);
 
-  /** Filtro búsqueda */
   useEffect(() => {
     if (!search.trim()) {
       setFilteredFavorites(favorites);
@@ -116,7 +109,6 @@ export default function UserFavorites() {
     }
   }, [search, favorites]);
 
-  /** Navegaciones */
   const goToEventDetail = (eventId) =>
     navigation.navigate("UserEventDetail", { eventId });
   const goToNotifications = () => navigation.navigate("UserNotifications");
@@ -127,7 +119,6 @@ export default function UserFavorites() {
   const goToContact = () => navigation.navigate("Contacto");
   const goToHome = () => navigation.navigate("User");
 
-  /** Menú lateral */
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -149,7 +140,6 @@ export default function UserFavorites() {
     }
   };
 
-  /** Cabecera móvil*/
   const renderTopBar = () => (
     <View
       style={{
@@ -161,7 +151,6 @@ export default function UserFavorites() {
         backgroundColor: "#fff",
       }}
     >
-      {/* Perfil Usuario */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
@@ -188,7 +177,6 @@ export default function UserFavorites() {
         </View>
       </View>
 
-      {/* Iconos derecha */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
@@ -220,7 +208,6 @@ export default function UserFavorites() {
     </View>
   );
 
-  /** Menú móvil */
   const renderMobileMenu = () =>
     menuVisible && (
       <View style={styles.mobileMenuContainer}>
@@ -271,7 +258,6 @@ export default function UserFavorites() {
           ))}
         </View>
 
-        {/* Barra inferior con iconos */}
         <View style={styles.bottomBarBlue}>
           <Pressable onPress={goToHome}>
             <Image
@@ -300,7 +286,6 @@ export default function UserFavorites() {
       <Header hideAuthButtons />
       {renderTopBar()}
 
-      {/* MENÚ WEB*/}
       {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
@@ -349,8 +334,15 @@ export default function UserFavorites() {
       )}
       {Platform.OS !== "web" && renderMobileMenu()}
 
-      {/* Contenido principal */}
-      <View style={{ flex: 1, paddingHorizontal: 20, paddingVertical: 20 }}>
+      <View
+        style={{
+          flex: 1,
+          paddingHorizontal: Platform.OS === "web" ? 400 : 20,
+          paddingVertical: 20,
+          maxHeight: Platform.OS === "web" ? "77vh" : "auto",
+          overflow: "hidden",
+        }}
+      >
         <Text
           style={{
             textAlign: "center",
@@ -363,7 +355,10 @@ export default function UserFavorites() {
           Favoritos
         </Text>
 
-        <ScrollView>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={true}
+        >
           {filteredFavorites.length > 0 ? (
             filteredFavorites.map((fav) => (
               <Pressable
@@ -398,7 +393,6 @@ export default function UserFavorites() {
   );
 }
 
-/** Estilos */
 const styles = StyleSheet.create({
   iconBlue: { width: 26, height: 26, tintColor: "#014869" },
   overlay: {
@@ -421,7 +415,6 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
 
-  // Menú móvil azul
   mobileMenuContainer: {
     position: "absolute",
     top: 0,
@@ -438,11 +431,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 20,
-    backgroundColor:"#f8f8f8"
+    backgroundColor: "#f8f8f8",
   },
   headerTitleBlue: { fontSize: 18, fontWeight: "bold", color: "#014869" },
   backIconBlue: { width: 22, height: 22, tintColor: "#014869" },
-  menuOptionsBlue: { flex: 1, paddingHorizontal: 40, gap: 30,    backgroundColor: "#f8f8f8", },
+  menuOptionsBlue: {
+    flex: 1,
+    paddingHorizontal: 40,
+    gap: 30,
+    backgroundColor: "#f8f8f8",
+  },
   optionBlue: {
     flexDirection: "row",
     alignItems: "center",

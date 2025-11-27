@@ -27,7 +27,6 @@ export default function AdminUsers() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  //  TOAST (igual al login)
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -48,7 +47,6 @@ export default function AdminUsers() {
     }, 3000);
   };
 
-  //  MODAL DE CONFIRMACIÓN
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
@@ -76,7 +74,6 @@ export default function AdminUsers() {
     }
   };
 
-  //  CARGAR USUARIOS
   const loadUsers = async () => {
     try {
       const session = await getSession();
@@ -102,7 +99,6 @@ export default function AdminUsers() {
     loadUsers();
   }, []);
 
-  // NAVEGACIONES
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -112,7 +108,6 @@ export default function AdminUsers() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
 
-  // ELIMINAR USUARIO
   const handleDelete = async () => {
     if (!userToDelete) return;
     try {
@@ -134,7 +129,6 @@ export default function AdminUsers() {
     }
   };
 
-  //  MENÚ LATERAL
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -152,7 +146,6 @@ export default function AdminUsers() {
     }
   };
 
-  //  CABECERA ADMIN IGUAL QUE CULTURA
   const renderAdminTopBar = () => (
     <View style={styles.topBar}>
       {/* Perfil Admin */}
@@ -173,7 +166,6 @@ export default function AdminUsers() {
         </View>
       </View>
 
-      {/* Iconos derecha */}
       <View style={styles.iconRow}>
         <Pressable onPress={goToNotifications} style={styles.iconButton}>
           <Image
@@ -201,7 +193,6 @@ export default function AdminUsers() {
     </View>
   );
 
-  //  MENÚ LATERAL
   const renderAdminMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
@@ -239,7 +230,6 @@ export default function AdminUsers() {
       {renderAdminTopBar()}
       {renderAdminMenu()}
 
-      {/* === CONTENIDO === */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -271,7 +261,6 @@ export default function AdminUsers() {
         </View>
       </ScrollView>
 
-      {/*  MODAL DE CONFIRMACIÓN  */}
       {confirmVisible && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -297,7 +286,6 @@ export default function AdminUsers() {
         </View>
       )}
 
-      {/*  TOAST  */}
       {toast.visible && (
         <Animated.View
           style={[
@@ -323,7 +311,6 @@ export default function AdminUsers() {
   );
 }
 
-// === ESTILOS ===
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
@@ -359,7 +346,6 @@ const styles = StyleSheet.create({
   iconButton: { marginRight: 20 },
   topIcon: { width: 22, height: 22, tintColor: "#0094A2" },
 
-  // Contenedor principal de usuarios
   userContainer: {
     backgroundColor: "#f5f5f5",
     borderRadius: 10,
@@ -390,7 +376,6 @@ const styles = StyleSheet.create({
     color: "#014869",
   },
 
-  // Menú lateral
   sideMenu: {
     position: "absolute",
     top: 0,
@@ -411,7 +396,6 @@ const styles = StyleSheet.create({
     zIndex: 9,
   },
 
-  // Modal
   modalOverlay: {
     position: "absolute",
     top: 0,
@@ -458,11 +442,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
 
-  // Toast
-  // Toast
   toast: {
     position: "absolute",
-    bottom: 100, // 🔼 antes 40 → ahora más arriba para no tapar el footer
+    bottom: 100, 
     left: "5%",
     right: "5%",
     paddingVertical: 14,

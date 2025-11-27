@@ -81,9 +81,4 @@ notificationSchema.index(
   { user: 1, event: 1, type: 1, dateKey: 1 },
   { unique: true, sparse: true }
 );
-
-/**
- * Exporto el modelo "Notification" basado en el esquema anterior.
- * MongoDB creará automáticamente la colección "notifications".
- */
 module.exports = mongoose.model("Notification", notificationSchema);

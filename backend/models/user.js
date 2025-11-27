@@ -57,8 +57,4 @@ const userSchema = new mongoose.Schema({
   ],
 });
 
-/**
- * Exportación del modelo
- * Crea (o reutiliza) la colección "users" en MongoDB.
- */
 module.exports = mongoose.model("User", userSchema);

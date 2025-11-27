@@ -174,7 +174,6 @@ export default function Contacto() {
   const goToFavorites = () => nav.navigate("UserFavorites");
   const goToContact = () => nav.navigate("Contacto");
 
-  /** CABECERA USUARIO NORMAL*/
   const renderUserTopBar = () => (
     <View
       style={{
@@ -186,7 +185,6 @@ export default function Contacto() {
         backgroundColor: "#fff",
       }}
     >
-      {/* Perfil Usuario */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
@@ -213,7 +211,6 @@ export default function Contacto() {
         </View>
       </View>
 
-      {/* Iconos derecha */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
@@ -245,7 +242,6 @@ export default function Contacto() {
     </View>
   );
 
-  // CABECERA ADMIN
   const renderAdminTopBar = () => (
     <View style={styles.topBar}>
       <View style={styles.adminInfo}>
@@ -292,7 +288,6 @@ export default function Contacto() {
     </View>
   );
 
-  // CABECERA ORGANIZADOR
   const renderOrganizerTopBar = () =>
     role === "organizer" && (
       <View
@@ -374,7 +369,6 @@ export default function Contacto() {
       </View>
     );
 
-  // MENÚ ADMIN WEB
   const renderAdminMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
@@ -406,7 +400,6 @@ export default function Contacto() {
       </>
     );
 
-  // MENÚ ORGANIZADOR WEB
   const renderOrganizerMenuWeb = () =>
     role === "organizer" &&
     Platform.OS === "web" &&
@@ -453,7 +446,6 @@ export default function Contacto() {
       </Animated.View>
     );
 
-  // MENÚ USUARIO WEB
   const renderUserMenuWeb = () =>
     role === "user" &&
     Platform.OS === "web" &&
@@ -504,21 +496,18 @@ export default function Contacto() {
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
-      {/* CABECERA SEGÚN ROL */}
       {role === "admin"
         ? renderAdminTopBar()
         : role === "organizer"
         ? renderOrganizerTopBar()
         : renderUserTopBar()}
 
-      {/* MENÚ WEB SEGÚN ROL */}
       {role === "admin"
         ? renderAdminMenu()
         : role === "organizer"
         ? renderOrganizerMenuWeb()
         : renderUserMenuWeb()}
 
-      {/* MENÚ MÓVIL */}
       {Platform.OS !== "web" &&
         menuVisible &&
         (role === "organizer" ? (
@@ -638,7 +627,6 @@ export default function Contacto() {
   );
 }
 
-// ESTILOS
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",

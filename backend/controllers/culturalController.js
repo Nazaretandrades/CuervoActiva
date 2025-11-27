@@ -1,7 +1,6 @@
-// Se importa el modelo correspondiente
 const CulturalSection = require("../models/culturalsection");
 
-// 📜 Listar todas las secciones culturales
+// Listar todas las secciones culturales
 exports.listCulturalSections = async (req, res) => {
   try {
     // Obtengo todas las secciones culturales guardadas en la base de datos
@@ -15,7 +14,7 @@ exports.listCulturalSections = async (req, res) => {
   }
 };
 
-// 🔍 Obtener el detalle de una sección cultural específica
+// Obtener el detalle de una sección cultural específica
 exports.getCulturalSection = async (req, res) => {
   try {
     // Busco la sección por su ID

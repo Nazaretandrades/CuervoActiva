@@ -1,22 +1,11 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, Image, Platform, Linking } from "react-native";
 
-/**
- * Componente: Footer
- * Pie de página reutilizable para la aplicación.
- * Muestra enlaces legales ("Privacidad", "Condiciones", "Sobre Nosotros"),
- * idioma actual y accesos a redes sociales.
- */
 export default function Footer({
   onAboutPress,
   onPrivacyPress,
   onConditionsPress,
 }) {
-  /**
-   * Función: openLink
-   * Abre un enlace externo en el navegador del dispositivo.
-   * Se usa para las redes sociales del proyecto.
-   */
   const openLink = async (url) => {
     try {
       await Linking.openURL(url);
@@ -24,8 +13,6 @@ export default function Footer({
       console.error("Error al abrir el enlace:", error);
     }
   };
-
-  // Estados para manejar efectos de hover (solo en versión web)
   const [hoveredLink, setHoveredLink] = useState(null);
   const [hoveredIcon, setHoveredIcon] = useState(null);
 
@@ -57,12 +44,10 @@ export default function Footer({
             flexWrap: "nowrap",
           }}
         >
-          {/* Marca y año */}
           <Text style={{ color: "#555", fontSize: 12, marginRight: 10 }}>
             © 2025 CuervoActiva, Inc.
           </Text>
 
-          {/* Enlace: Política de Privacidad */}
           <Pressable
             onPress={onPrivacyPress}
             onHoverIn={() => setHoveredLink("privacidad")}
@@ -83,7 +68,6 @@ export default function Footer({
             </Text>
           </Pressable>
 
-          {/* Enlace: Condiciones de uso */}
           <Pressable
             onPress={onConditionsPress}
             onHoverIn={() => setHoveredLink("condiciones")}
@@ -104,7 +88,6 @@ export default function Footer({
             </Text>
           </Pressable>
 
-          {/* Enlace: Sobre Nosotros */}
           <Pressable
             onPress={onAboutPress}
             onHoverIn={() => setHoveredLink("sobre")}
@@ -126,9 +109,7 @@ export default function Footer({
           </Pressable>
         </View>
 
-        {/* SECCIÓN DERECHA — Idioma + redes sociales */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {/* Selector de idioma (actualmente fijo en Español) */}
           <View
             style={{
               flexDirection: "row",
@@ -148,22 +129,21 @@ export default function Footer({
             <Text style={{ color: "#555", fontSize: 12 }}>Español (ES)</Text>
           </View>
 
-          {/* Íconos de redes sociales */}
           {[
             {
               id: "facebook",
               icon: require("../assets/iconos/facebook.png"),
-              url: "https://www.facebook.com/cuervoactiva",
+              url: "https://www.facebook.com/profile.php?id=61583832168012",
             },
             {
               id: "twitter",
               icon: require("../assets/iconos/twitter.png"),
-              url: "https://x.com/cuervoactiva",
+              url: "https://x.com/CuervoActiva",
             },
             {
               id: "instagram",
               icon: require("../assets/iconos/instagram.png"),
-              url: "https://www.instagram.com/cuervoactiva",
+              url: "https://www.instagram.com/p/DRb_K0SiHDa",
             },
           ].map((item) => (
             <Pressable
