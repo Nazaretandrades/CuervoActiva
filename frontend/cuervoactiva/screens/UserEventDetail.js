@@ -10,6 +10,7 @@ import {
   Animated,
   Alert,
   Linking,
+  TextInput, // ⬅️ AÑADIDO
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -34,6 +35,8 @@ export default function UserEventDetail() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [shareVisible, setShareVisible] = useState(false);
+  const [commentText, setCommentText] = useState(""); // ⬅️ ya lo tenías
+  const [userComment, setUserComment] = useState(null); // ⬅️ sigue por si lo usas luego
 
   const getToken = async () => {
     try {
@@ -142,6 +145,52 @@ export default function UserEventDetail() {
     } catch (err) {
       console.error("Error al valorar:", err);
       Alert.alert("Error", "No se pudo registrar la valoración");
+    }
+  };
+
+  // ⬇️ NUEVO: enviar comentario (independiente pero usando el rating actual)
+  const handleSendComment = async () => {
+    try {
+      const token = await getToken();
+      if (!token) {
+        Alert.alert("Error", "Debes iniciar sesión para comentar el evento");
+        return;
+      }
+
+      if (!rating || rating <= 0) {
+        Alert.alert(
+          "Error",
+          "Debes valorar el evento (elegir estrellas) antes de comentar."
+        );
+        return;
+      }
+
+      if (!commentText.trim()) {
+        Alert.alert("Error", "El comentario no puede estar vacío.");
+        return;
+      }
+
+      const res = await fetch(`${COMMENTS_URL}/${eventId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          rating, // reutilizamos la valoración actual
+          text: commentText.trim(),
+        }),
+      });
+
+      if (!res.ok) throw new Error("No se pudo enviar el comentario");
+
+      const data = await res.json();
+      setUserComment(data);
+      setCommentText("");
+      Alert.alert("✅", "Tu comentario se ha enviado correctamente.");
+    } catch (err) {
+      console.error("Error al enviar comentario:", err);
+      Alert.alert("Error", "No se pudo enviar el comentario.");
     }
   };
 
@@ -662,6 +711,60 @@ export default function UserEventDetail() {
                 </Text>
 
                 {renderStars(rating, true)}
+
+                {/* ⬇️ NUEVO BLOQUE: COMENTARIO (WEB) */}
+                <View style={{ marginTop: 18 }}>
+                  <Text
+                    style={{
+                      color: "#014869",
+                      fontWeight: "bold",
+                      marginBottom: 6,
+                      fontSize: 15,
+                    }}
+                  >
+                    Tu comentario
+                  </Text>
+                  <TextInput
+                    value={commentText}
+                    onChangeText={setCommentText}
+                    placeholder="Escribe aquí tu opinión sobre el evento..."
+                    placeholderTextColor="#777"
+                    multiline
+                    style={{
+                      backgroundColor: "#fff",
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: "#ddd",
+                      paddingHorizontal: 10,
+                      paddingVertical: 8,
+                      minHeight: 70,
+                      textAlignVertical: "top",
+                      color: "#333",
+                      fontSize: 14,
+                    }}
+                  />
+                  <Pressable
+                    onPress={handleSendComment}
+                    style={{
+                      marginTop: 10,
+                      alignSelf: "flex-end",
+                      backgroundColor: "#014869",
+                      borderRadius: 20,
+                      paddingVertical: 6,
+                      paddingHorizontal: 16,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontWeight: "600",
+                        fontSize: 13,
+                      }}
+                    >
+                      Enviar comentario
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
             </>
           ) : (
@@ -757,6 +860,60 @@ export default function UserEventDetail() {
                 </Text>
 
                 {renderStars(rating, true)}
+
+                {/* ⬇️ NUEVO BLOQUE: COMENTARIO (MÓVIL) */}
+                <View style={{ marginTop: 18 }}>
+                  <Text
+                    style={{
+                      color: "#014869",
+                      fontWeight: "bold",
+                      marginBottom: 6,
+                      fontSize: 15,
+                    }}
+                  >
+                    Tu comentario
+                  </Text>
+                  <TextInput
+                    value={commentText}
+                    onChangeText={setCommentText}
+                    placeholder="Escribe aquí tu opinión sobre el evento..."
+                    placeholderTextColor="#777"
+                    multiline
+                    style={{
+                      backgroundColor: "#fff",
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: "#ddd",
+                      paddingHorizontal: 10,
+                      paddingVertical: 8,
+                      minHeight: 70,
+                      textAlignVertical: "top",
+                      color: "#333",
+                      fontSize: 14,
+                    }}
+                  />
+                  <Pressable
+                    onPress={handleSendComment}
+                    style={{
+                      marginTop: 10,
+                      alignSelf: "flex-end",
+                      backgroundColor: "#014869",
+                      borderRadius: 20,
+                      paddingVertical: 6,
+                      paddingHorizontal: 16,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontWeight: "600",
+                        fontSize: 13,
+                      }}
+                    >
+                      Enviar comentario
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
             </>
           )}

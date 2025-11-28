@@ -32,6 +32,13 @@ export default function AdminEventDetail({ route }) {
   const [shareVisible, setShareVisible] = useState(false);
   const navigation = useNavigation();
 
+  // ⭐ NUEVO → Modal para confirmar eliminar comentario
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState(null);
+
+  // ============================
+  //   CARGAR ADMIN
+  // ============================
   useEffect(() => {
     const loadAdmin = async () => {
       const session = await getSession();
@@ -40,12 +47,15 @@ export default function AdminEventDetail({ route }) {
     loadAdmin();
   }, []);
 
-  //  Cargar evento y valoraciones
+  // ============================
+  //   CARGAR EVENTO + COMENTARIOS
+  // ============================
   useEffect(() => {
     const loadEvent = async () => {
       try {
         const session = await getSession();
         const token = session?.token;
+
         const res = await fetch(`${API_URL}/${eventId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -65,6 +75,43 @@ export default function AdminEventDetail({ route }) {
     if (eventId) loadEvent();
   }, [eventId]);
 
+  // ⭐⭐⭐ NUEVO → FUNCIÓN PARA ELIMINAR COMENTARIO (sin alert)
+  const deleteComment = async (commentId) => {
+    try {
+      const session = await getSession();
+      const token = session?.token;
+
+      const res = await fetch(`${COMMENTS_URL}/${commentId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("No se pudo eliminar el comentario");
+
+      // Actualizar lista sin refrescar
+      setComments((prev) => prev.filter((c) => c._id !== commentId));
+    } catch (err) {
+      console.error("Error al eliminar comentario:", err);
+    }
+  };
+
+  // ⭐ NUEVO → Confirmar eliminación
+  const confirmDelete = async () => {
+    await deleteComment(commentToDelete);
+    setConfirmVisible(false);
+  };
+
+  // ⭐ NUEVO → Cancelar eliminación
+  const cancelDelete = () => {
+    setCommentToDelete(null);
+    setConfirmVisible(false);
+  };
+
+  // ============================
+  //   NAVEGACIÓN
+  // ============================
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -131,7 +178,7 @@ export default function AdminEventDetail({ route }) {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/*  BARRA SUPERIOR  */}
+      {/* BARRA SUPERIOR */}
       <View
         style={{
           flexDirection: "row",
@@ -181,7 +228,6 @@ export default function AdminEventDetail({ route }) {
         </View>
 
         {/* Iconos */}
-
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable
             onPress={() => navigation.navigate("Admin")}
@@ -237,7 +283,7 @@ export default function AdminEventDetail({ route }) {
         </View>
       </View>
 
-      {/* === MENÚ LATERAL === */}
+      {/* MENÚ LATERAL */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -295,7 +341,7 @@ export default function AdminEventDetail({ route }) {
         </>
       )}
 
-      {/* === DETALLE EVENTO === */}
+      {/* DETALLE EVENTO */}
       {event && (
         <ScrollView
           style={{
@@ -328,7 +374,7 @@ export default function AdminEventDetail({ route }) {
             </Text>
           </View>
 
-          {/* GRID 2 COLUMNAS – mismo estilo que organizador */}
+          {/* 2 Columnas */}
           <View
             style={{
               flexDirection: "row",
@@ -337,7 +383,6 @@ export default function AdminEventDetail({ route }) {
               gap: 20,
             }}
           >
-            {/* Imagen izquierda */}
             <Image
               source={{
                 uri:
@@ -353,7 +398,6 @@ export default function AdminEventDetail({ route }) {
               resizeMode="cover"
             />
 
-            {/* Descripción derecha */}
             <View style={{ width: "48%" }}>
               <Text
                 style={{
@@ -379,7 +423,7 @@ export default function AdminEventDetail({ route }) {
             </View>
           </View>
 
-          {/* Estado + Compartir */}
+          {/* Estado + compartir */}
           <View
             style={{
               width: "100%",
@@ -390,7 +434,6 @@ export default function AdminEventDetail({ route }) {
               gap: 20,
             }}
           >
-            {/* Estado */}
             <View
               style={{
                 backgroundColor:
@@ -415,7 +458,6 @@ export default function AdminEventDetail({ route }) {
               </Text>
             </View>
 
-            {/* Compartir */}
             <Pressable onPress={() => setShareVisible(true)}>
               <Image
                 source={require("../assets/iconos/compartir.png")}
@@ -424,7 +466,7 @@ export default function AdminEventDetail({ route }) {
             </Pressable>
           </View>
 
-          {/* VALORACIONES (igual que organizador) */}
+          {/* ⭐⭐⭐ VALORACIONES + COMENTARIOS + BORRADO */}
           <View style={{ marginTop: 25 }}>
             <Text
               style={{
@@ -439,37 +481,85 @@ export default function AdminEventDetail({ route }) {
 
             <ScrollView
               style={{
-                maxHeight: 160,
+                maxHeight: 200,
                 backgroundColor: "#f9f9f9",
                 borderRadius: 8,
                 padding: 10,
               }}
             >
               {comments.length > 0 ? (
-                comments.map((c, i) => (
+                comments.map((c) => (
                   <View
-                    key={i}
+                    key={c._id}
                     style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: 8,
-                      borderBottomWidth: 0.5,
-                      borderBottomColor: "#ddd",
-                      paddingBottom: 4,
+                      backgroundColor: "#fff",
+                      padding: 10,
+                      borderRadius: 8,
+                      marginBottom: 12,
+                      borderWidth: 1,
+                      borderColor: "#ddd",
                     }}
                   >
-                    <Text
+                    {/* Usuario + estrellas */}
+                    <View
                       style={{
-                        color: "#014869",
-                        fontWeight: "600",
-                        flex: 1,
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
                       }}
                     >
-                      {c.user?.name || "Usuario"}
-                    </Text>
+                      <Text
+                        style={{
+                          color: "#014869",
+                          fontWeight: "600",
+                        }}
+                      >
+                        {c.user?.name || "Usuario"}
+                      </Text>
 
-                    {renderStars(c.rating)}
+                      {renderStars(c.rating)}
+                    </View>
+
+                    {/* Texto del comentario */}
+                    {c.text && c.text.trim() !== "" && (
+                      <Text
+                        style={{
+                          marginTop: 6,
+                          color: "#333",
+                          fontSize: 13,
+                          lineHeight: 18,
+                          fontStyle: "italic",
+                        }}
+                      >
+                        "{c.text}"
+                      </Text>
+                    )}
+
+                    {/* ⭐ BOTÓN ELIMINAR (abre modal) ⭐ */}
+                    <Pressable
+                      onPress={() => {
+                        setCommentToDelete(c._id); // ⭐ NUEVO
+                        setConfirmVisible(true); // ⭐ NUEVO
+                      }}
+                      style={{
+                        marginTop: 10,
+                        alignSelf: "flex-end",
+                        backgroundColor: "#E63946",
+                        paddingVertical: 4,
+                        paddingHorizontal: 12,
+                        borderRadius: 6,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#fff",
+                          fontWeight: "700",
+                          fontSize: 12,
+                        }}
+                      >
+                        Eliminar
+                      </Text>
+                    </Pressable>
                   </View>
                 ))
               ) : (
@@ -480,6 +570,81 @@ export default function AdminEventDetail({ route }) {
             </ScrollView>
           </View>
         </ScrollView>
+      )}
+
+      {/* ⭐⭐⭐ MODAL DE CONFIRMACIÓN DE ELIMINAR ⭐⭐⭐ */}
+      {confirmVisible && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 999,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#fff",
+              width: 320,
+              borderRadius: 15,
+              padding: 22,
+              alignItems: "center",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 17,
+                fontWeight: "700",
+                color: "#014869",
+                marginBottom: 20,
+                textAlign: "center",
+              }}
+            >
+              ¿Eliminar este comentario?
+            </Text>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                width: "80%",
+              }}
+            >
+              <Pressable
+                onPress={cancelDelete}
+                style={{
+                  backgroundColor: "#ccc",
+                  paddingVertical: 8,
+                  paddingHorizontal: 20,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ fontWeight: "700", color: "#333" }}>
+                  Cancelar
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={confirmDelete}
+                style={{
+                  backgroundColor: "#E63946",
+                  paddingVertical: 8,
+                  paddingHorizontal: 20,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ fontWeight: "700", color: "#fff" }}>
+                  Eliminar
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
       )}
 
       {/* MODAL COMPARTIR */}
@@ -543,7 +708,9 @@ export default function AdminEventDetail({ route }) {
                 marginBottom: 8,
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>Twitter</Text>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                Twitter
+              </Text>
             </Pressable>
             <Pressable onPress={() => setShareVisible(false)}>
               <Text style={{ color: "#014869", fontWeight: "bold" }}>
@@ -554,7 +721,7 @@ export default function AdminEventDetail({ route }) {
         </View>
       </Modal>
 
-      {/* FOOTER  */}
+      {/* FOOTER */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAboutUs}

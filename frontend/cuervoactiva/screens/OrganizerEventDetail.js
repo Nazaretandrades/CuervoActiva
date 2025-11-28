@@ -55,6 +55,13 @@ export default function OrganizerEventDetail({ route }) {
         const data = await res.json();
         setEvent(data);
 
+        // 🔥🔥🔥 ÚNICO CAMBIO AÑADIDO 🔥🔥🔥
+        // Solo mostrar comentarios si el evento pertenece al organizador
+        if (data.createdBy !== session.id) {
+          setComments([]);
+          return;
+        }
+
         const resComments = await fetch(`${COMMENTS_URL}/${eventId}`);
         if (resComments.ok) {
           const commentsData = await resComments.json();
@@ -283,8 +290,7 @@ export default function OrganizerEventDetail({ route }) {
           </Animated.View>
         </>
       )}
-
-      {/* MENÚ MÓVIL*/}
+      {/* MENÚ MÓVIL */}
       {Platform.OS !== "web" && menuVisible && (
         <OrganizerMenu onClose={toggleMenu} />
       )}
@@ -320,8 +326,10 @@ export default function OrganizerEventDetail({ route }) {
               {event.title}
             </Text>
           </View>
+
           {Platform.OS === "web" ? (
             <>
+              {/* ------------- WEB LAYOUT ------------- */}
               <View
                 style={{
                   flexDirection: "row",
@@ -344,6 +352,7 @@ export default function OrganizerEventDetail({ route }) {
                   }}
                   resizeMode="cover"
                 />
+
                 <View style={{ width: "48%" }}>
                   <Text
                     style={{
@@ -355,6 +364,7 @@ export default function OrganizerEventDetail({ route }) {
                   >
                     Descripción
                   </Text>
+
                   <Text
                     style={{
                       color: "#333",
@@ -367,7 +377,8 @@ export default function OrganizerEventDetail({ route }) {
                   </Text>
                 </View>
               </View>
-              {/* ESTADO + COMPARTIR (WEB) */}
+
+              {/* Estado + Compartir */}
               <View
                 style={{
                   width: "100%",
@@ -378,7 +389,6 @@ export default function OrganizerEventDetail({ route }) {
                   gap: 20,
                 }}
               >
-                {/* Estado */}
                 <View
                   style={{
                     backgroundColor:
@@ -403,7 +413,6 @@ export default function OrganizerEventDetail({ route }) {
                   </Text>
                 </View>
 
-                {/* Compartir */}
                 <Pressable onPress={() => setShareVisible(true)}>
                   <Image
                     source={require("../assets/iconos/compartir.png")}
@@ -412,7 +421,7 @@ export default function OrganizerEventDetail({ route }) {
                 </Pressable>
               </View>
 
-              {/* VALORACIONES - IGUAL A SEGUNDA IMAGEN */}
+              {/* ⭐ VALORACIONES WEB */}
               <View style={{ marginTop: 25 }}>
                 <Text
                   style={{
@@ -438,26 +447,45 @@ export default function OrganizerEventDetail({ route }) {
                       <View
                         key={i}
                         style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
                           marginBottom: 8,
                           borderBottomWidth: 0.5,
                           borderBottomColor: "#ddd",
-                          paddingBottom: 4,
+                          paddingBottom: 6,
                         }}
                       >
-                        <Text
+                        {/* Nombre y estrellas */}
+                        <View
                           style={{
-                            color: "#014869",
-                            fontWeight: "600",
-                            flex: 1,
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
                           }}
                         >
-                          {c.user?.name || "Usuario"}
-                        </Text>
+                          <Text
+                            style={{
+                              color: "#014869",
+                              fontWeight: "600",
+                              flex: 1,
+                            }}
+                          >
+                            {c.user?.name || "Usuario"}
+                          </Text>
 
-                        {renderStars(c.rating)}
+                          {renderStars(c.rating)}
+                        </View>
+
+                        {/* Comentario (si existe) */}
+                        {c.text && c.text.trim() !== "" && (
+                          <Text
+                            style={{
+                              color: "#555",
+                              fontSize: 13,
+                              marginTop: 4,
+                            }}
+                          >
+                            {c.text}
+                          </Text>
+                        )}
                       </View>
                     ))
                   ) : (
@@ -470,7 +498,7 @@ export default function OrganizerEventDetail({ route }) {
             </>
           ) : (
             <>
-              {/* Imagen */}
+              {/* ------------- MÓVIL LAYOUT ------------- */}
               {event.image_url ? (
                 <Image
                   source={{
@@ -521,7 +549,6 @@ export default function OrganizerEventDetail({ route }) {
                   gap: 15,
                 }}
               >
-                {/* Estado */}
                 <View
                   style={{
                     backgroundColor:
@@ -546,7 +573,6 @@ export default function OrganizerEventDetail({ route }) {
                   </Text>
                 </View>
 
-                {/* Compartir */}
                 <Pressable onPress={() => setShareVisible(true)}>
                   <Image
                     source={require("../assets/iconos/compartir.png")}
@@ -555,7 +581,7 @@ export default function OrganizerEventDetail({ route }) {
                 </Pressable>
               </View>
 
-              {/* Valoraciones */}
+              {/* ⭐ VALORACIONES MÓVIL */}
               <View style={{ marginTop: 25 }}>
                 <Text
                   style={{
@@ -568,48 +594,51 @@ export default function OrganizerEventDetail({ route }) {
                   Valoraciones de usuarios
                 </Text>
 
-                {comments.length > 0 ? (
-                  <ScrollView
-                    nestedScrollEnabled={true}
+                {comments.map((c, i) => (
+                  <View
+                    key={i}
                     style={{
-                      maxHeight: 120,
-                      backgroundColor: "#f9f9f9",
-                      borderRadius: 8,
-                      padding: 10,
+                      marginBottom: 8,
+                      borderBottomWidth: 0.5,
+                      borderBottomColor: "#ddd",
+                      paddingBottom: 6,
                     }}
                   >
-                    {comments.map((c, i) => (
-                      <View
-                        key={i}
+                    {/* Nombre + estrellas */}
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text
                         style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: 8,
-                          borderBottomWidth: 0.5,
-                          borderBottomColor: "#ddd",
-                          paddingBottom: 4,
+                          color: "#014869",
+                          fontWeight: "600",
+                          flex: 1,
                         }}
                       >
-                        <Text
-                          style={{
-                            color: "#014869",
-                            fontWeight: "600",
-                            flex: 1,
-                          }}
-                        >
-                          {c.user?.name || "Usuario"}
-                        </Text>
+                        {c.user?.name || "Usuario"}
+                      </Text>
 
-                        {renderStars(c.rating)}
-                      </View>
-                    ))}
-                  </ScrollView>
-                ) : (
-                  <Text style={{ color: "#777", fontStyle: "italic" }}>
-                    Sin valoraciones aún.
-                  </Text>
-                )}
+                      {renderStars(c.rating)}
+                    </View>
+
+                    {/* Comentario (si existe) */}
+                    {c.text && c.text.trim() !== "" && (
+                      <Text
+                        style={{
+                          color: "#555",
+                          fontSize: 13,
+                          marginTop: 4,
+                        }}
+                      >
+                        {c.text}
+                      </Text>
+                    )}
+                  </View>
+                ))}
               </View>
             </>
           )}
@@ -645,6 +674,7 @@ export default function OrganizerEventDetail({ route }) {
             >
               Compartir evento
             </Text>
+
             <Pressable
               onPress={() => {
                 setShareVisible(false);
@@ -663,6 +693,7 @@ export default function OrganizerEventDetail({ route }) {
                 WhatsApp
               </Text>
             </Pressable>
+
             <Pressable
               onPress={() => {
                 setShareVisible(false);
@@ -679,6 +710,7 @@ export default function OrganizerEventDetail({ route }) {
             >
               <Text style={{ color: "#fff", fontWeight: "bold" }}>Twitter</Text>
             </Pressable>
+
             <Pressable onPress={() => setShareVisible(false)}>
               <Text style={{ color: "#014869", fontWeight: "bold" }}>
                 Cancelar
@@ -688,7 +720,6 @@ export default function OrganizerEventDetail({ route }) {
         </View>
       </Modal>
 
-      {/* Footer */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAboutUs}

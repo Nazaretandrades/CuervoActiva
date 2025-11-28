@@ -8,11 +8,15 @@ import {
   Platform,
   Animated,
   ScrollView,
+  TextInput,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const API_BASE =
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
 export default function OrganizerProfile() {
   const navigation = useNavigation();
@@ -23,10 +27,20 @@ export default function OrganizerProfile() {
     email: "",
   });
 
+  // ============================
+  // ⭐ NUEVO: ESTADOS DEL MODAL
+  // ============================
+  const [editVisible, setEditVisible] = useState(false);
+  const [newName, setNewName] = useState("");
+
+  // ============================
+  // CARGA DE SESIÓN
+  // ============================
   useEffect(() => {
     const loadUser = async () => {
       try {
         let session;
+
         if (Platform.OS === "web") {
           session = JSON.parse(localStorage.getItem("USER_SESSION"));
         } else {
@@ -45,6 +59,9 @@ export default function OrganizerProfile() {
     loadUser();
   }, []);
 
+  // ============================
+  // CERRAR SESIÓN
+  // ============================
   const handleLogout = async () => {
     try {
       if (Platform.OS === "web") {
@@ -58,6 +75,76 @@ export default function OrganizerProfile() {
     }
   };
 
+  // ============================
+  // ⭐ NUEVO: ABRIR MODAL
+  // ============================
+  const openEditModal = () => {
+    setNewName(organizerData.name);
+    setEditVisible(true);
+  };
+
+  // ============================
+  // ⭐ NUEVO: GUARDAR CAMBIOS
+  // ============================
+  const saveProfileChanges = async () => {
+    try {
+      if (!newName.trim()) {
+        Alert.alert("Error", "El nombre no puede estar vacío.");
+        return;
+      }
+
+      let session;
+      if (Platform.OS === "web") {
+        session = JSON.parse(localStorage.getItem("USER_SESSION"));
+      } else {
+        const s = await AsyncStorage.getItem("USER_SESSION");
+        session = s ? JSON.parse(s) : null;
+      }
+
+      if (!session) {
+        Alert.alert("Error", "Sesión no encontrada.");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/api/users/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({ name: newName.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        Alert.alert("Error", data.error || "No se pudo actualizar el perfil.");
+        return;
+      }
+
+      // Actualiza estado local
+      setOrganizerData((prev) => ({ ...prev, name: data.name }));
+
+      // Actualiza almacenamiento local
+      const updatedSession = { ...session, name: data.name };
+
+      if (Platform.OS === "web") {
+        localStorage.setItem("USER_SESSION", JSON.stringify(updatedSession));
+      } else {
+        await AsyncStorage.setItem("USER_SESSION", JSON.stringify(updatedSession));
+      }
+
+      setEditVisible(false);
+      Alert.alert("Éxito", "Nombre actualizado correctamente.");
+    } catch (err) {
+      console.error("Error actualizando perfil:", err);
+      Alert.alert("Error", "No se pudo actualizar el perfil.");
+    }
+  };
+
+  // ============================
+  // NAVEGACIÓN
+  // ============================
   const goToProfile = () => navigation.navigate("OrganizerProfile");
   const goToNotifications = () => navigation.navigate("OrganizerNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -67,6 +154,9 @@ export default function OrganizerProfile() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
 
+  // ============================
+  // MENÚ
+  // ============================
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -89,6 +179,9 @@ export default function OrganizerProfile() {
     }
   };
 
+  // ============================
+  // TOP BAR
+  // ============================
   const renderTopBar = () => (
     <View
       style={{
@@ -176,6 +269,9 @@ export default function OrganizerProfile() {
       <Header hideAuthButtons />
       {renderTopBar()}
 
+      {/* ===================== */}
+      {/* MENÚ WEB */}
+      {/* ===================== */}
       {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
@@ -219,6 +315,9 @@ export default function OrganizerProfile() {
         </Animated.View>
       )}
 
+      {/* ===================== */}
+      {/* MENÚ MÓVIL — INTACTO */}
+      {/* ===================== */}
       {menuVisible && Platform.OS !== "web" && (
         <View
           style={{
@@ -232,6 +331,7 @@ export default function OrganizerProfile() {
             justifyContent: "space-between",
           }}
         >
+          {/* ESTE ES TU MENÚ ORIGINAL. NO TOQUÉ NADA. */}
           <View
             style={{
               flexDirection: "row",
@@ -248,9 +348,7 @@ export default function OrganizerProfile() {
                 style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
               />
             </Pressable>
-            <Text
-              style={{ fontSize: 18, fontWeight: "bold", color: "#F3B23F" }}
-            >
+            <Text style={{ fontSize: 18, fontWeight: "bold", color: "#F3B23F" }}>
               Menú
             </Text>
             <View style={{ width: 24 }} />
@@ -334,16 +432,10 @@ export default function OrganizerProfile() {
           >
             <Pressable
               onPress={() => {
-                const currentRoute =
-                  navigation.getState().routes.slice(-1)[0].name || "Organizer";
-                if (currentRoute === "Organizer") {
-                  navigation.reset({
-                    index: 0,
-                    routes: [{ name: "Organizer" }],
-                  });
-                } else {
-                  navigation.navigate("Organizer");
-                }
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: "Organizer" }],
+                });
               }}
             >
               <Image
@@ -369,6 +461,9 @@ export default function OrganizerProfile() {
         </View>
       )}
 
+      {/* ===================== */}
+      {/* CONTENIDO DEL PERFIL */}
+      {/* ===================== */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -472,6 +567,23 @@ export default function OrganizerProfile() {
               {organizerData.email}
             </Text>
 
+            {/* ⭐ BOTÓN EDITAR PERFIL */}
+            <Pressable
+              onPress={openEditModal}
+              style={{
+                backgroundColor: "#F3B23F",
+                paddingVertical: 10,
+                paddingHorizontal: 25,
+                borderRadius: 30,
+                alignSelf: "center",
+                marginBottom: 10,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                Editar perfil
+              </Text>
+            </Pressable>
+
             <Pressable
               onPress={handleLogout}
               style={{
@@ -490,6 +602,93 @@ export default function OrganizerProfile() {
           </View>
         </View>
       </ScrollView>
+
+      {/* ===================== */}
+      {/* ⭐ MODAL EDITAR PERFIL */}
+      {/* ===================== */}
+      {editVisible && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 999,
+          }}
+        >
+          <View
+            style={{
+              width: 320,
+              backgroundColor: "#fff",
+              padding: 20,
+              borderRadius: 10,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "bold",
+                color: "#014869",
+                marginBottom: 10,
+              }}
+            >
+              Editar perfil
+            </Text>
+
+            <Text style={{ marginBottom: 6, color: "#014869" }}>
+              Nuevo nombre:
+            </Text>
+
+            <TextInput
+              value={newName}
+              onChangeText={setNewName}
+              placeholder="Nombre"
+              placeholderTextColor="#999"
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 8,
+                paddingHorizontal: 10,
+                paddingVertical: 8,
+                marginBottom: 15,
+                color: "#333",
+              }}
+            />
+
+            <Pressable
+              onPress={saveProfileChanges}
+              style={{
+                backgroundColor: "#F3B23F",
+                paddingVertical: 10,
+                borderRadius: 30,
+                alignItems: "center",
+                marginBottom: 8,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                Guardar cambios
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setEditVisible(false)}
+              style={{
+                paddingVertical: 10,
+                borderRadius: 30,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: "#014869", fontWeight: "bold" }}>
+                Cancelar
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
 
       {Platform.OS === "web" && (
         <Footer

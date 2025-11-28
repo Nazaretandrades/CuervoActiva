@@ -198,10 +198,37 @@ export default function AdminUsers() {
 
   const closeEditModal = () => setEditVisible(false);
 
-  // 🔹 Crear usuario (POST /api/users/admin-create)
   const submitCreateUser = async () => {
-    if (!newUser.name.trim() || !newUser.email.trim() || !newUser.password) {
-      showToast("error", "Nombre, email y contraseña son obligatorios");
+    // 🔍 Validación uno por uno
+    if (!newUser.name.trim()) {
+      showToast("error", "El nombre es obligatorio");
+      return;
+    }
+
+    if (!newUser.email.trim()) {
+      showToast("error", "El email es obligatorio");
+      return;
+    }
+
+    // Validar email correcto
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newUser.email)) {
+      showToast("error", "El email no es válido");
+      return;
+    }
+
+    if (!newUser.password.trim()) {
+      showToast("error", "La contraseña es obligatoria");
+      return;
+    }
+
+    if (newUser.password.length < 6) {
+      showToast("error", "La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+
+    if (!newUser.confirmPassword.trim()) {
+      showToast("error", "Debes repetir la contraseña");
       return;
     }
 
@@ -209,6 +236,8 @@ export default function AdminUsers() {
       showToast("error", "Las contraseñas no coinciden");
       return;
     }
+
+    // ------------------------------
 
     try {
       const session = await getSession();
@@ -235,7 +264,6 @@ export default function AdminUsers() {
         return;
       }
 
-      // Añadimos el usuario a la lista sin perder los demás
       setUsers((prev) => [...prev, data]);
       closeCreateModal();
       showToast("success", "✅ Usuario creado correctamente");
@@ -244,26 +272,51 @@ export default function AdminUsers() {
     }
   };
 
-  // 🔹 Editar usuario (PUT /api/users/admin-update/:id)
   const submitEditUser = async () => {
-    if (!editUser.name.trim() || !editUser.email.trim()) {
-      showToast("error", "Nombre y email son obligatorios");
+    // 🔍 Validación campo por campo
+    if (!editUser.name.trim()) {
+      showToast("error", "El nombre es obligatorio");
       return;
     }
 
+    if (!editUser.email.trim()) {
+      showToast("error", "El email es obligatorio");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editUser.email)) {
+      showToast("error", "El email no es válido");
+      return;
+    }
+
+    // Si quiere cambiar password ↓↓↓
     if (editUser.password || editUser.confirmPassword) {
-      if (!editUser.password || !editUser.confirmPassword) {
+      if (!editUser.password.trim()) {
+        showToast("error", "La nueva contraseña no puede estar vacía");
+        return;
+      }
+
+      if (editUser.password.length < 6) {
         showToast(
           "error",
-          "Si cambias la contraseña, rellena ambos campos de contraseña"
+          "La nueva contraseña debe tener al menos 6 caracteres"
         );
         return;
       }
+
+      if (!editUser.confirmPassword.trim()) {
+        showToast("error", "Debes repetir la contraseña nueva");
+        return;
+      }
+
       if (editUser.password !== editUser.confirmPassword) {
         showToast("error", "Las contraseñas no coinciden");
         return;
       }
     }
+
+    // ----------------------------------
 
     try {
       const session = await getSession();
@@ -274,9 +327,8 @@ export default function AdminUsers() {
         email: editUser.email,
         role: editUser.role,
       };
-      if (editUser.password) {
-        payload.password = editUser.password;
-      }
+
+      if (editUser.password) payload.password = editUser.password;
 
       const res = await fetch(`${API_URL}/admin-update/${editUser.id}`, {
         method: "PUT",
@@ -294,10 +346,7 @@ export default function AdminUsers() {
         return;
       }
 
-      // Actualizamos en la lista
-      setUsers((prev) =>
-        prev.map((u) => (u._id === data._id ? data : u))
-      );
+      setUsers((prev) => prev.map((u) => (u._id === data._id ? data : u)));
 
       closeEditModal();
       showToast("success", "✅ Usuario actualizado correctamente");
@@ -525,9 +574,7 @@ export default function AdminUsers() {
             <Text style={styles.label}>Rol</Text>
             <View style={styles.roleRow}>
               <Pressable
-                onPress={() =>
-                  setNewUser((p) => ({ ...p, role: "user" }))
-                }
+                onPress={() => setNewUser((p) => ({ ...p, role: "user" }))}
                 style={[
                   styles.roleOption,
                   newUser.role === "user" && styles.roleOptionSelected,
@@ -543,9 +590,7 @@ export default function AdminUsers() {
                 </Text>
               </Pressable>
               <Pressable
-                onPress={() =>
-                  setNewUser((p) => ({ ...p, role: "organizer" }))
-                }
+                onPress={() => setNewUser((p) => ({ ...p, role: "organizer" }))}
                 style={[
                   styles.roleOption,
                   newUser.role === "organizer" && styles.roleOptionSelected,
@@ -564,18 +609,13 @@ export default function AdminUsers() {
             </View>
 
             <View style={[styles.modalButtons, { marginTop: 18 }]}>
-              <Pressable
-                onPress={closeCreateModal}
-                style={styles.cancelButton}
-              >
+              <Pressable onPress={closeCreateModal} style={styles.cancelButton}>
                 <Text style={{ color: "#333", fontWeight: "bold" }}>
                   Cancelar
                 </Text>
               </Pressable>
               <Pressable onPress={submitCreateUser} style={styles.saveButton}>
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                  Crear
-                </Text>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Crear</Text>
               </Pressable>
             </View>
           </View>
@@ -630,9 +670,7 @@ export default function AdminUsers() {
             <Text style={styles.label}>Rol</Text>
             <View style={styles.roleRow}>
               <Pressable
-                onPress={() =>
-                  setEditUser((p) => ({ ...p, role: "user" }))
-                }
+                onPress={() => setEditUser((p) => ({ ...p, role: "user" }))}
                 style={[
                   styles.roleOption,
                   editUser.role === "user" && styles.roleOptionSelected,
@@ -689,8 +727,7 @@ export default function AdminUsers() {
           style={[
             styles.toast,
             {
-              backgroundColor:
-                toast.type === "success" ? "#4CAF50" : "#E74C3C",
+              backgroundColor: toast.type === "success" ? "#4CAF50" : "#E74C3C",
               opacity: fadeAnim,
             },
           ]}

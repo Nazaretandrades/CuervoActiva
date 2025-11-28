@@ -5,7 +5,9 @@ const {
   addComment,
   getComments,
   getUserRating,
+  deleteComment,
 } = require("../controllers/commentController");
+
 const { auth, authorizeRoles } = require("../middlewares/authMiddleware");
 
 /*
@@ -25,5 +27,11 @@ router.get("/user/:eventId", auth, getUserRating);
  * Comentarios del evento (admin / organizador).
  */
 router.get("/:eventId", getComments);
+
+/*
+ * DELETE /api/comments/:commentId
+ * Elimina un comentario (solo admin)
+ */
+router.delete("/:commentId", auth, authorizeRoles("admin"), deleteComment);
 
 module.exports = router;

@@ -50,15 +50,59 @@ export default function Register() {
   };
 
   async function onSubmit() {
-    if (!email.trim() || !name.trim() || !password.trim()) {
-      showToast("error", "Por favor, completa todos los campos obligatorios.");
+    // VALIDACIÓN UNO POR UNO
+
+    // 1️⃣ Email vacío
+    if (!email.trim()) {
+      showToast("error", "El email es obligatorio.");
       return;
     }
 
+    // 2️⃣ Email con formato inválido
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showToast("error", "Introduce un correo electrónico válido.");
+      return;
+    }
+
+    // 3️⃣ Nombre vacío
+    if (!name.trim()) {
+      showToast("error", "El nombre de usuario es obligatorio.");
+      return;
+    }
+
+    // 4️⃣ Nombre demasiado corto
+    if (name.trim().length < 3) {
+      showToast("error", "El nombre debe tener al menos 3 caracteres.");
+      return;
+    }
+
+    // 5️⃣ Contraseña vacía
+    if (!password.trim()) {
+      showToast("error", "La contraseña es obligatoria.");
+      return;
+    }
+
+    // 6️⃣ Contraseña demasiado corta
+    if (password.length < 6) {
+      showToast("error", "La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
+
+    // 7️⃣ Validar rol (por si falla algo en el Picker)
+    if (role !== "user" && role !== "organizer") {
+      showToast("error", "El rol seleccionado no es válido.");
+      return;
+    }
+
+    // -----------------------------
+    // 🔥 SI TODO ESTÁ BIEN, REGISTRAR
     try {
       setLoading(true);
       await registerUser({ name, email, password, role });
+
       showToast("success", "✅ Registro completado correctamente.");
+
       setTimeout(() => navigation.navigate("Login"), 1500);
     } catch (e) {
       showToast("error", e.message || "❌ Error. Intenta de nuevo.");

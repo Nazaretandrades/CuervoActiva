@@ -8,19 +8,25 @@ import {
   Platform,
   Animated,
   ScrollView,
+  TextInput,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-
+const API_BASE =
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
 export default function UserProfile() {
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [userData, setUserData] = useState({ name: "Usuario", email: "" });
+
+  // ⭐ NUEVO — estado del modal
+  const [editVisible, setEditVisible] = useState(false);
+  const [newName, setNewName] = useState("");
 
   useEffect(() => {
     const loadUser = async () => {
@@ -53,6 +59,66 @@ export default function UserProfile() {
       navigation.navigate("Intro");
     } catch (err) {
       Alert.alert("Error", "No se pudo cerrar sesión correctamente.");
+    }
+  };
+
+  // ⭐ NUEVO: abrir modal
+  const openEditModal = () => {
+    setNewName(userData.name);
+    setEditVisible(true);
+  };
+
+  // ⭐ NUEVO: guardar cambios
+  const saveProfileChanges = async () => {
+    try {
+      if (!newName.trim()) {
+        Alert.alert("Error", "El nombre no puede estar vacío.");
+        return;
+      }
+
+      let session =
+        Platform.OS === "web"
+          ? JSON.parse(localStorage.getItem("USER_SESSION"))
+          : JSON.parse(await AsyncStorage.getItem("USER_SESSION"));
+
+      if (!session) {
+        Alert.alert("Error", "Sesión no encontrada.");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/api/users/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({ name: newName.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        Alert.alert("Error", data.error || "No se pudo actualizar el perfil.");
+        return;
+      }
+
+      // Actualiza estado
+      setUserData((prev) => ({ ...prev, name: data.name }));
+
+      // Actualiza storage
+      const updatedSession = { ...session, name: data.name };
+
+      if (Platform.OS === "web") {
+        localStorage.setItem("USER_SESSION", JSON.stringify(updatedSession));
+      } else {
+        await AsyncStorage.setItem("USER_SESSION", JSON.stringify(updatedSession));
+      }
+
+      setEditVisible(false);
+      Alert.alert("Éxito", "Nombre actualizado correctamente.");
+    } catch (err) {
+      console.error("Error:", err);
+      Alert.alert("Error", "No se pudo actualizar el perfil.");
     }
   };
 
@@ -103,7 +169,6 @@ export default function UserProfile() {
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
-            position: "relative",
             marginRight: 12,
             width: 44,
             height: 44,
@@ -164,6 +229,7 @@ export default function UserProfile() {
       <Header hideAuthButtons />
       {renderTopBar()}
 
+      {/* Menú web */}
       {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
@@ -208,7 +274,9 @@ export default function UserProfile() {
         </Animated.View>
       )}
 
+      {/* Menú móvil */}
       {menuVisible && Platform.OS !== "web" && (
+        /* --- AQUÍ NO TOCO NADA, TU MENÚ ORIGINAL --- */
         <View
           style={{
             position: "absolute",
@@ -222,6 +290,7 @@ export default function UserProfile() {
             paddingTop: 50,
           }}
         >
+          {/* CABECERA */}
           <View
             style={{
               flexDirection: "row",
@@ -249,8 +318,10 @@ export default function UserProfile() {
             </Text>
           </View>
 
+          {/* OPCIONES */}
           <View style={{ flex: 1 }}>
             {[
+
               {
                 label: "Cultura e Historia",
                 icon: require("../assets/iconos/museo-usuario.png"),
@@ -313,6 +384,7 @@ export default function UserProfile() {
             ))}
           </View>
 
+          {/* FOOTER MENÚ */}
           <View
             style={{
               position: "absolute",
@@ -350,6 +422,7 @@ export default function UserProfile() {
         </View>
       )}
 
+      {/* PERFIL */}
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -386,7 +459,6 @@ export default function UserProfile() {
 
           <View
             style={{
-              position: "relative",
               width: 70,
               height: 70,
               borderRadius: 35,
@@ -441,6 +513,23 @@ export default function UserProfile() {
               {userData.email}
             </Text>
 
+            {/* ⭐ BOTÓN EDITAR PERFIL */}
+            <Pressable
+              onPress={openEditModal}
+              style={{
+                backgroundColor: "#014869",
+                paddingVertical: 10,
+                paddingHorizontal: 25,
+                borderRadius: 30,
+                alignSelf: "center",
+                marginBottom: 10,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                Editar perfil
+              </Text>
+            </Pressable>
+
             <Pressable
               onPress={handleLogout}
               style={{
@@ -458,6 +547,91 @@ export default function UserProfile() {
           </View>
         </View>
       </ScrollView>
+
+      {/* ⭐ MODAL PARA EDITAR PERFIL */}
+      {editVisible && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 999,
+          }}
+        >
+          <View
+            style={{
+              width: 320,
+              backgroundColor: "#fff",
+              padding: 20,
+              borderRadius: 10,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "bold",
+                color: "#014869",
+                marginBottom: 10,
+              }}
+            >
+              Editar perfil
+            </Text>
+
+            <Text style={{ marginBottom: 6, color: "#014869" }}>
+              Nuevo nombre:
+            </Text>
+
+            <TextInput
+              value={newName}
+              onChangeText={setNewName}
+              placeholder="Nombre"
+              placeholderTextColor="#999"
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 8,
+                paddingHorizontal: 10,
+                paddingVertical: 8,
+                marginBottom: 15,
+                color: "#333",
+              }}
+            />
+
+            <Pressable
+              onPress={saveProfileChanges}
+              style={{
+                backgroundColor: "#014869",
+                paddingVertical: 10,
+                borderRadius: 30,
+                alignItems: "center",
+                marginBottom: 8,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                Guardar cambios
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setEditVisible(false)}
+              style={{
+                paddingVertical: 10,
+                borderRadius: 30,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: "#014869", fontWeight: "bold" }}>
+                Cancelar
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
 
       {Platform.OS === "web" && (
         <Footer

@@ -9,10 +9,15 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Alert,
+  TextInput, // ⭐ NUEVO
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
+import { getSession, saveSession } from "../services/sessionManager";
+
+const API_BASE =
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
 export default function AdminProfile() {
   const navigation = useNavigation();
@@ -20,10 +25,16 @@ export default function AdminProfile() {
   const [menuAnim] = useState(new Animated.Value(-250));
   const [adminData, setAdminData] = useState({ name: "Admin", email: "" });
 
+  // ⭐ NUEVO: estado para editar perfil
+  const [editVisible, setEditVisible] = useState(false);
+  const [newName, setNewName] = useState("");
+
   useEffect(() => {
     const loadUser = () => {
       try {
-        const session = JSON.parse(localStorage.getItem("USER_SESSION"));
+        const session = JSON.parse(
+          Platform.OS === "web" ? localStorage.getItem("USER_SESSION") : null
+        );
         if (session?.name && session?.email) {
           setAdminData({ name: session.name, email: session.email });
         }
@@ -33,14 +44,19 @@ export default function AdminProfile() {
     };
 
     loadUser();
-    window.addEventListener("storage", loadUser);
-    return () => window.removeEventListener("storage", loadUser);
+
+    if (Platform.OS === "web") {
+      window.addEventListener("storage", loadUser);
+      return () => window.removeEventListener("storage", loadUser);
+    }
   }, []);
 
   const handleLogout = async () => {
     try {
-      localStorage.removeItem("USER_SESSION");
-      localStorage.removeItem("SEEN_INTRO");
+      if (Platform.OS === "web") {
+        localStorage.removeItem("USER_SESSION");
+        localStorage.removeItem("SEEN_INTRO");
+      }
       navigation.reset({
         index: 0,
         routes: [{ name: "Intro" }],
@@ -48,6 +64,58 @@ export default function AdminProfile() {
     } catch (err) {
       console.error("Error cerrando sesión:", err);
       Alert.alert("Error", "No se pudo cerrar sesión correctamente.");
+    }
+  };
+
+  // ⭐ NUEVO: abrir modal de edición
+  const openEditModal = () => {
+    setNewName(adminData.name || "");
+    setEditVisible(true);
+  };
+
+  // ⭐ NUEVO: guardar cambios llamando al backend
+
+  const saveProfileChanges = async () => {
+    try {
+      if (!newName.trim()) {
+        Alert.alert("Error", "El nombre no puede estar vacío.");
+        return;
+      }
+
+      const session = await getSession(); // 🔥 AHORA FUNCIONA EN WEB Y MÓVIL
+
+      if (!session?.token) {
+        Alert.alert("Error", "Sesión no encontrada.");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/api/users/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`, // 🔥 Token correcto SIEMPRE
+        },
+        body: JSON.stringify({ name: newName.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        Alert.alert("Error", data.error || "No se pudo actualizar el perfil.");
+        return;
+      }
+
+      // Actualizar estado local (pantalla)
+      setAdminData((prev) => ({ ...prev, name: data.name }));
+
+      // 🔥 Guardar sesión actualizada (funciona web + móvil)
+      await saveSession({ ...session, name: data.name });
+
+      setEditVisible(false);
+      Alert.alert("Éxito", "Nombre actualizado correctamente.");
+    } catch (err) {
+      console.error("Error actualizando perfil:", err);
+      Alert.alert("Error", "No se pudo actualizar el perfil.");
     }
   };
 
@@ -336,6 +404,24 @@ export default function AdminProfile() {
               {adminData.email}
             </Text>
 
+            {/* ⭐ NUEVO BOTÓN EDITAR PERFIL */}
+            <Pressable
+              onPress={openEditModal}
+              style={{
+                backgroundColor: "#0094A2",
+                paddingVertical: 10,
+                paddingHorizontal: 25,
+                borderRadius: 30,
+                alignSelf: "center",
+                marginTop: 10,
+                marginBottom: 10,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                Editar perfil
+              </Text>
+            </Pressable>
+
             <Pressable
               onPress={handleLogout}
               style={{
@@ -354,6 +440,91 @@ export default function AdminProfile() {
           </View>
         </View>
       </ScrollView>
+
+      {/* ⭐ NUEVO MODAL DE EDICIÓN */}
+      {editVisible && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 999,
+          }}
+        >
+          <View
+            style={{
+              width: 320,
+              backgroundColor: "#fff",
+              padding: 20,
+              borderRadius: 10,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "bold",
+                color: "#014869",
+                marginBottom: 10,
+              }}
+            >
+              Editar perfil
+            </Text>
+
+            <Text style={{ marginBottom: 6, color: "#014869" }}>
+              Nuevo nombre:
+            </Text>
+
+            <TextInput
+              value={newName}
+              onChangeText={setNewName}
+              placeholder="Nombre"
+              placeholderTextColor="#999"
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 8,
+                paddingHorizontal: 10,
+                paddingVertical: 8,
+                marginBottom: 15,
+                color: "#333",
+              }}
+            />
+
+            <Pressable
+              onPress={saveProfileChanges}
+              style={{
+                backgroundColor: "#0094A2",
+                paddingVertical: 10,
+                borderRadius: 30,
+                alignItems: "center",
+                marginBottom: 8,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                Guardar cambios
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setEditVisible(false)}
+              style={{
+                paddingVertical: 10,
+                borderRadius: 30,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: "#014869", fontWeight: "bold" }}>
+                Cancelar
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
 
       {Platform.OS === "web" && (
         <Footer

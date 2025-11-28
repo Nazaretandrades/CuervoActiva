@@ -36,6 +36,8 @@ const commentSchema = new mongoose.Schema(
       max: 5,
       required: true,
     },
+
+    text: { type: String, default: "" } 
   },
   {
     /**

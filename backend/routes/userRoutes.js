@@ -10,6 +10,7 @@ const {
   deleteUser,
   createUserByAdmin,
   updateUserByAdmin,
+  updateOwnProfile,   
 } = require("../controllers/userController");
 
 // Importamos los middlewares de autenticación y control de roles
@@ -35,6 +36,12 @@ router.post("/login", loginUser);
  * - Requiere autenticación.
  */
 router.get("/profile", auth, getProfile);
+
+/**
+ * RUTA: PUT /api/users/profile
+ * Permite al usuario autenticado actualizar su propio perfil (solo nombre).
+ */
+router.put("/profile", auth, updateOwnProfile);
 
 /**
  * RUTA: GET /api/users
