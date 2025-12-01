@@ -4,12 +4,11 @@ import {
   Text,
   TextInput,
   Pressable,
-  ScrollView,
   Image,
   Platform,
-  Dimensions,
   StatusBar,
   Animated,
+  useWindowDimensions,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation } from "@react-navigation/native";
@@ -18,6 +17,7 @@ import { registerUser } from "../services/auth";
 
 export default function Register() {
   const navigation = useNavigation();
+  const { width } = useWindowDimensions();
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -29,115 +29,106 @@ export default function Register() {
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
   const fadeAnim = useState(new Animated.Value(0))[0];
 
-  const { width } = Dimensions.get("window");
-  const isMobile = width < 768;
+  // BREAKPOINTS
+  const isMobile = width < 600;
+  const isTablet = width >= 600 && width < 992;
+  const isLaptop = width >= 992 && width < 1400;
+  const isSmallMobile = width <= 360; // iPhone SE / Mobile S 320-360
 
-  const showToast = (type, message) => {
-    setToast({ visible: true, type, message });
+  const formWidth = isMobile
+    ? "90%"
+    : isTablet
+    ? "70%"
+    : isLaptop
+    ? "40%"
+    : "30%";
+
+  const showToast = (type, msg) => {
+    setToast({ visible: true, type, message: msg });
+
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 300,
+      duration: 250,
       useNativeDriver: true,
     }).start();
 
     setTimeout(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 300,
+        duration: 250,
         useNativeDriver: true,
-      }).start(() => setToast({ visible: false, type: "", message: "" }));
-    }, 3000);
+      }).start(() => setToast({ visible: false }));
+    }, 2000);
   };
 
   async function onSubmit() {
-    // VALIDACIÓN UNO POR UNO
+    if (!email.trim()) return showToast("error", "El email es obligatorio.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return showToast("error", "Introduce un email válido.");
 
-    // 1️⃣ Email vacío
-    if (!email.trim()) {
-      showToast("error", "El email es obligatorio.");
-      return;
-    }
+    if (!name.trim()) return showToast("error", "El nombre es obligatorio.");
+    if (name.trim().length < 3)
+      return showToast("error", "El nombre debe tener al menos 3 caracteres.");
 
-    // 2️⃣ Email con formato inválido
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      showToast("error", "Introduce un correo electrónico válido.");
-      return;
-    }
+    if (!password.trim())
+      return showToast("error", "La contraseña es obligatoria.");
+    if (password.length < 6)
+      return showToast(
+        "error",
+        "La contraseña debe tener mínimo 6 caracteres."
+      );
 
-    // 3️⃣ Nombre vacío
-    if (!name.trim()) {
-      showToast("error", "El nombre de usuario es obligatorio.");
-      return;
-    }
-
-    // 4️⃣ Nombre demasiado corto
-    if (name.trim().length < 3) {
-      showToast("error", "El nombre debe tener al menos 3 caracteres.");
-      return;
-    }
-
-    // 5️⃣ Contraseña vacía
-    if (!password.trim()) {
-      showToast("error", "La contraseña es obligatoria.");
-      return;
-    }
-
-    // 6️⃣ Contraseña demasiado corta
-    if (password.length < 6) {
-      showToast("error", "La contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
-
-    // 7️⃣ Validar rol (por si falla algo en el Picker)
-    if (role !== "user" && role !== "organizer") {
-      showToast("error", "El rol seleccionado no es válido.");
-      return;
-    }
-
-    // -----------------------------
-    // 🔥 SI TODO ESTÁ BIEN, REGISTRAR
     try {
       setLoading(true);
       await registerUser({ name, email, password, role });
 
-      showToast("success", "✅ Registro completado correctamente.");
-
+      showToast("success", "Registro completado.");
       setTimeout(() => navigation.navigate("Login"), 1500);
     } catch (e) {
-      showToast("error", e.message || "❌ Error. Intenta de nuevo.");
+      showToast("error", e.message || "Error al registrarse");
     } finally {
       setLoading(false);
     }
   }
 
+  // Valores compactos para móviles muy pequeños
+  const fieldHeight = isSmallMobile ? 44 : 48;
+  const fieldPaddingH = isSmallMobile ? 10 : 14;
+  const iconSize = isSmallMobile ? 18 : 20;
+  const pickerHeight = isSmallMobile ? 50 : 55;
+
   return (
-    <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
+    <View
+      style={{
+        flex: 1,
+        width: "100%",
+        height: "100%",
+        backgroundColor: "#fff",
+        overflow: "hidden",
+      }}
+    >
+      {/* BACKGROUND */}
       <Image
         source={require("../assets/fondo.png")}
         style={{
           position: "absolute",
-          right: isMobile ? "-50%" : "-30%",
-          top: isMobile ? "-80%" : "15%",
-          transform: [
-            { translateY: isMobile ? -200 : -250 },
-            { scale: isMobile ? 0.8 : 1 },
-          ],
-          width: isMobile ? "300%" : "120%",
-          height: isMobile ? "300%" : "120%",
-          resizeMode: "contain",
-          opacity: 0.9,
-          zIndex: 0,
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          resizeMode: "cover",
+          opacity: 1,
         }}
       />
 
+      {/* HEADER */}
       {Platform.OS === "web" ? (
         <Header
           onLogin={() => navigation.navigate("Login")}
           onRegister={() => navigation.navigate("Register")}
         />
       ) : (
-        <View style={{ marginTop: StatusBar.currentHeight ? 0 : 0 }}>
+        <View>
           <Header
             onLogin={() => navigation.navigate("Login")}
             onRegister={() => navigation.navigate("Register")}
@@ -145,41 +136,43 @@ export default function Register() {
         </View>
       )}
 
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
+      {/* CONTENIDO */}
+      <View
+        style={{
+          flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          paddingVertical: isMobile ? 25 : 50,
+          paddingHorizontal: isSmallMobile ? 12 : 20,
         }}
       >
         <Text
           style={{
-            fontSize: isMobile ? 22 : 28,
+            fontSize: isMobile ? 26 : 34,
             fontWeight: "bold",
             color: "#014869",
-            marginBottom: 20,
+            marginBottom: 25,
             textAlign: "center",
           }}
         >
           Crear cuenta
         </Text>
 
+        {/* CARD */}
         <View
           style={{
-            width: isMobile ? "85%" : "60%",
+            width: formWidth,
             maxWidth: 480,
             backgroundColor: "#F9F9F9",
-            borderRadius: 15,
-            paddingVertical: 25,
-            paddingHorizontal: 30,
+            borderRadius: 18,
+            paddingVertical: isMobile ? 22 : 35,
+            paddingHorizontal: isSmallMobile ? 16 : isMobile ? 20 : 30,
             shadowColor: "#000",
             shadowOpacity: 0.1,
             shadowRadius: 10,
             elevation: 3,
-            alignItems: "center",
           }}
         >
+          {/* EMAIL */}
           <View
             style={{
               flexDirection: "row",
@@ -188,17 +181,16 @@ export default function Register() {
               borderRadius: 25,
               borderWidth: 1,
               borderColor: "#ddd",
-              paddingHorizontal: 12,
-              height: 42,
-              width: "100%",
-              marginBottom: 15,
+              paddingHorizontal: fieldPaddingH,
+              height: fieldHeight,
+              marginBottom: 18,
             }}
           >
             <Image
               source={require("../assets/iconos/email.png")}
               style={{
-                width: 18,
-                height: 18,
+                width: iconSize,
+                height: iconSize,
                 marginRight: 8,
                 tintColor: "#014869",
               }}
@@ -208,16 +200,20 @@ export default function Register() {
               onChangeText={setEmail}
               placeholder="Correo electrónico"
               placeholderTextColor="#7a7a7a"
+              maxLength={50}
+              numberOfLines={1}
+              ellipsizeMode="clip"
               style={{
                 flex: 1,
+                minWidth: 0, // ⭐ evita desbordes en 320px
+                fontSize: isSmallMobile ? 14 : 15,
                 color: "#014869",
-                fontSize: 14,
+                padding: 0,
               }}
-              keyboardType="email-address"
-              autoCapitalize="none"
             />
           </View>
 
+          {/* USERNAME */}
           <View
             style={{
               flexDirection: "row",
@@ -226,17 +222,16 @@ export default function Register() {
               borderRadius: 25,
               borderWidth: 1,
               borderColor: "#ddd",
-              paddingHorizontal: 12,
-              height: 42,
-              width: "100%",
-              marginBottom: 15,
+              paddingHorizontal: fieldPaddingH,
+              height: fieldHeight,
+              marginBottom: 18,
             }}
           >
             <Image
               source={require("../assets/iconos/usuario.png")}
               style={{
-                width: 18,
-                height: 18,
+                width: iconSize,
+                height: iconSize,
                 marginRight: 8,
                 tintColor: "#014869",
               }}
@@ -246,14 +241,20 @@ export default function Register() {
               onChangeText={setName}
               placeholder="Nombre de usuario"
               placeholderTextColor="#7a7a7a"
+              maxLength={30}
+              numberOfLines={1}
+              ellipsizeMode="clip"
               style={{
                 flex: 1,
+                minWidth: 0, // ⭐ importante para Mobile S
+                fontSize: isSmallMobile ? 14 : 15,
                 color: "#014869",
-                fontSize: 14,
+                padding: 0,
               }}
             />
           </View>
 
+          {/* ROL */}
           <View
             style={{
               flexDirection: "row",
@@ -262,44 +263,38 @@ export default function Register() {
               borderRadius: 25,
               borderWidth: 1,
               borderColor: "#ddd",
-              paddingHorizontal: 12,
-              height: 55,
-              width: "100%",
-              marginBottom: 15,
+              paddingHorizontal: fieldPaddingH,
+              height: pickerHeight,
+              marginBottom: 18,
             }}
           >
             <Image
               source={require("../assets/iconos/rol.png")}
               style={{
-                width: 18,
-                height: 18,
+                width: iconSize,
+                height: iconSize,
                 marginRight: 8,
                 tintColor: "#014869",
               }}
             />
-            <View style={{ flex: 1, justifyContent: "center" }}>
-              <Picker
-                selectedValue={role}
-                onValueChange={setRole}
-                dropdownIconColor="#014869"
-                style={{
-                  flex: 1,
-                  color: "#014869",
-                  fontSize: 16,
-                  height: 55,
-                  backgroundColor: "transparent",
-                }}
-                itemStyle={{
-                  fontSize: 16,
-                  color: "#014869",
-                }}
-              >
-                <Picker.Item label="Usuario" value="user" />
-                <Picker.Item label="Organizador" value="organizer" />
-              </Picker>
-            </View>
+            <Picker
+              selectedValue={role}
+              onValueChange={setRole}
+              dropdownIconColor="#014869"
+              style={{
+                flex: 1,
+                minWidth: 0, // ⭐ el Picker también puede desbordar
+                color: "#014869",
+                backgroundColor: "transparent",
+                fontSize: isSmallMobile ? 14 : 15,
+              }}
+            >
+              <Picker.Item label="Usuario" value="user" />
+              <Picker.Item label="Organizador" value="organizer" />
+            </Picker>
           </View>
 
+          {/* PASSWORD */}
           <View
             style={{
               flexDirection: "row",
@@ -308,17 +303,16 @@ export default function Register() {
               borderRadius: 25,
               borderWidth: 1,
               borderColor: "#ddd",
-              paddingHorizontal: 12,
-              height: 42,
-              width: "100%",
-              marginBottom: 20,
+              paddingHorizontal: fieldPaddingH,
+              height: fieldHeight,
+              marginBottom: 28,
             }}
           >
             <Image
               source={require("../assets/iconos/lock.png")}
               style={{
-                width: 18,
-                height: 18,
+                width: iconSize,
+                height: iconSize,
                 marginRight: 8,
                 tintColor: "#014869",
               }}
@@ -329,81 +323,71 @@ export default function Register() {
               placeholder="Contraseña"
               placeholderTextColor="#7a7a7a"
               secureTextEntry={!showPass}
+              maxLength={40}
+              numberOfLines={1}
+              ellipsizeMode="clip"
               style={{
                 flex: 1,
+                minWidth: 0, // ⭐ para que no empuje el icono
+                fontSize: isSmallMobile ? 14 : 15,
                 color: "#014869",
-                fontSize: 14,
+                padding: 0,
               }}
             />
             <Pressable onPress={() => setShowPass(!showPass)}>
               <Image
                 source={require("../assets/iconos/invisible.png")}
                 style={{
-                  width: 18,
-                  height: 18,
+                  width: isSmallMobile ? 16 : 18,
+                  height: isSmallMobile ? 16 : 18,
                   tintColor: showPass ? "#F3B23F" : "#014869",
                 }}
               />
             </Pressable>
           </View>
 
+          {/* SUBMIT */}
           <Pressable
             onPress={onSubmit}
             disabled={loading}
-            android_ripple={{ color: "rgba(255,255,255,0.2)" }}
             style={{
               backgroundColor: "#F3B23F",
               borderRadius: 8,
-              paddingVertical: 10,
-              paddingHorizontal: 40,
+              paddingVertical: isSmallMobile ? 10 : 12,
               alignItems: "center",
-              justifyContent: "center",
               opacity: loading ? 0.7 : 1,
-              shadowColor: "#000",
-              shadowOpacity: 0.2,
-              shadowRadius: 3,
-              elevation: 4,
             }}
           >
             <Text
               style={{
                 color: "#fff",
                 fontWeight: "700",
-                fontSize: 15,
+                fontSize: isSmallMobile ? 15 : 16,
               }}
             >
               {loading ? "Registrando..." : "Registrarse"}
             </Text>
           </Pressable>
         </View>
-      </ScrollView>
+      </View>
 
+      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={{
             position: "absolute",
-            bottom: 60,
-            left: "5%",
-            right: "5%",
-            backgroundColor: toast.type === "success" ? "#4CAF50" : "#E74C3C",
+            bottom: 40,
+            left: "8%",
+            right: "8%",
+            backgroundColor:
+              toast.type === "success" ? "#4CAF50" : "#E74C3C",
             paddingVertical: 14,
             paddingHorizontal: 18,
             borderRadius: 12,
-            shadowColor: "#000",
-            shadowOpacity: 0.3,
-            shadowRadius: 6,
-            elevation: 5,
             opacity: fadeAnim,
           }}
         >
-          <Text
-            style={{
-              color: "#fff",
-              fontWeight: "700",
-              textAlign: "center",
-              fontSize: 15,
-            }}
-          >
+          <Text style={{ color: "#fff", textAlign: "center", fontSize: 15 }}>
             {toast.message}
           </Text>
         </Animated.View>

@@ -4,13 +4,13 @@ import {
   Text,
   TextInput,
   Pressable,
-  ScrollView,
   Image,
   Platform,
-  Dimensions,
   StatusBar,
   Animated,
+  useWindowDimensions,
 } from "react-native";
+
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/HeaderIntro";
 import { loginUser } from "../services/auth";
@@ -18,115 +18,111 @@ import { saveSession } from "../services/sessionManager";
 
 export default function Login() {
   const navigation = useNavigation();
+  const { width } = useWindowDimensions();
 
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
   const fadeAnim = useState(new Animated.Value(0))[0];
 
-  const { width } = Dimensions.get("window");
-  const isMobile = width < 768;
+  // BREAKPOINTS
+  const isMobile = width < 600;
+  const isSmallMobile = width <= 360;
+  const isTablet = width >= 600 && width < 992;
+  const isLaptop = width >= 992 && width < 1400;
 
-  const showToast = (type, message) => {
-    setToast({ visible: true, type, message });
+  const formWidth = isMobile
+    ? "90%"
+    : isTablet
+    ? "70%"
+    : isLaptop
+    ? "40%"
+    : "30%";
+
+  const fieldHeight = isSmallMobile ? 44 : 48;
+  const paddingH = isSmallMobile ? 10 : 14;
+  const iconSize = isSmallMobile ? 18 : 20;
+
+  const showToast = (type, msg) => {
+    setToast({ visible: true, type, message: msg });
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 300,
+      duration: 250,
       useNativeDriver: true,
     }).start();
 
     setTimeout(() => {
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 300,
+        duration: 250,
         useNativeDriver: true,
-      }).start(() => setToast({ visible: false, type: "", message: "" }));
-    }, 3000);
+      }).start(() => setToast({ visible: false }));
+    }, 2000);
   };
 
   async function onSubmit() {
     if (!emailOrUsername.trim() || !password.trim()) {
-      showToast("error", "Por favor, completa todos los campos obligatorios.");
+      showToast("error", "Completa todos los campos");
       return;
     }
 
     try {
       setLoading(true);
       const data = await loginUser({ emailOrUsername, password });
-      const role = data.user?.role || data.role;
-
-      if (!role) {
-        showToast("error", "No se pudo identificar el rol del usuario.");
-        return;
-      }
-
       await saveSession(data);
 
-      if (role === "organizer") {
-        showToast("success", "Inicio de sesión exitoso como Organizador.");
-        setTimeout(() => {
-          navigation.reset({ index: 0, routes: [{ name: "Organizer" }] });
-        }, 1200);
-      } else if (role === "admin") {
-        if (Platform.OS === "web") {
-          showToast("success", "Inicio de sesión exitoso como Administrador.");
-          setTimeout(() => {
-            navigation.reset({ index: 0, routes: [{ name: "Admin" }] });
-          }, 1200);
-        } else {
-          showToast(
-            "error",
-            "El panel de administrador solo está disponible en la versión web."
-          );
-        }
-      } else if (role === "user") {
-        showToast("success", "Inicio de sesión exitoso como Usuario.");
-        setTimeout(() => {
-          navigation.reset({ index: 0, routes: [{ name: "User" }] });
-        }, 1200);
-      } else {
-        showToast("success", "Inicio de sesión exitoso.");
-        setTimeout(() => {
-          navigation.reset({ index: 0, routes: [{ name: "Intro" }] });
-        }, 1200);
-      }
+      const role = data.user?.role || data.role;
+
+      if (role === "admin") {
+        if (Platform.OS === "web")
+          navigation.reset({ index: 0, routes: [{ name: "Admin" }] });
+        else showToast("error", "Solo disponible en Web");
+      } else if (role === "organizer")
+        navigation.reset({ index: 0, routes: [{ name: "Organizer" }] });
+      else navigation.reset({ index: 0, routes: [{ name: "User" }] });
+
+      showToast("success", "Inicio exitoso");
     } catch (e) {
-      showToast("error", e.message || "❌ Error. Intenta de nuevo.");
+      showToast("error", e.message || "Error inesperado");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
+    <View
+      style={{
+        flex: 1,
+        width: "100%",
+        height: "100%",
+        backgroundColor: "#fff",
+        overflow: "hidden",
+      }}
+    >
+      {/* BACKGROUND */}
       <Image
         source={require("../assets/fondo.png")}
         style={{
           position: "absolute",
-          right: isMobile ? "-50%" : "-30%",
-          top: isMobile ? "-80%" : "15%",
-          transform: [
-            { translateY: isMobile ? -200 : -250 },
-            { scale: isMobile ? 0.8 : 1 },
-          ],
-          width: isMobile ? "300%" : "120%",
-          height: isMobile ? "300%" : "120%",
-          resizeMode: "contain",
-          opacity: 0.9,
-          zIndex: 0,
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          resizeMode: "cover",
+          opacity: 1,
         }}
       />
 
+      {/* HEADER */}
       {Platform.OS === "web" ? (
         <Header
           onLogin={() => navigation.navigate("Login")}
           onRegister={() => navigation.navigate("Register")}
         />
       ) : (
-        <View style={{ marginTop: StatusBar.currentHeight ? 0 : 0 }}>
+        <View>
           <Header
             onLogin={() => navigation.navigate("Login")}
             onRegister={() => navigation.navigate("Register")}
@@ -134,41 +130,43 @@ export default function Login() {
         </View>
       )}
 
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
+      {/* CONTENT */}
+      <View
+        style={{
+          flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          paddingVertical: isMobile ? 10 : 50,
+          paddingHorizontal: isSmallMobile ? 12 : 20,
         }}
       >
         <Text
           style={{
-            fontSize: isMobile ? 24 : 28,
+            fontSize: isMobile ? 28 : 34,
             fontWeight: "bold",
             color: "#014869",
-            marginBottom: 25,
+            marginBottom: 30,
             textAlign: "center",
           }}
         >
           Iniciar Sesión
         </Text>
 
+        {/* CARD */}
         <View
           style={{
-            width: isMobile ? "85%" : "60%",
-            maxWidth: 400,
+            width: formWidth,
+            maxWidth: 480,
             backgroundColor: "#F9F9F9",
-            borderRadius: 15,
-            paddingVertical: 30,
-            paddingHorizontal: 25,
+            borderRadius: 18,
+            paddingVertical: isMobile ? 25 : 35,
+            paddingHorizontal: isSmallMobile ? 16 : isMobile ? 20 : 30,
             shadowColor: "#000",
             shadowOpacity: 0.1,
             shadowRadius: 10,
             elevation: 3,
-            alignItems: "center",
           }}
         >
+          {/* EMAIL */}
           <View
             style={{
               flexDirection: "row",
@@ -177,36 +175,38 @@ export default function Login() {
               borderRadius: 25,
               borderWidth: 1,
               borderColor: "#ddd",
-              paddingHorizontal: 12,
-              height: 42,
-              width: "100%",
-              marginBottom: 15,
+              paddingHorizontal: paddingH,
+              height: fieldHeight,
+              marginBottom: 20,
             }}
           >
             <Image
               source={require("../assets/iconos/email.png")}
               style={{
-                width: 20,
-                height: 20,
-                marginRight: 10,
+                width: iconSize,
+                height: iconSize,
+                marginRight: 8,
                 tintColor: "#014869",
               }}
             />
             <TextInput
               value={emailOrUsername}
               onChangeText={setEmailOrUsername}
-              placeholder="Gmail o Usuario:"
+              placeholder="Correo o Usuario"
               placeholderTextColor="#7a7a7a"
+              numberOfLines={1}
+              ellipsizeMode="clip"
               style={{
                 flex: 1,
+                minWidth: 0,
+                fontSize: isSmallMobile ? 14 : 15,
                 color: "#014869",
-                fontSize: 14,
+                padding: 0,
               }}
-              autoCapitalize="none"
-              keyboardType="email-address"
             />
           </View>
 
+          {/* PASSWORD */}
           <View
             style={{
               flexDirection: "row",
@@ -215,102 +215,90 @@ export default function Login() {
               borderRadius: 25,
               borderWidth: 1,
               borderColor: "#ddd",
-              paddingHorizontal: 12,
-              height: 42,
-              width: "100%",
-              marginBottom: 25,
+              paddingHorizontal: paddingH,
+              height: fieldHeight,
+              marginBottom: 28,
             }}
           >
             <Image
               source={require("../assets/iconos/lock.png")}
               style={{
-                width: 20,
-                height: 20,
-                marginRight: 10,
+                width: iconSize,
+                height: iconSize,
+                marginRight: 8,
                 tintColor: "#014869",
               }}
             />
             <TextInput
               value={password}
               onChangeText={setPassword}
-              placeholder="Contraseña:"
+              placeholder="Contraseña"
               placeholderTextColor="#7a7a7a"
               secureTextEntry={!showPass}
+              numberOfLines={1}
+              ellipsizeMode="clip"
               style={{
                 flex: 1,
+                minWidth: 0,
+                fontSize: isSmallMobile ? 14 : 15,
                 color: "#014869",
-                fontSize: 14,
+                padding: 0,
               }}
             />
             <Pressable onPress={() => setShowPass(!showPass)}>
               <Image
                 source={require("../assets/iconos/invisible.png")}
                 style={{
-                  width: 18,
-                  height: 18,
+                  width: isSmallMobile ? 16 : 18,
+                  height: isSmallMobile ? 16 : 18,
                   tintColor: showPass ? "#F3B23F" : "#014869",
                 }}
               />
             </Pressable>
           </View>
 
+          {/* SUBMIT */}
           <Pressable
             onPress={onSubmit}
             disabled={loading}
-            android_ripple={{ color: "rgba(255,255,255,0.2)" }}
             style={{
               backgroundColor: "#F3B23F",
               borderRadius: 8,
-              paddingVertical: 10,
-              paddingHorizontal: 40,
+              paddingVertical: isSmallMobile ? 10 : 12,
               alignItems: "center",
-              justifyContent: "center",
               opacity: loading ? 0.7 : 1,
-              shadowColor: "#000",
-              shadowOpacity: 0.2,
-              shadowRadius: 3,
-              elevation: 4,
             }}
           >
             <Text
               style={{
                 color: "#fff",
                 fontWeight: "700",
-                fontSize: 15,
+                fontSize: isSmallMobile ? 15 : 16,
               }}
             >
               {loading ? "Iniciando..." : "Iniciar Sesión"}
             </Text>
           </Pressable>
         </View>
-      </ScrollView>
+      </View>
 
+      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={{
             position: "absolute",
-            bottom: 60,
-            left: "5%",
-            right: "5%",
-            backgroundColor: toast.type === "success" ? "#4CAF50" : "#E74C3C",
+            bottom: 40,
+            left: "8%",
+            right: "8%",
+            backgroundColor:
+              toast.type === "success" ? "#4CAF50" : "#E74C3C",
             paddingVertical: 14,
             paddingHorizontal: 18,
             borderRadius: 12,
-            shadowColor: "#000",
-            shadowOpacity: 0.3,
-            shadowRadius: 6,
-            elevation: 5,
             opacity: fadeAnim,
           }}
         >
-          <Text
-            style={{
-              color: "#fff",
-              fontWeight: "700",
-              textAlign: "center",
-              fontSize: 15,
-            }}
-          >
+          <Text style={{ color: "#fff", textAlign: "center", fontSize: 15 }}>
             {toast.message}
           </Text>
         </Animated.View>
