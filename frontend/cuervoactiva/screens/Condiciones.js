@@ -6,15 +6,26 @@ import {
   Image,
   Platform,
   Animated,
-  TouchableWithoutFeedback,
   Pressable,
   StyleSheet,
+  useWindowDimensions,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Condiciones({ navigation }) {
+  const { width, height } = useWindowDimensions();
+
+  // Breakpoints
+  const isMobile = width < 600;
+  const isTablet = width >= 600 && width < 900;
+  const isLaptop = width >= 900 && width < 1400;
+  const isDesktop = width >= 1400;
+
+  const dynamicPadding = isMobile ? 14 : isTablet ? 18 : 24;
+  const cardMinHeight = isMobile ? 260 : isTablet ? 320 : 350;
+
   const [role, setRole] = useState("user");
   const [userName, setUserName] = useState("Usuario");
   const [menuVisible, setMenuVisible] = useState(false);
@@ -83,20 +94,39 @@ export default function Condiciones({ navigation }) {
     }
   };
 
+  // TEXT SETTINGS
+  const textSizeTitle = isMobile ? 12 : 14;
+  const textSizeName = isMobile ? 12 : 13;
+  const iconSize = isMobile ? 20 : 22;
+  const menuIconSize = isMobile ? 22 : 24;
+
+  // -----------------------
+  // TOPBARS
+  // -----------------------
+
   const renderUserTopBar = () => (
-    <View style={styles.topBar}>
+    <View style={[styles.topBar, { paddingHorizontal: dynamicPadding }]}>
       <View style={styles.profileContainer}>
         <View style={styles.profileCircleUser}>
           <Image
             source={require("../assets/iconos/user.png")}
-            style={{ width: 24, height: 24, tintColor: "#fff" }}
+            style={{ width: iconSize, height: iconSize, tintColor: "#fff" }}
           />
         </View>
+
         <View>
-          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+          <Text
+            style={{
+              color: "#014869",
+              fontWeight: "700",
+              fontSize: textSizeTitle,
+            }}
+          >
             Usuario
           </Text>
-          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+          <Text style={{ color: "#6c757d", fontSize: textSizeName }}>
+            {userName}
+          </Text>
         </View>
       </View>
 
@@ -104,17 +134,23 @@ export default function Condiciones({ navigation }) {
         <Pressable onPress={goToNotifications} style={styles.iconButton}>
           <Image
             source={require("../assets/iconos/bell.png")}
-            style={{ width: 22, height: 22, tintColor: "#014869" }}
+            style={{ width: iconSize, height: iconSize, tintColor: "#014869" }}
           />
         </Pressable>
+
         {Platform.OS === "web" && (
           <Pressable onPress={goToCalendar} style={styles.iconButton}>
             <Image
               source={require("../assets/iconos/calendar.png")}
-              style={{ width: 22, height: 22, tintColor: "#014869" }}
+              style={{
+                width: iconSize,
+                height: iconSize,
+                tintColor: "#014869",
+              }}
             />
           </Pressable>
         )}
+
         <Pressable onPress={toggleMenu}>
           <Image
             source={
@@ -122,7 +158,11 @@ export default function Condiciones({ navigation }) {
                 ? require("../assets/iconos/close.png")
                 : require("../assets/iconos/menu-usuario.png")
             }
-            style={{ width: 24, height: 24, tintColor: "#014869" }}
+            style={{
+              width: menuIconSize,
+              height: menuIconSize,
+              tintColor: "#014869",
+            }}
           />
         </Pressable>
       </View>
@@ -130,36 +170,44 @@ export default function Condiciones({ navigation }) {
   );
 
   const renderAdminTopBar = () => (
-    <View style={styles.topBar}>
+    <View style={[styles.topBar, { paddingHorizontal: dynamicPadding }]}>
       <View style={styles.adminInfo}>
         <View style={styles.adminIconContainer}>
           <Image
             source={require("../assets/iconos/user.png")}
-            style={styles.userIcon}
+            style={[styles.userIcon, { width: iconSize, height: iconSize }]}
           />
           <Image
             source={require("../assets/iconos/corona.png")}
-            style={styles.crownIcon}
+            style={[styles.crownIcon, { width: iconSize, height: iconSize }]}
           />
         </View>
+
         <View>
-          <Text style={styles.adminTitle}>Admin.</Text>
-          <Text style={styles.adminName}>{userName}</Text>
+          <Text style={[styles.adminTitle, { fontSize: textSizeTitle }]}>
+            Admin.
+          </Text>
+          <Text style={[styles.adminName, { fontSize: textSizeName }]}>
+            {userName}
+          </Text>
         </View>
       </View>
+
       <View style={styles.iconRow}>
         <Pressable onPress={goToNotifications} style={styles.iconButton}>
           <Image
             source={require("../assets/iconos/bell2.png")}
-            style={styles.topIcon}
+            style={{ width: iconSize, height: iconSize, tintColor: "#0094A2" }}
           />
         </Pressable>
+
         <Pressable onPress={goToCalendar} style={styles.iconButton}>
           <Image
             source={require("../assets/iconos/calendar-admin.png")}
-            style={styles.topIcon}
+            style={{ width: iconSize, height: iconSize, tintColor: "#0094A2" }}
           />
         </Pressable>
+
         <Pressable onPress={toggleMenu}>
           <Image
             source={
@@ -167,7 +215,11 @@ export default function Condiciones({ navigation }) {
                 ? require("../assets/iconos/close-admin.png")
                 : require("../assets/iconos/menu-admin.png")
             }
-            style={styles.topIcon}
+            style={{
+              width: menuIconSize,
+              height: menuIconSize,
+              tintColor: "#0094A2",
+            }}
           />
         </Pressable>
       </View>
@@ -176,23 +228,35 @@ export default function Condiciones({ navigation }) {
 
   const renderOrganizerTopBar = () =>
     role === "organizer" && (
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingHorizontal: dynamicPadding }]}>
         <View style={styles.profileContainer}>
           <View style={styles.profileCircleOrganizer}>
             <Image
               source={require("../assets/iconos/user.png")}
-              style={{ width: 24, height: 24, tintColor: "#fff" }}
+              style={{ width: iconSize, height: iconSize, tintColor: "#fff" }}
             />
             <Image
               source={require("../assets/iconos/lapiz.png")}
-              style={styles.penIcon}
+              style={[
+                styles.penIcon,
+                { width: iconSize, height: iconSize, top: -5, left: -5 },
+              ]}
             />
           </View>
+
           <View>
-            <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+            <Text
+              style={{
+                color: "#014869",
+                fontWeight: "700",
+                fontSize: textSizeTitle,
+              }}
+            >
               Organiz.
             </Text>
-            <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+            <Text style={{ color: "#6c757d", fontSize: textSizeName }}>
+              {userName}
+            </Text>
           </View>
         </View>
 
@@ -200,17 +264,27 @@ export default function Condiciones({ navigation }) {
           <Pressable onPress={goToNotifications} style={styles.iconButton}>
             <Image
               source={require("../assets/iconos/bell3.png")}
-              style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+              style={{
+                width: iconSize,
+                height: iconSize,
+                tintColor: "#F3B23F",
+              }}
             />
           </Pressable>
+
           {Platform.OS === "web" && (
             <Pressable onPress={goToCalendar} style={styles.iconButton}>
               <Image
                 source={require("../assets/iconos/calendar-organizador.png")}
-                style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+                style={{
+                  width: iconSize,
+                  height: iconSize,
+                  tintColor: "#F3B23F",
+                }}
               />
             </Pressable>
           )}
+
           <Pressable onPress={toggleMenu}>
             <Image
               source={
@@ -218,32 +292,41 @@ export default function Condiciones({ navigation }) {
                   ? require("../assets/iconos/close-organizador.png")
                   : require("../assets/iconos/menu-organizador.png")
               }
-              style={{ width: 24, height: 24, tintColor: "#F3B23F" }}
+              style={{
+                width: menuIconSize,
+                height: menuIconSize,
+                tintColor: "#F3B23F",
+              }}
             />
           </Pressable>
         </View>
       </View>
     );
 
+  // -----------------------
+  // RETURN
+  // -----------------------
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
+
       {role === "admin"
         ? renderAdminTopBar()
         : role === "organizer"
         ? renderOrganizerTopBar()
         : renderUserTopBar()}
 
-      {Platform.OS === "web" && menuVisible && role === "admin" && (
+      {/* MENÚ RESPONSIVE */}
+      {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
             position: "fixed",
             top: 0,
             left: 0,
-            width: 250,
+            width: isMobile ? 200 : 250,
             height: "100%",
             backgroundColor: "#f8f8f8",
-            padding: 20,
+            padding: isMobile ? 14 : 20,
             zIndex: 10,
             transform: [{ translateX: menuAnim }],
             boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
@@ -251,7 +334,7 @@ export default function Condiciones({ navigation }) {
         >
           {[
             { label: "Perfil", action: goToProfile },
-            {
+            role === "admin" && {
               label: "Ver usuarios",
               action: () => navigation.navigate("AdminUsers"),
             },
@@ -259,105 +342,7 @@ export default function Condiciones({ navigation }) {
               label: "Cultura e Historia",
               action: () => navigation.navigate("CulturaHistoria"),
             },
-            {
-              label: "Contacto",
-              action: () => navigation.navigate("Contacto"),
-            },
-          ].map((item, i) => (
-            <Pressable
-              key={i}
-              onPress={() => {
-                toggleMenu();
-                item.action();
-              }}
-              style={{ marginBottom: 25 }}
-            >
-              <Text
-                style={{
-                  color: "#014869",
-                  fontSize: 18,
-                  fontWeight: "700",
-                  cursor: "pointer",
-                }}
-              >
-                {item.label}
-              </Text>
-            </Pressable>
-          ))}
-        </Animated.View>
-      )}
-
-      {Platform.OS === "web" && menuVisible && role === "organizer" && (
-        <Animated.View
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: 250,
-            height: "100%",
-            backgroundColor: "#f8f8f8",
-            padding: 20,
-            zIndex: 10,
-            transform: [{ translateX: menuAnim }],
-            boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
-          }}
-        >
-          {[
-            { label: "Perfil", action: goToProfile },
-            {
-              label: "Cultura e Historia",
-              action: () => navigation.navigate("CulturaHistoria"),
-            },
-            {
-              label: "Contacto",
-              action: () => navigation.navigate("Contacto"),
-            },
-          ].map((item, i) => (
-            <Pressable
-              key={i}
-              onPress={() => {
-                toggleMenu();
-                item.action();
-              }}
-              style={{ marginBottom: 25 }}
-            >
-              <Text
-                style={{
-                  color: "#014869",
-                  fontSize: 18,
-                  fontWeight: "700",
-                  cursor: "pointer",
-                }}
-              >
-                {item.label}
-              </Text>
-            </Pressable>
-          ))}
-        </Animated.View>
-      )}
-
-      {Platform.OS === "web" && menuVisible && role === "user" && (
-        <Animated.View
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: 250,
-            height: "100%",
-            backgroundColor: "#f8f8f8",
-            padding: 20,
-            zIndex: 10,
-            transform: [{ translateX: menuAnim }],
-            boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
-          }}
-        >
-          {[
-            { label: "Perfil", action: goToProfile },
-            {
-              label: "Cultura e Historia",
-              action: () => navigation.navigate("CulturaHistoria"),
-            },
-            {
+            role === "user" && {
               label: "Ver favoritos",
               action: () => navigation.navigate("UserFavorites"),
             },
@@ -365,70 +350,123 @@ export default function Condiciones({ navigation }) {
               label: "Contacto",
               action: () => navigation.navigate("Contacto"),
             },
-          ].map((item, i) => (
-            <Pressable
-              key={i}
-              onPress={() => {
-                toggleMenu();
-                item.action();
-              }}
-              style={{ marginBottom: 25 }}
-            >
-              <Text
-                style={{
-                  color: "#014869",
-                  fontSize: 18,
-                  fontWeight: "700",
-                  cursor: "pointer",
+          ]
+            .filter(Boolean)
+            .map((item, i) => (
+              <Pressable
+                key={i}
+                onPress={() => {
+                  toggleMenu();
+                  item.action();
                 }}
+                style={{ marginBottom: 25 }}
               >
-                {item.label}
-              </Text>
-            </Pressable>
-          ))}
+                <Text
+                  style={{
+                    color: "#014869",
+                    fontSize: isMobile ? 16 : 18,
+                    fontWeight: "700",
+                    cursor: "pointer",
+                  }}
+                >
+                  {item.label}
+                </Text>
+              </Pressable>
+            ))}
         </Animated.View>
       )}
 
+      {/* SCROLL PRINCIPAL */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
-          padding: 24,
+          padding: dynamicPadding,
           alignItems: "center",
           backgroundColor: "#f9f9f9",
           flexGrow: 1,
-          paddingBottom: 120,
-          marginTop: 60,
+
+          // 🔥 AJUSTE REAL PARA TABLET 🔥
+          marginTop: isTablet ? -10 : isMobile ? 0 : 60,
+          paddingBottom: isMobile ? 20 : isTablet ? 80 : 160,
         }}
       >
         <Text
           style={{
-            fontSize: 22,
+            fontSize: isMobile ? 20 : 22,
             fontWeight: "bold",
             color: "#014869",
             textAlign: "center",
-            marginBottom: 30,
+
+            // 🔥 AÑADIMOS ESTO PARA SUBIRLO EN TABLET 🔥
+            marginTop: isTablet ? 1 : isMobile ? 10 : 0,
+
+            marginBottom: isTablet ? 1 : isMobile ? 20 : 0,
           }}
         >
           Condiciones de Uso
         </Text>
 
+        {/* CONTENEDOR PRINCIPAL */}
         <View
           style={{
-            flexDirection: Platform.OS === "web" ? "row" : "column",
+            flexDirection: isMobile ? "column" : "row",
             justifyContent: "center",
             alignItems: "stretch",
-            gap: 20,
+            gap: isMobile ? 20 : 24,
             width: "100%",
-            maxWidth: 1000,
+            maxWidth: 1100,
             backgroundColor: "#f2f2f2",
-            borderRadius: 10,
-            padding: 20,
+            borderRadius: 12,
+            padding: isMobile ? 12 : 20,
+
+            height: isMobile ? height * 0.65 : "auto",
+
+            overflow: "visible",
           }}
         >
-          {[
-            {
-              title: "Términos Generales",
-              text: `El uso de la aplicación Cuervo Activa implica la aceptación plena
+          {/* CARD 1 */}
+          <View
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 16,
+              padding: isMobile ? 16 : 20,
+              flex: 1,
+              minHeight: cardMinHeight,
+              maxHeight: isMobile ? height * 0.65 : "none",
+              shadowColor: "#000",
+              shadowOpacity: 0.1,
+              shadowRadius: 5,
+              elevation: 3,
+              overflow: "hidden",
+            }}
+          >
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ paddingBottom: 10 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <Text
+                style={{
+                  fontWeight: "bold",
+                  fontSize: isMobile ? 16 : 18,
+                  color: "#014869",
+                  marginBottom: 10,
+                  textAlign: "center",
+                }}
+              >
+                Términos Generales
+              </Text>
+
+              <Text
+                style={{
+                  color: "#333",
+                  lineHeight: isMobile ? 18 : 20,
+                  textAlign: "justify",
+                  fontSize: isMobile ? 13 : 14,
+                  maxWidth: "100%",
+                }}
+              >
+                {`El uso de la aplicación Cuervo Activa implica la aceptación plena
 de los presentes términos y condiciones. Los usuarios se
 comprometen a utilizar la plataforma de manera responsable, sin
 realizar acciones que perjudiquen su funcionamiento o la
@@ -441,11 +479,54 @@ suspender cuentas que vulneren estas normas.
 
 El acceso a ciertos servicios puede requerir registro previo y la
 veracidad de la información proporcionada es responsabilidad del
-usuario.`,
-            },
-            {
-              title: "Responsabilidad y Uso",
-              text: `Cuervo Activa no se hace responsable del mal uso de la aplicación
+usuario.`}
+              </Text>
+            </ScrollView>
+          </View>
+
+          {/* CARD 2 */}
+          <View
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 16,
+              padding: isMobile ? 16 : 20,
+              flex: 1,
+              minHeight: cardMinHeight,
+              maxHeight: isMobile ? height * 0.65 : "none",
+              shadowColor: "#000",
+              shadowOpacity: 0.1,
+              shadowRadius: 5,
+              elevation: 3,
+              overflow: "hidden",
+            }}
+          >
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ paddingBottom: 10 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <Text
+                style={{
+                  fontWeight: "bold",
+                  fontSize: isMobile ? 16 : 18,
+                  color: "#014869",
+                  marginBottom: 10,
+                  textAlign: "center",
+                }}
+              >
+                Responsabilidad y Uso
+              </Text>
+
+              <Text
+                style={{
+                  color: "#333",
+                  lineHeight: isMobile ? 18 : 20,
+                  textAlign: "justify",
+                  fontSize: isMobile ? 13 : 14,
+                  maxWidth: "100%",
+                }}
+              >
+                {`Cuervo Activa no se hace responsable del mal uso de la aplicación
 ni de los daños derivados del incumplimiento de las normas por
 parte del usuario. Las actividades y eventos publicados son
 responsabilidad de sus respectivos organizadores.
@@ -456,51 +537,14 @@ requisitos de cada evento antes de asistir.
 
 La plataforma podrá suspender temporalmente el servicio por
 mantenimiento o mejoras, notificando a los usuarios cuando sea
-posible.`,
-            },
-          ].map((item, i) => (
-            <View
-              key={i}
-              style={{
-                backgroundColor: "#fff",
-                borderRadius: 16,
-                padding: 20,
-                flex: 1,
-                minHeight: 350,
-                shadowColor: "#000",
-                shadowOpacity: 0.1,
-                shadowRadius: 5,
-                elevation: 3,
-                justifyContent: "flex-start",
-              }}
-            >
-              <Text
-                style={{
-                  fontWeight: "bold",
-                  fontSize: 18,
-                  color: "#014869",
-                  marginBottom: 10,
-                  textAlign: "center",
-                }}
-              >
-                {item.title}
+posible.`}
               </Text>
-              <Text
-                style={{
-                  color: "#333",
-                  lineHeight: 20,
-                  textAlign: "justify",
-                  flexShrink: 1,
-                }}
-              >
-                {item.text}
-              </Text>
-            </View>
-          ))}
+            </ScrollView>
+          </View>
         </View>
       </ScrollView>
 
-      {Platform.OS === "web" && (
+      {Platform.OS === "web" && !isMobile && !isTablet && (
         <View
           style={{
             position: "fixed",
@@ -526,7 +570,6 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 24,
     paddingVertical: 14,
     justifyContent: "space-between",
     backgroundColor: "#fff",
@@ -581,9 +624,8 @@ const styles = StyleSheet.create({
     height: 22,
     resizeMode: "contain",
   },
-  adminTitle: { color: "#014869", fontWeight: "700", fontSize: 14 },
-  adminName: { color: "#6c757d", fontSize: 13 },
+  adminTitle: { color: "#014869", fontWeight: "700" },
+  adminName: { color: "#6c757d" },
   iconRow: { flexDirection: "row", alignItems: "center" },
-  iconButton: { marginRight: 20 },
-  topIcon: { width: 22, height: 22, tintColor: "#0094A2" },
+  iconButton: { marginRight: 16 },
 });

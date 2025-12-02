@@ -1,5 +1,13 @@
-import React, { useState } from "react";
-import { View, Text, Pressable, Image, Platform, Linking } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  Image,
+  Platform,
+  Linking,
+  useWindowDimensions,
+} from "react-native";
 
 export default function Footer({
   onAboutPress,
@@ -13,8 +21,26 @@ export default function Footer({
       console.error("Error al abrir el enlace:", error);
     }
   };
+
   const [hoveredLink, setHoveredLink] = useState(null);
   const [hoveredIcon, setHoveredIcon] = useState(null);
+
+  // --- ARREGLO RESPONSIVE EN WEB ---
+  const dims = useWindowDimensions();
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : dims.width
+  );
+
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      const onResize = () => setWinWidth(window.innerWidth);
+      window.addEventListener("resize", onResize);
+      return () => window.removeEventListener("resize", onResize);
+    }
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+  const isNarrowWeb = isWeb && winWidth < 768;
 
   return (
     <View
@@ -24,27 +50,36 @@ export default function Footer({
         borderTopWidth: 1,
         borderTopColor: "#ddd",
         paddingVertical: 12,
-        paddingHorizontal: 28,
+        paddingHorizontal: 16,
       }}
     >
-      {/* Contenedor principal del footer */}
       <View
         style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
+          flexDirection: isNarrowWeb ? "column" : "row",
+          justifyContent: isNarrowWeb ? "center" : "space-between",
           alignItems: "center",
-          flexWrap: "nowrap",
+          flexWrap: "wrap",
+          rowGap: isNarrowWeb ? 8 : 0,
         }}
       >
-        {/* SECCIÓN IZQUIERDA — Enlaces legales */}
+        {/* LEFT SECTION */}
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
-            flexWrap: "nowrap",
+            flexWrap: "wrap",
+            justifyContent: isNarrowWeb ? "center" : "flex-start",
+            marginBottom: isNarrowWeb ? 6 : 0,
           }}
         >
-          <Text style={{ color: "#555", fontSize: 12, marginRight: 10 }}>
+          <Text
+            style={{
+              color: "#555",
+              fontSize: 12,
+              marginRight: 10,
+              textAlign: "center",
+            }}
+          >
             © 2025 CuervoActiva, Inc.
           </Text>
 
@@ -52,7 +87,10 @@ export default function Footer({
             onPress={onPrivacyPress}
             onHoverIn={() => setHoveredLink("privacidad")}
             onHoverOut={() => setHoveredLink(null)}
-            style={{ marginHorizontal: 6, cursor: "pointer" }}
+            style={{
+              marginHorizontal: 6,
+              ...(isWeb ? { cursor: "pointer" } : {}),
+            }}
           >
             <Text
               style={{
@@ -60,8 +98,6 @@ export default function Footer({
                 fontSize: 12,
                 textDecorationLine:
                   hoveredLink === "privacidad" ? "underline" : "none",
-                textDecorationColor: "#222",
-                transition: "all 0.2s ease-in-out",
               }}
             >
               Privacidad
@@ -72,7 +108,10 @@ export default function Footer({
             onPress={onConditionsPress}
             onHoverIn={() => setHoveredLink("condiciones")}
             onHoverOut={() => setHoveredLink(null)}
-            style={{ marginHorizontal: 6, cursor: "pointer" }}
+            style={{
+              marginHorizontal: 6,
+              ...(isWeb ? { cursor: "pointer" } : {}),
+            }}
           >
             <Text
               style={{
@@ -80,8 +119,6 @@ export default function Footer({
                 fontSize: 12,
                 textDecorationLine:
                   hoveredLink === "condiciones" ? "underline" : "none",
-                textDecorationColor: "#222",
-                transition: "all 0.2s ease-in-out",
               }}
             >
               Condiciones
@@ -92,7 +129,10 @@ export default function Footer({
             onPress={onAboutPress}
             onHoverIn={() => setHoveredLink("sobre")}
             onHoverOut={() => setHoveredLink(null)}
-            style={{ marginHorizontal: 6, cursor: "pointer" }}
+            style={{
+              marginHorizontal: 6,
+              ...(isWeb ? { cursor: "pointer" } : {}),
+            }}
           >
             <Text
               style={{
@@ -100,8 +140,6 @@ export default function Footer({
                 fontSize: 12,
                 textDecorationLine:
                   hoveredLink === "sobre" ? "underline" : "none",
-                textDecorationColor: "#222",
-                transition: "all 0.2s ease-in-out",
               }}
             >
               Sobre Nosotros
@@ -109,7 +147,15 @@ export default function Footer({
           </Pressable>
         </View>
 
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        {/* RIGHT SECTION */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: isNarrowWeb ? "center" : "flex-end",
+            marginTop: isNarrowWeb ? 4 : 0,
+          }}
+        >
           <View
             style={{
               flexDirection: "row",
@@ -129,7 +175,7 @@ export default function Footer({
             <Text style={{ color: "#555", fontSize: 12 }}>Español (ES)</Text>
           </View>
 
-          {[
+          {[ 
             {
               id: "facebook",
               icon: require("../assets/iconos/facebook.png"),
@@ -153,10 +199,9 @@ export default function Footer({
               onHoverOut={() => setHoveredIcon(null)}
               style={{
                 marginHorizontal: 6,
-                cursor: "pointer",
+                ...(isWeb ? { cursor: "pointer" } : {}),
                 transform:
                   hoveredIcon === item.id ? [{ scale: 1.15 }] : [{ scale: 1 }],
-                transition: "all 0.2s ease-in-out",
               }}
             >
               <Image

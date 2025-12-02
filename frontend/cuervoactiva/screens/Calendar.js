@@ -53,34 +53,46 @@ function atStartOfDay(d) {
   x.setHours(0, 0, 0, 0);
   return x;
 }
+
 function parseDDMMYYYY(str) {
   if (!str || typeof str !== "string") return null;
+
+  // Formato ISO yyyy-mm-dd
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
     const [y, m, d] = str.substring(0, 10).split("-").map(Number);
     const date = new Date(y, m - 1, d, 12, 0, 0);
     if (!isNaN(date.getTime())) return atStartOfDay(date);
   }
+
+  // Formato dd/mm/yyyy
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
     const [dd, mm, yyyy] = str.split("/").map(Number);
     const date = new Date(yyyy, mm - 1, dd, 12, 0, 0);
     if (!isNaN(date.getTime())) return atStartOfDay(date);
   }
+
   return null;
 }
+
 function ymdKey(date) {
   const y = date.getFullYear();
   const m = `${date.getMonth() + 1}`.padStart(2, "0");
   const d = `${date.getDate()}`.padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
+
 function getMonthMatrix(year, monthIndex) {
   const first = new Date(year, monthIndex, 1);
   const last = new Date(year, monthIndex + 1, 0);
+
   const firstWeekday = (first.getDay() + 6) % 7;
   const daysInMonth = last.getDate();
+
   const matrix = [];
   let week = [];
+
   for (let i = 0; i < firstWeekday; i++) week.push(null);
+
   for (let day = 1; day <= daysInMonth; day++) {
     week.push(new Date(year, monthIndex, day));
     if (week.length === 7) {
@@ -88,12 +100,15 @@ function getMonthMatrix(year, monthIndex) {
       week = [];
     }
   }
+
   if (week.length > 0) {
     while (week.length < 7) week.push(null);
     matrix.push(week);
   }
+
   return matrix;
 }
+
 function ColorDot({ color }) {
   return (
     <View
@@ -115,10 +130,31 @@ export default function Calendar() {
   const [events, setEvents] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedKey, setSelectedKey] = useState(null);
-  const [mobilePanelVisible, setMobilePanelVisible] = useState(false);
+  const [detailPanelVisible, setDetailPanelVisible] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
+  // ============================
+  // BREAKPOINTS WEB (NUEVOS)
+  // ============================
+  const [windowWidth, setWindowWidth] = useState(
+    Dimensions.get("window").width
+  );
+  const isWeb = Platform.OS === "web";
+
+  // SOLO SE APLICAN EN WEB
+  const isMobileWeb = isWeb && windowWidth < 600;
+  const isTabletWeb = isWeb && windowWidth >= 600 && windowWidth < 900;
+  const isLaptopWeb = isWeb && windowWidth >= 900 && windowWidth < 1400;
+  const isDesktopWeb = isWeb && windowWidth >= 1400;
+
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      const onResize = () => setWindowWidth(window.innerWidth);
+      window.addEventListener("resize", onResize);
+      return () => window.removeEventListener("resize", onResize);
+    }
+  }, []);
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -126,8 +162,10 @@ export default function Calendar() {
           Platform.OS === "web"
             ? JSON.parse(localStorage.getItem("USER_SESSION"))
             : JSON.parse(await AsyncStorage.getItem("USER_SESSION"));
+
         if (session?.user?.name || session?.name)
           setUserName(session.user?.name || session.name);
+
         if (session?.user?.role || session?.role)
           setRole(session.user?.role || session.role);
         else setRole("user");
@@ -144,13 +182,17 @@ export default function Calendar() {
       try {
         const res = await fetch(API_URL);
         if (!res.ok) throw new Error("No se pudieron obtener los eventos");
+
         const data = await res.json();
+
         const normalized = (data || []).map((ev) => {
           const d = parseDDMMYYYY(ev.date);
           const cat = (ev.category || "").toLowerCase();
           const color = CATEGORY_COLORS[cat] || CATEGORY_COLORS.default;
+
           return { ...ev, _date: d, _key: d ? ymdKey(d) : null, _color: color };
         });
+
         setEvents(normalized);
       } catch (e) {
         console.error(e);
@@ -178,10 +220,11 @@ export default function Calendar() {
 
   const goPrevMonth = () => setCurrentDate(new Date(year, monthIndex - 1, 1));
   const goNextMonth = () => setCurrentDate(new Date(year, monthIndex + 1, 1));
+
   const handleSelectDay = (key) => {
     if (!key) return;
-    setSelectedKey((prev) => (prev === key ? null : key));
-    if (Platform.OS !== "web") setMobilePanelVisible(true);
+    setSelectedKey(key);
+    setDetailPanelVisible(true);
   };
 
   const selectedEvents = selectedKey ? eventsByDay[selectedKey] || [] : [];
@@ -207,7 +250,7 @@ export default function Calendar() {
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToUsers = () => navigation.navigate("AdminUsers");
-  const goToHomeOrganizador = () => navigation.navigate("Organizer");
+
   const goToFavorites = () => {
     if (Platform.OS !== "web") toggleMenu();
     navigation.navigate("UserFavorites");
@@ -218,6 +261,7 @@ export default function Calendar() {
       setMenuVisible((prev) => !prev);
       return;
     }
+
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
@@ -241,6 +285,7 @@ export default function Calendar() {
         : role === "admin"
         ? "#0094A2"
         : "#014869";
+
     const avatarBg = tint;
 
     const bellIcon =
@@ -293,6 +338,7 @@ export default function Calendar() {
           backgroundColor: "#fff",
         }}
       >
+        {/* Avatar + nombre */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View
             style={{
@@ -310,8 +356,10 @@ export default function Calendar() {
               source={require("../assets/iconos/user.png")}
               style={{ width: 24, height: 24, tintColor: "#fff" }}
             />
+
             {userBadge && <Image source={userBadge} style={userBadgeStyle} />}
           </View>
+
           <View>
             <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
               {role === "admin"
@@ -324,6 +372,7 @@ export default function Calendar() {
           </View>
         </View>
 
+        {/* ICONOS */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
             <Image
@@ -356,16 +405,18 @@ export default function Calendar() {
     );
   };
 
-  const gridMaxWidth =
-    Platform.OS === "web"
-      ? 720
-      : Math.min(Dimensions.get("window").width - 24, 720);
-
+  // ANCHO CONTROLADO PARA EL CALENDARIO EN WEB
+  const gridMaxWidth = isWeb
+    ? isMobileWeb
+      ? Math.min(windowWidth * 0.92, 420)
+      : Math.min(windowWidth - 80, 680)
+    : Math.min(Dimensions.get("window").width - 24, 720);
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
       {renderTopBar()}
 
+      {/* MENU LATERAL WEB */}
       {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
@@ -392,7 +443,7 @@ export default function Calendar() {
             ? [
                 { label: "Perfil", action: goToProfile },
                 { label: "Cultura e Historia", action: goToCulturaHistoria },
-                 { label: "Ver usuarios", action: goToUsers },
+                { label: "Ver usuarios", action: goToUsers },
                 { label: "Contacto", action: goToContact },
               ]
             : [
@@ -424,7 +475,7 @@ export default function Calendar() {
         </Animated.View>
       )}
 
-      {/* MENÚ MÓVIL */}
+      {/* MENU MÓVIL (ORGANIZER / USER) */}
       {Platform.OS !== "web" &&
         menuVisible &&
         (role === "organizer" ? (
@@ -525,6 +576,7 @@ export default function Calendar() {
                       {item.label}
                     </Text>
                   </View>
+
                   <Image
                     source={require("../assets/iconos/siguiente.png")}
                     style={{
@@ -553,6 +605,7 @@ export default function Calendar() {
                   const currentRoute =
                     navigation.getState().routes.slice(-1)[0].name ||
                     "Organizer";
+
                   if (currentRoute === "Organizer") {
                     navigation.reset({
                       index: 0,
@@ -593,11 +646,13 @@ export default function Calendar() {
                   style={{ width: 22, height: 22 }}
                 />
               </Pressable>
+
               <Text
                 style={{ fontSize: 18, fontWeight: "bold", color: "#014869" }}
               >
                 Menú
               </Text>
+
               <View style={{ width: 24 }} />
             </View>
 
@@ -644,6 +699,7 @@ export default function Calendar() {
                     />
                     <Text style={styles.mobileMenuText}>{item.label}</Text>
                   </View>
+
                   <Image
                     source={require("../assets/iconos/siguiente.png")}
                     style={{ width: 16, height: 16 }}
@@ -657,6 +713,7 @@ export default function Calendar() {
                 onPress={() => {
                   const currentRoute =
                     navigation.getState().routes.slice(-1)[0].name || "User";
+
                   if (currentRoute === "User") {
                     navigation.reset({
                       index: 0,
@@ -689,13 +746,26 @@ export default function Calendar() {
             </View>
           </View>
         ))}
-
       <ScrollView
+        style={{
+          minHeight: isMobileWeb
+            ? "auto" 
+            : isLaptopWeb || isDesktopWeb
+            ? "calc(100vh - 220px)" 
+            : "auto",
+        }}
         contentContainerStyle={{
           flexGrow: 1,
           alignItems: "center",
           backgroundColor: "#f5f6f7",
-          paddingVertical: 20,
+          paddingTop: Platform.OS === "web" ? (isMobileWeb ? 100 : 20) : 100,
+
+          paddingBottom:
+            Platform.OS === "web"
+              ? isLaptopWeb || isDesktopWeb
+                ? 160
+                : 80
+              : 40,
         }}
       >
         <View style={[styles.headerRow, { width: gridMaxWidth }]}>
@@ -734,6 +804,7 @@ export default function Calendar() {
                     disabled={!date}
                     style={[
                       styles.dayCell,
+                      isWeb && !isMobileWeb && styles.dayCellWeb, // solo web grande
                       !date && styles.dayCellEmpty,
                       isToday && styles.todayCell,
                       selectedKey === key && styles.selectedCell,
@@ -748,6 +819,7 @@ export default function Calendar() {
                     >
                       {day}
                     </Text>
+
                     {!!dayEvents.length && (
                       <View style={styles.dotsRow}>
                         {dayEvents.slice(0, 3).map((ev, i) => (
@@ -767,46 +839,68 @@ export default function Calendar() {
           ))}
         </View>
 
+        {/* DETALLE DE DÍA COMO MODAL EN TODAS LAS PLATAFORMAS */}
         {Platform.OS === "web" ? (
-          selectedKey &&
-          selectedEvents.length > 0 && (
-            <View style={[styles.webDetailCard]}>
-              <Text style={styles.detailDateTitle}>
-                {renderDateTitle(selectedKey)}
-              </Text>
-              <ScrollView style={styles.detailList}>
-                {selectedEvents.map((ev) => (
-                  <View key={ev._id} style={styles.detailItem}>
-                    <View
-                      style={[
-                        styles.detailBadge,
-                        { backgroundColor: ev._color },
-                      ]}
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.detailTitle}>{ev.title}</Text>
-                      <Text style={styles.detailSub}>
-                        {ev.hour
-                          ? `${ev.hour} · ${labelFromCategory(ev.category)}`
-                          : labelFromCategory(ev.category)}
-                      </Text>
+          <Modal
+            animationType="fade"
+            transparent
+            visible={detailPanelVisible && selectedEvents.length > 0}
+            onRequestClose={() => setDetailPanelVisible(false)}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              style={styles.webModalBackdrop}
+              onPress={() => setDetailPanelVisible(false)}
+            >
+              <View style={styles.webModalContent}>
+                <Text style={styles.detailDateTitle}>
+                  {renderDateTitle(selectedKey)}
+                </Text>
+                <ScrollView
+                  style={{ maxHeight: 260, width: "100%" }}
+                  contentContainerStyle={{ paddingVertical: 4 }}
+                >
+                  {selectedEvents.map((ev) => (
+                    <View key={ev._id} style={styles.detailItem}>
+                      <View
+                        style={[
+                          styles.detailBadge,
+                          { backgroundColor: ev._color },
+                        ]}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.detailTitle} numberOfLines={2}>
+                          {ev.title}
+                        </Text>
+                        <Text style={styles.detailSub}>
+                          {ev.hour
+                            ? `${ev.hour} · ${labelFromCategory(ev.category)}`
+                            : labelFromCategory(ev.category)}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-          )
+                  ))}
+                </ScrollView>
+                <Pressable
+                  onPress={() => setDetailPanelVisible(false)}
+                  style={styles.closeDetailBtn}
+                >
+                  <Text style={styles.closeDetailText}>Cerrar</Text>
+                </Pressable>
+              </View>
+            </TouchableOpacity>
+          </Modal>
         ) : (
           <Modal
             animationType="slide"
             transparent
-            visible={mobilePanelVisible}
-            onRequestClose={() => setMobilePanelVisible(false)}
+            visible={detailPanelVisible && selectedEvents.length > 0}
+            onRequestClose={() => setDetailPanelVisible(false)}
           >
             <TouchableOpacity
               activeOpacity={1}
               style={styles.modalBackdrop}
-              onPress={() => setMobilePanelVisible(false)}
+              onPress={() => setDetailPanelVisible(false)}
             >
               <View style={styles.modalSheet}>
                 <Text style={styles.detailDateTitle}>
@@ -835,7 +929,7 @@ export default function Calendar() {
                   ))}
                 </ScrollView>
                 <Pressable
-                  onPress={() => setMobilePanelVisible(false)}
+                  onPress={() => setDetailPanelVisible(false)}
                   style={[styles.closeDetailBtn, { alignSelf: "center" }]}
                 >
                   <Text style={styles.closeDetailText}>Cerrar</Text>
@@ -846,12 +940,24 @@ export default function Calendar() {
         )}
       </ScrollView>
 
-      {Platform.OS === "web" && (
-        <Footer
-          onAboutPress={goToAbout}
-          onPrivacyPress={goToPrivacy}
-          onConditionsPress={goToConditions}
-        />
+      {/* 🔻 FOOTER SOLO EN WEB LAPTOP / DESKTOP */}
+      {Platform.OS === "web" && (isLaptopWeb || isDesktopWeb) && (
+        <View
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            backgroundColor: "#fff",
+          }}
+        >
+          <Footer
+            onAboutPress={goToAbout}
+            onPrivacyPress={goToPrivacy}
+            onConditionsPress={goToConditions}
+          />
+        </View>
       )}
     </View>
   );
@@ -874,6 +980,7 @@ function labelFromCategory(cat) {
       return "Otros";
   }
 }
+
 function renderDateTitle(key) {
   if (!key) return "";
   const [y, m, d] = key.split("-").map(Number);
@@ -901,6 +1008,7 @@ const styles = StyleSheet.create({
     zIndex: 20,
     justifyContent: "space-between",
   },
+
   mobileMenuHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -909,19 +1017,27 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 20,
   },
+
   mobileMenuBody: {
     flex: 1,
     paddingHorizontal: 40,
     justifyContent: "flex-start",
     gap: 30,
   },
+
   mobileMenuItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 24,
   },
-  mobileMenuText: { color: "#014869", fontSize: 16, fontWeight: "600" },
+
+  mobileMenuText: {
+    color: "#014869",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
   mobileBottomBar: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -931,13 +1047,21 @@ const styles = StyleSheet.create({
     borderColor: "#014869",
     backgroundColor: "#fff",
   },
+
+  /* CALENDAR HEADER */
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: Platform.OS === "web" ? 1 : 10,
   },
-  monthTitle: { fontSize: 18, fontWeight: "700", color: "#014869" },
+
+  monthTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#014869",
+  },
+
   navBtn: {
     width: 30,
     height: 30,
@@ -946,13 +1070,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#eef5f8",
   },
-  navBtnText: { fontSize: 18, fontWeight: "700", color: "#014869" },
+
+  navBtnText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#014869",
+  },
+
   weekHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 4,
     paddingHorizontal: 4,
   },
+
   weekHeaderText: {
     width: "13.6%",
     textAlign: "center",
@@ -960,17 +1091,21 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     opacity: 0.85,
   },
+
+  /* GRID */
   calendarGrid: {
     backgroundColor: "#F2F4F5",
     borderRadius: 14,
     paddingVertical: 8,
     paddingHorizontal: 6,
   },
+
   weekRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginVertical: 3,
+    marginVertical: 2,
   },
+
   dayCell: {
     width: "13.6%",
     aspectRatio: 0.9,
@@ -978,52 +1113,114 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    marginVertical: 2,
   },
-  dayCellEmpty: { backgroundColor: "transparent" },
-  todayCell: { borderWidth: 2, borderColor: "#014869" },
-  selectedCell: { borderWidth: 2, borderColor: "#F3B23F" },
-  dayNumber: { fontWeight: "700", color: "#334155", fontSize: 12 },
-  todayNumber: { color: "#014869" },
+
+  dayCellWeb: {
+    aspectRatio: 1,
+    marginVertical: 1,
+  },
+
+  dayCellEmpty: {
+    backgroundColor: "transparent",
+  },
+
+  todayCell: {
+    borderWidth: 2,
+    borderColor: "#014869",
+  },
+
+  selectedCell: {
+    borderWidth: 2,
+    borderColor: "#F3B23F",
+  },
+
+  dayNumber: {
+    fontWeight: "700",
+    color: "#334155",
+    fontSize: 12,
+  },
+
+  todayNumber: {
+    color: "#014869",
+  },
+
   dotsRow: {
     position: "absolute",
     bottom: 4,
     flexDirection: "row",
     alignItems: "center",
   },
-  moreDots: { fontSize: 9, marginLeft: 2, color: "#64748b", fontWeight: "600" },
-  webDetailCard: {
-    position: "absolute",
-    left: 30,
-    top: 150,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    maxHeight: 320,
-    width: 260,
+
+  moreDots: {
+    fontSize: 9,
+    marginLeft: 2,
+    color: "#64748b",
+    fontWeight: "600",
   },
+
+  /* DETAIL PANEL */
   detailDateTitle: {
     fontSize: 15,
     fontWeight: "800",
     color: "#014869",
     marginBottom: 8,
   },
-  detailList: { gap: 8 },
+
   detailItem: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     paddingVertical: 5,
   },
-  detailBadge: { width: 8, height: 8, borderRadius: 4 },
-  detailTitle: { fontSize: 13, fontWeight: "700", color: "#111827" },
-  detailSub: { fontSize: 11, color: "#6b7280", marginTop: 2 },
+
+  detailBadge: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+
+  detailTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#111827",
+  },
+
+  detailSub: {
+    fontSize: 11,
+    color: "#6b7280",
+    marginTop: 2,
+  },
+
+  /* MODAL WEB */
+  webModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.25)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
+  },
+
+  webModalContent: {
+    width: "100%",
+    maxWidth: 420,
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+
+  /* MODAL MÓVIL */
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.15)",
     justifyContent: "flex-end",
   },
+
   modalSheet: {
     backgroundColor: "#fff",
     borderTopLeftRadius: 16,
@@ -1031,6 +1228,7 @@ const styles = StyleSheet.create({
     padding: 16,
     maxHeight: Dimensions.get("window").height * 0.6,
   },
+
   closeDetailBtn: {
     marginTop: 12,
     alignSelf: "flex-end",
@@ -1039,5 +1237,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
   },
-  closeDetailText: { color: "#fff", fontWeight: "700" },
+
+  closeDetailText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
 });

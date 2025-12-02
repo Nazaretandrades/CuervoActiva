@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Animated,
   Pressable,
   TouchableWithoutFeedback,
+  Dimensions,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -22,6 +23,41 @@ export default function CulturaHistoria() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [userName, setUserName] = useState("Usuario");
+
+  /* ---------- Responsive web (solo web) ---------- */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const handleResize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+
+  // 📌 BREAKPOINTS OPCIÓN A
+  const isMobileWeb = isWeb && winWidth < 768;
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLargeWeb = isWeb && winWidth >= 1024;
+
+  /* ============================
+     ⭐ ALTURA SCROLL EVENTOS
+     ============================ */
+  const eventScrollMaxHeight = isLargeWeb ? 350 : 300;
+
+  /* ============================
+     ⭐ ANCHO DEL CONTENEDOR
+     ============================ */
+  const eventContainerResponsiveStyle = !isWeb
+    ? {}
+    : isMobileWeb
+    ? { width: "100%", maxWidth: "100%" }
+    : isTabletWeb
+    ? { width: "90%", maxWidth: 1000 }
+    : { width: "60%", maxWidth: 1200 }; // laptop/desktop
 
   const nav = useNavigation();
 
@@ -51,12 +87,14 @@ export default function CulturaHistoria() {
       : role === "organizer"
       ? nav.navigate("OrganizerProfile")
       : nav.navigate("UserProfile");
+
   const goToNotifications = () =>
     role === "admin"
       ? nav.navigate("AdminNotifications")
       : role === "organizer"
       ? nav.navigate("OrganizerNotifications")
       : nav.navigate("UserNotifications");
+
   const goToAboutUs = () => nav.navigate("SobreNosotros");
   const goToPrivacy = () => nav.navigate("PoliticaPrivacidad");
   const goToConditions = () => nav.navigate("Condiciones");
@@ -87,43 +125,26 @@ export default function CulturaHistoria() {
     }
   };
 
+  /* ============================
+     ⭐ TOPBARS POR ROL
+     ============================ */
+
   const renderUserTopBar = () => (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 24,
-        paddingVertical: 14,
-        justifyContent: "space-between",
-        backgroundColor: "#fff",
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <View
-          style={{
-            marginRight: 12,
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: "#014869",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+    <View style={styles.topBar}>
+      <View style={styles.topBarLeft}>
+        <View style={[styles.avatarCircle, { backgroundColor: "#014869" }]}>
           <Image
             source={require("../assets/iconos/user.png")}
             style={{ width: 24, height: 24, tintColor: "#fff" }}
           />
         </View>
         <View>
-          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
-            Usuario
-          </Text>
-          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+          <Text style={styles.topBarRole}>Usuario</Text>
+          <Text style={styles.topBarName}>{userName}</Text>
         </View>
       </View>
 
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <View style={styles.topBarRight}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
             source={require("../assets/iconos/bell.png")}
@@ -131,7 +152,7 @@ export default function CulturaHistoria() {
           />
         </Pressable>
 
-        {Platform.OS === "web" && (
+        {isWeb && (
           <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
             <Image
               source={require("../assets/iconos/calendar.png")}
@@ -155,28 +176,13 @@ export default function CulturaHistoria() {
   );
 
   const renderOrganizerTopBar = () => (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 24,
-        paddingVertical: 14,
-        justifyContent: "space-between",
-        backgroundColor: "#fff",
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+    <View style={styles.topBar}>
+      <View style={styles.topBarLeft}>
         <View
-          style={{
-            position: "relative",
-            marginRight: 12,
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: "#F3B23F",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          style={[
+            styles.avatarCircle,
+            { backgroundColor: "#F3B23F", position: "relative" },
+          ]}
         >
           <Image
             source={require("../assets/iconos/user.png")}
@@ -197,14 +203,12 @@ export default function CulturaHistoria() {
         </View>
 
         <View>
-          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
-            Organizador
-          </Text>
-          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+          <Text style={styles.topBarRole}>Organizador</Text>
+          <Text style={styles.topBarName}>{userName}</Text>
         </View>
       </View>
 
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <View style={styles.topBarRight}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
             source={require("../assets/iconos/bell3.png")}
@@ -212,7 +216,7 @@ export default function CulturaHistoria() {
           />
         </Pressable>
 
-        {Platform.OS === "web" && (
+        {isWeb && (
           <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
             <Image
               source={require("../assets/iconos/calendar-organizador.png")}
@@ -236,28 +240,13 @@ export default function CulturaHistoria() {
   );
 
   const renderAdminTopBar = () => (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 24,
-        paddingVertical: 14,
-        justifyContent: "space-between",
-        backgroundColor: "#fff",
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+    <View style={styles.topBar}>
+      <View style={styles.topBarLeft}>
         <View
-          style={{
-            position: "relative",
-            marginRight: 12,
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: "#0094A2",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          style={[
+            styles.avatarCircle,
+            { backgroundColor: "#0094A2", position: "relative" },
+          ]}
         >
           <Image
             source={require("../assets/iconos/user.png")}
@@ -276,19 +265,17 @@ export default function CulturaHistoria() {
           />
         </View>
         <View>
-          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
-            Admin.
-          </Text>
-          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+          <Text style={styles.topBarRole}>Admin.</Text>
+          <Text style={styles.topBarName}>{userName}</Text>
         </View>
       </View>
 
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <View style={styles.topBarRight}>
         <Pressable
           onPress={goToNotifications}
           style={{
             marginRight: 20,
-            ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+            ...(isWeb ? { cursor: "pointer" } : {}),
           }}
         >
           <Image
@@ -301,7 +288,7 @@ export default function CulturaHistoria() {
           onPress={goToCalendar}
           style={{
             marginRight: 20,
-            ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+            ...(isWeb ? { cursor: "pointer" } : {}),
           }}
         >
           <Image
@@ -312,7 +299,7 @@ export default function CulturaHistoria() {
 
         <Pressable
           onPress={toggleMenu}
-          style={Platform.OS === "web" ? { cursor: "pointer" } : {}}
+          style={isWeb ? { cursor: "pointer" } : {}}
         >
           <Image
             source={
@@ -327,8 +314,11 @@ export default function CulturaHistoria() {
     </View>
   );
 
+  /* ============================
+     ⭐ MENÚ LATERAL WEB
+     ============================ */
   const renderWebMenu = () => {
-    if (!menuVisible || Platform.OS !== "web") return null;
+    if (!menuVisible || !isWeb) return null;
 
     let menuItems = [];
 
@@ -409,6 +399,9 @@ export default function CulturaHistoria() {
     );
   };
 
+  /* ============================
+     ⭐ RENDER
+     ============================ */
   return (
     <View style={styles.pageContainer}>
       <Header hideAuthButtons />
@@ -419,6 +412,7 @@ export default function CulturaHistoria() {
 
       {renderWebMenu()}
 
+      {/* Menú móvil nativo */}
       {Platform.OS !== "web" &&
         menuVisible &&
         (role === "organizer" ? (
@@ -427,17 +421,18 @@ export default function CulturaHistoria() {
           <UserMenu onClose={toggleMenu} />
         ) : null)}
 
+      {/* SCROLL PRINCIPAL */}
       <ScrollView
-        style={{ flex: 1 }}
         contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingVertical: 20,
-          flexGrow: 1,
+          paddingHorizontal: isMobileWeb ? 20 : 55,
+          paddingTop: 5,
+          paddingBottom: isLargeWeb ? 40 : 20,
         }}
         showsVerticalScrollIndicator
         nestedScrollEnabled
       >
         <Text style={styles.title}>Cultura e Historia</Text>
+
         <Text style={styles.paragraph}>
           El Cuervo de Sevilla, situado en la comarca del Bajo Guadalquivir, fue
           parte de Lebrija hasta finales del siglo XX. Su independencia se
@@ -452,11 +447,22 @@ export default function CulturaHistoria() {
         <View
           style={[
             styles.eventContainer,
-            Platform.OS !== "web" && styles.eventContainerMobile,
+            !isWeb && styles.eventContainerMobile,
+            eventContainerResponsiveStyle,
+            {
+              marginBottom: isLargeWeb ? 20 : 20,
+            },
           ]}
         >
-          {Platform.OS === "web" ? (
-            <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator>
+          {isWeb ? (
+            <ScrollView
+              style={
+                eventScrollMaxHeight
+                  ? { maxHeight: eventScrollMaxHeight }
+                  : undefined
+              }
+              showsVerticalScrollIndicator
+            >
               {events.map((evt, i) => (
                 <View key={i}>
                   <View style={styles.eventCard}>
@@ -485,7 +491,8 @@ export default function CulturaHistoria() {
         </View>
       </ScrollView>
 
-      {Platform.OS === "web" && (
+      {/* FOOTER: solo en laptop/desktop web (opción 1) */}
+      {isWeb && isLargeWeb && (
         <Footer
           onAboutPress={goToAboutUs}
           onPrivacyPress={goToPrivacy}
@@ -495,6 +502,8 @@ export default function CulturaHistoria() {
     </View>
   );
 }
+
+/* ========= 📌 LISTA COMPLETA DE EVENTOS ========= */
 
 const events = [
   {
@@ -559,13 +568,53 @@ const events = [
   },
 ];
 
+/* ========= 📌 ESTILOS ========= */
+
 const styles = StyleSheet.create({
   pageContainer: {
     flex: 1,
     backgroundColor: "#fff",
-    minHeight: "100vh",
-    justifyContent: "space-between",
   },
+
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
+  },
+
+  topBarLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  topBarRight: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  avatarCircle: {
+    marginRight: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  topBarRole: {
+    color: "#014869",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+
+  topBarName: {
+    color: "#6c757d",
+    fontSize: 13,
+  },
+
   title: {
     fontSize: 24,
     fontWeight: "bold",
@@ -573,6 +622,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 15,
   },
+
   paragraph: {
     fontSize: 16,
     color: "#333",
@@ -580,33 +630,38 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "justify",
   },
+
   eventContainer: {
     backgroundColor: "#f5f5f5",
     borderRadius: 8,
     padding: 20,
-    width: "200%",
+    width: "100%",
     maxWidth: 1500,
     alignSelf: "center",
     boxShadow: "0 0 10px rgba(0,0,0,0.1)",
     marginTop: 25,
   },
+
   eventContainerMobile: {
     width: "100%",
     maxWidth: "100%",
     padding: 16,
     boxShadow: undefined,
   },
+
   eventCard: {
     flexDirection: "row",
     backgroundColor: "#f5f5f5",
     paddingVertical: 10,
     alignItems: "flex-start",
   },
+
   eventCardMobile: {
     backgroundColor: "#f5f5f5",
     paddingVertical: 10,
     alignItems: "center",
   },
+
   eventImage: {
     width: 140,
     height: 100,
@@ -614,6 +669,7 @@ const styles = StyleSheet.create({
     marginRight: 18,
     resizeMode: "cover",
   },
+
   eventImageMobile: {
     width: "100%",
     height: 180,
@@ -621,19 +677,23 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     resizeMode: "cover",
   },
+
   eventTextContainer: { flex: 1 },
+
   eventTitle: {
     fontSize: 17,
     fontWeight: "bold",
     color: "#014869",
     marginBottom: 6,
   },
+
   eventText: {
     fontSize: 14,
     color: "#444",
     lineHeight: 20,
     textAlign: "justify",
   },
+
   separator: {
     height: 1,
     backgroundColor: "#ddd",
