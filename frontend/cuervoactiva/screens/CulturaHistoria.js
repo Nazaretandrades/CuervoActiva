@@ -41,12 +41,34 @@ export default function CulturaHistoria() {
   // 📌 BREAKPOINTS OPCIÓN A
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isLargeWeb = isWeb && winWidth >= 1024;
+  const showFooter = isLaptopWeb || isLargeWeb;
+
+  // ⭐ Breakpoints móviles pequeños y grandes SOLO WEB
+  const isMobileSmall = isWeb && winWidth < 400;
+  const isMobileMedium = isWeb && winWidth >= 400 && winWidth < 500;
+  const isMobileLarge = isWeb && winWidth >= 500 && winWidth < 768;
+
+  // ⭐ Tamaño dinámico del párrafo SOLO móvil web
+  const paragraphFontSize = isMobileSmall
+    ? 14
+    : isMobileMedium
+    ? 15
+    : isMobileLarge
+    ? 16
+    : 16;
 
   /* ============================
      ⭐ ALTURA SCROLL EVENTOS
      ============================ */
-  const eventScrollMaxHeight = isLargeWeb ? 350 : 300;
+  const eventScrollMaxHeight = isMobileWeb
+    ? 250
+    : isTabletWeb
+    ? 180
+    : isLaptopWeb
+    ? 220
+    : 280;
 
   /* ============================
      ⭐ ANCHO DEL CONTENEDOR
@@ -57,7 +79,7 @@ export default function CulturaHistoria() {
     ? { width: "100%", maxWidth: "100%" }
     : isTabletWeb
     ? { width: "90%", maxWidth: 1000 }
-    : { width: "60%", maxWidth: 1200 }; // laptop/desktop
+    : { width: "60%", maxWidth: 1200 };
 
   const nav = useNavigation();
 
@@ -102,6 +124,7 @@ export default function CulturaHistoria() {
   const goToCulturaHistoria = () => nav.navigate("CulturaHistoria");
   const goToCalendar = () => nav.navigate("Calendar");
   const goToHomeUser = () => nav.navigate("User");
+  const goToAbout = () => navigation.navigate("SobreNosotros");
 
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
@@ -124,7 +147,6 @@ export default function CulturaHistoria() {
       }).start(() => setMenuVisible(false));
     }
   };
-
   /* ============================
      ⭐ TOPBARS POR ROL
      ============================ */
@@ -398,7 +420,6 @@ export default function CulturaHistoria() {
       </>
     );
   };
-
   /* ============================
      ⭐ RENDER
      ============================ */
@@ -433,7 +454,17 @@ export default function CulturaHistoria() {
       >
         <Text style={styles.title}>Cultura e Historia</Text>
 
-        <Text style={styles.paragraph}>
+        {/* TEXTO AJUSTADO PARA MOVILES */}
+        <Text
+          style={[
+            styles.paragraph,
+            isMobileSmall
+              ? { fontSize: 13, lineHeight: 18 }
+              : isMobileLarge
+              ? { fontSize: 14, lineHeight: 20 }
+              : {},
+          ]}
+        >
           El Cuervo de Sevilla, situado en la comarca del Bajo Guadalquivir, fue
           parte de Lebrija hasta finales del siglo XX. Su independencia se
           alcanzó el 19 de diciembre de 1992 tras un movimiento popular que
@@ -450,7 +481,17 @@ export default function CulturaHistoria() {
             !isWeb && styles.eventContainerMobile,
             eventContainerResponsiveStyle,
             {
-              marginBottom: isLargeWeb ? 20 : 20,
+              marginTop: isMobileSmall
+                ? -20
+                : isMobileLarge
+                ? -10
+                : isTabletWeb
+                ? 20
+                : isLaptopWeb
+                ? 20
+                : isLargeWeb
+                ? 20
+                : -10,
             },
           ]}
         >
@@ -491,13 +532,15 @@ export default function CulturaHistoria() {
         </View>
       </ScrollView>
 
-      {/* FOOTER: solo en laptop/desktop web (opción 1) */}
-      {isWeb && isLargeWeb && (
-        <Footer
-          onAboutPress={goToAboutUs}
-          onPrivacyPress={goToPrivacy}
-          onConditionsPress={goToConditions}
-        />
+      {/* FOOTER */}
+      {isWeb && showFooter && (
+        <View style={{ position: "fixed", bottom: 0, left: 0, right: 0 }}>
+          <Footer
+            onAboutPress={goToAbout}
+            onPrivacyPress={goToPrivacy}
+            onConditionsPress={goToConditions}
+          />
+        </View>
       )}
     </View>
   );

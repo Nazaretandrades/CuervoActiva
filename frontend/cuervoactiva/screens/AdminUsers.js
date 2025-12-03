@@ -10,6 +10,7 @@ import {
   TouchableWithoutFeedback,
   TextInput,
   StyleSheet,
+  Dimensions,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -35,7 +36,7 @@ export default function AdminUsers() {
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
-  // 🔹 Modales crear / editar usuario
+  // Modales crear / editar usuario
   const [createVisible, setCreateVisible] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
 
@@ -56,6 +57,56 @@ export default function AdminUsers() {
     role: "user",
   });
 
+  /* ======== RESPONSIVE BREAKPOINTS (como AdminNotifications) ======== */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const resize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+  const isMobileWeb = isWeb && winWidth < 768;
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1000 && winWidth < 1440;
+  const isDesktopWeb = isWeb && winWidth >= 1440;
+  const isLargeWeb = isLaptopWeb || isDesktopWeb;
+
+  // Paddings laterales del scroll principal
+  const pagePaddingHorizontal = isMobileWeb
+    ? 20
+    : isTabletWeb
+    ? 40
+    : isLaptopWeb
+    ? 55
+    : 80;
+
+  // Padding inferior para dejar aire al footer + toast
+  const pagePaddingBottom = isMobileWeb ? 180 : isLargeWeb ? 10 : 40;
+
+  // Ancho responsive del bloque (título + lista usuarios)
+  const mainContainerWidthStyle = isMobileWeb
+    ? { width: "100%", maxWidth: "100%" }
+    : isTabletWeb
+    ? { width: "95%", maxWidth: 1100 }
+    : isLaptopWeb
+    ? { width: "80%", maxWidth: 1100  }
+    : { width: "80%", maxWidth: 1100 };
+
+  // Altura máxima de la lista (ligeramente distinta según tamaño)
+  const listMaxHeight = isMobileWeb
+    ? 380
+    : isTabletWeb
+    ? 420
+    : isLaptopWeb
+    ? 450
+    : 350;
+
+  /* ======== TOAST ======== */
   const showToast = (type, message) => {
     setToast({ visible: true, type, message });
     Animated.timing(fadeAnim, {
@@ -83,7 +134,7 @@ export default function AdminUsers() {
     setConfirmVisible(false);
   };
 
-  //  SESIÓN
+  /* ======== SESIÓN ======== */
   const getSession = async () => {
     try {
       if (Platform.OS === "web") {
@@ -122,6 +173,7 @@ export default function AdminUsers() {
     loadUsers();
   }, []);
 
+  /* ======== NAVIGATION ======== */
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -131,6 +183,7 @@ export default function AdminUsers() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
 
+  /* ======== ELIMINAR USUARIO ======== */
   const handleDelete = async () => {
     if (!userToDelete) return;
     try {
@@ -152,6 +205,7 @@ export default function AdminUsers() {
     }
   };
 
+  /* ======== MENÚ ======== */
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -169,7 +223,7 @@ export default function AdminUsers() {
     }
   };
 
-  // 🔹 Abrir / cerrar modal CREAR usuario
+  // Abrir / cerrar modal CREAR usuario
   const openCreateModal = () => {
     setNewUser({
       name: "",
@@ -183,7 +237,7 @@ export default function AdminUsers() {
 
   const closeCreateModal = () => setCreateVisible(false);
 
-  // 🔹 Abrir / cerrar modal EDITAR usuario
+  // Abrir / cerrar modal EDITAR usuario
   const openEditModal = (user) => {
     setEditUser({
       id: user._id,
@@ -198,8 +252,8 @@ export default function AdminUsers() {
 
   const closeEditModal = () => setEditVisible(false);
 
+  /* ======== CREAR USUARIO ======== */
   const submitCreateUser = async () => {
-    // 🔍 Validación uno por uno
     if (!newUser.name.trim()) {
       showToast("error", "El nombre es obligatorio");
       return;
@@ -210,7 +264,6 @@ export default function AdminUsers() {
       return;
     }
 
-    // Validar email correcto
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newUser.email)) {
       showToast("error", "El email no es válido");
@@ -236,8 +289,6 @@ export default function AdminUsers() {
       showToast("error", "Las contraseñas no coinciden");
       return;
     }
-
-    // ------------------------------
 
     try {
       const session = await getSession();
@@ -272,8 +323,8 @@ export default function AdminUsers() {
     }
   };
 
+  /* ======== EDITAR USUARIO ======== */
   const submitEditUser = async () => {
-    // 🔍 Validación campo por campo
     if (!editUser.name.trim()) {
       showToast("error", "El nombre es obligatorio");
       return;
@@ -290,7 +341,6 @@ export default function AdminUsers() {
       return;
     }
 
-    // Si quiere cambiar password ↓↓↓
     if (editUser.password || editUser.confirmPassword) {
       if (!editUser.password.trim()) {
         showToast("error", "La nueva contraseña no puede estar vacía");
@@ -315,8 +365,6 @@ export default function AdminUsers() {
         return;
       }
     }
-
-    // ----------------------------------
 
     try {
       const session = await getSession();
@@ -355,9 +403,9 @@ export default function AdminUsers() {
     }
   };
 
+  /* ======== RENDER TOPBAR Y MENÚ ======== */
   const renderAdminTopBar = () => (
     <View style={styles.topBar}>
-      {/* Perfil Admin */}
       <View style={styles.adminInfo}>
         <View style={styles.adminIconContainer}>
           <Image
@@ -376,19 +424,28 @@ export default function AdminUsers() {
       </View>
 
       <View style={styles.iconRow}>
-        <Pressable onPress={goToNotifications} style={styles.iconButton}>
+        <Pressable
+          onPress={goToNotifications}
+          style={[styles.iconButton, isWeb ? { cursor: "pointer" } : null]}
+        >
           <Image
             source={require("../assets/iconos/bell2.png")}
             style={styles.topIcon}
           />
         </Pressable>
-        <Pressable onPress={goToCalendar} style={styles.iconButton}>
+        <Pressable
+          onPress={goToCalendar}
+          style={[styles.iconButton, isWeb ? { cursor: "pointer" } : null]}
+        >
           <Image
             source={require("../assets/iconos/calendar-admin.png")}
             style={styles.topIcon}
           />
         </Pressable>
-        <Pressable onPress={toggleMenu}>
+        <Pressable
+          onPress={toggleMenu}
+          style={isWeb ? { cursor: "pointer" } : null}
+        >
           <Image
             source={
               menuVisible
@@ -403,7 +460,7 @@ export default function AdminUsers() {
   );
 
   const renderAdminMenu = () =>
-    Platform.OS === "web" &&
+    isWeb &&
     menuVisible && (
       <>
         <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -433,6 +490,7 @@ export default function AdminUsers() {
       </>
     );
 
+  /* ============== RENDER PRINCIPAL ============== */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
@@ -440,32 +498,32 @@ export default function AdminUsers() {
       {renderAdminMenu()}
 
       <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={{
-          flexGrow: 1,
+          paddingTop: 10,
+          paddingBottom: pagePaddingBottom,
+          paddingHorizontal: pagePaddingHorizontal,
+          backgroundColor: "#f5f6f7",
           alignItems: "center",
-          justifyContent: "flex-start",
-          paddingVertical: 40,
         }}
       >
         {/* Título + botón crear */}
-        <View
-          style={{
-            width: "90%",
-            maxWidth: 1300,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+        <View style={[styles.titleRow, mainContainerWidthStyle]}>
           <Text style={styles.title}>Usuarios</Text>
 
-          <Pressable onPress={openCreateModal} style={styles.createButton}>
+          <Pressable
+            onPress={openCreateModal}
+            style={[styles.createButton, isWeb ? { cursor: "pointer" } : null]}
+          >
             <Text style={styles.createButtonText}>+ Crear usuario</Text>
           </Pressable>
         </View>
 
-        <View style={styles.userContainer}>
-          <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator>
+        <View style={[styles.userContainer, mainContainerWidthStyle]}>
+          <ScrollView
+            style={{ maxHeight: listMaxHeight }}
+            showsVerticalScrollIndicator
+          >
             {users.length > 0 ? (
               users.map((u) => (
                 <View key={u._id} style={styles.userCard}>
@@ -480,7 +538,11 @@ export default function AdminUsers() {
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <Pressable
                       onPress={() => openEditModal(u)}
-                      style={{ marginRight: 14 }}
+                      style={
+                        isWeb
+                          ? { marginRight: 14, cursor: "pointer" }
+                          : { marginRight: 14 }
+                      }
                     >
                       <Image
                         source={require("../assets/iconos/editar.png")}
@@ -488,7 +550,10 @@ export default function AdminUsers() {
                       />
                     </Pressable>
 
-                    <Pressable onPress={() => openConfirmModal(u._id)}>
+                    <Pressable
+                      onPress={() => openConfirmModal(u._id)}
+                      style={isWeb ? { cursor: "pointer" } : null}
+                    >
                       <Image
                         source={require("../assets/iconos/papelera.png")}
                         style={styles.trashIcon}
@@ -722,6 +787,7 @@ export default function AdminUsers() {
         </View>
       )}
 
+      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={[
@@ -736,7 +802,8 @@ export default function AdminUsers() {
         </Animated.View>
       )}
 
-      {Platform.OS === "web" && (
+      {/* FOOTER solo en laptop/desktop web, igual que en otras pantallas */}
+      {isWeb && isLargeWeb && (
         <Footer
           onAboutPress={goToAboutUs}
           onPrivacyPress={goToPrivacy}
@@ -782,12 +849,16 @@ const styles = StyleSheet.create({
   iconButton: { marginRight: 20 },
   topIcon: { width: 22, height: 22, tintColor: "#0094A2" },
 
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
   userContainer: {
     backgroundColor: "#f5f5f5",
     borderRadius: 10,
     padding: 20,
-    width: "90%",
-    maxWidth: 1300,
     alignSelf: "center",
     boxShadow: "0 0 10px rgba(0,0,0,0.1)",
     marginTop: 20,

@@ -7,6 +7,7 @@ import {
   Platform,
   Animated,
   Image,
+  Dimensions,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
@@ -26,14 +27,51 @@ export default function UserNotifications({ navigation }) {
     type: "info",
   });
 
+  /* ================= RESPONSIVE BREAKPOINTS ================ */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const resize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+  const isMobileWeb = isWeb && winWidth < 768;
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
+  const isDesktopWeb = isWeb && winWidth >= 1440;
+  const isLargeWeb = isLaptopWeb || isDesktopWeb;
+
+  const pagePaddingHorizontal = isMobileWeb
+    ? 20
+    : isTabletWeb
+    ? 40
+    : isLaptopWeb
+    ? 55
+    : 80;
+
+  const pagePaddingBottom = isLargeWeb ? 80 : 20;
+
+  const notificationsContainerWidth = isMobileWeb
+    ? "100%"
+    : isTabletWeb
+    ? "95%"
+    : isLaptopWeb
+    ? "85%"
+    : "70%";
+
+  /* ================= TOAST ================= */
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
-    setTimeout(
-      () => setToast({ visible: false, message: "", type: "info" }),
-      2500
-    );
+    setTimeout(() => {
+      setToast({ visible: false, message: "", type: "info" });
+    }, 2500);
   };
-
+  /* ================= LOAD USER ================= */
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -41,6 +79,7 @@ export default function UserNotifications({ navigation }) {
           Platform.OS === "web"
             ? JSON.parse(localStorage.getItem("USER_SESSION"))
             : JSON.parse(await AsyncStorage.getItem("USER_SESSION"));
+
         if (session?.user?.name || session?.name)
           setUserName(session.user?.name || session.name);
       } catch {
@@ -50,6 +89,7 @@ export default function UserNotifications({ navigation }) {
     loadUser();
   }, []);
 
+  /* ================= LOAD NOTIFICATIONS ================= */
   useEffect(() => {
     const loadNotifications = async () => {
       try {
@@ -57,6 +97,7 @@ export default function UserNotifications({ navigation }) {
           Platform.OS === "web"
             ? JSON.parse(localStorage.getItem("USER_SESSION"))
             : JSON.parse(await AsyncStorage.getItem("USER_SESSION"));
+
         const token = session?.token;
 
         const res = await fetch(`${API_BASE}/api/notifications`, {
@@ -64,25 +105,26 @@ export default function UserNotifications({ navigation }) {
         });
 
         if (res.ok) {
-          const data = await res.json();
-          setNotifications(data);
+          setNotifications(await res.json());
         } else {
           showToast("❌ Error al cargar notificaciones.", "error");
         }
       } catch (err) {
-        console.error("Error al cargar notificaciones:", err);
+        console.error(err);
         showToast("⚠️ No se pudieron obtener las notificaciones.", "error");
       }
     };
     loadNotifications();
   }, []);
 
+  /* ================= MARK AS READ ================= */
   const markAsRead = async (id) => {
     try {
       const session =
         Platform.OS === "web"
           ? JSON.parse(localStorage.getItem("USER_SESSION"))
           : JSON.parse(await AsyncStorage.getItem("USER_SESSION"));
+
       const token = session?.token;
 
       const res = await fetch(`${API_BASE}/api/notifications/${id}`, {
@@ -90,16 +132,17 @@ export default function UserNotifications({ navigation }) {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) throw new Error("Error al eliminar notificación");
+      if (!res.ok) throw new Error("Error al eliminar");
 
       setNotifications((prev) => prev.filter((n) => n._id !== id));
-      showToast("✅ Notificación marcada como leída correctamente.", "success");
-    } catch (err) {
-      console.error("Error al marcar notificación como leída:", err);
-      showToast("❌ No se pudo marcar la notificación.", "error");
+
+      showToast("✅ Notificación marcada como leída.", "success");
+    } catch {
+      showToast("❌ Error al marcar la notificación.", "error");
     }
   };
 
+  /* ================= NAVIGATION ================= */
   const goToProfile = () => navigation.navigate("UserProfile");
   const goToNotifications = () => navigation.navigate("UserNotifications");
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
@@ -110,11 +153,14 @@ export default function UserNotifications({ navigation }) {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToHome = () => navigation.navigate("User");
 
+  /* ================= MENU ================= */
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
+      // === ⭐ MODO MÓVIL NATIVO: IGUAL QUE TU SEGUNDO CÓDIGO ===
       setMenuVisible((prev) => !prev);
       return;
     }
+
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
@@ -131,6 +177,7 @@ export default function UserNotifications({ navigation }) {
     }
   };
 
+  /* ================= TOP BAR ================= */
   const renderTopBar = () => (
     <View
       style={{
@@ -176,7 +223,7 @@ export default function UserNotifications({ navigation }) {
           />
         </Pressable>
 
-        {Platform.OS === "web" && (
+        {isWeb && (
           <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
             <Image
               source={require("../assets/iconos/calendar.png")}
@@ -198,67 +245,69 @@ export default function UserNotifications({ navigation }) {
       </View>
     </View>
   );
-
+  /* ================= RENDER ================= */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", position: "relative" }}>
       <Header hideAuthButtons />
       {renderTopBar()}
 
-      {Platform.OS === "web" && menuVisible && (
-        <>
-          <Animated.View
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: 250,
-              height: "100%",
-              backgroundColor: "#f8f8f8",
-              padding: 20,
-              zIndex: 10,
-              transform: [{ translateX: menuAnim }],
-              boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
-            }}
-          >
-            {[
-              { label: "Perfil", action: goToProfile },
-              { label: "Cultura e Historia", action: goToCulturaHistoria },
-              {
-                label: "Ver favoritos",
-                action: () => navigation.navigate("UserFavorites"),
-              },
-              { label: "Contacto", action: goToContact },
-            ].map((item, i) => (
-              <Pressable
-                key={i}
-                onPress={() => {
-                  toggleMenu();
-                  item.action();
+      {/* ===== WEB MENU ===== */}
+      {isWeb && menuVisible && (
+        <Animated.View
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: 250,
+            height: "100%",
+            backgroundColor: "#f8f8f8",
+            padding: 20,
+            zIndex: 10,
+            transform: [{ translateX: menuAnim }],
+            boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
+          }}
+        >
+          {[
+            { label: "Perfil", action: goToProfile },
+            { label: "Cultura e Historia", action: goToCulturaHistoria },
+            {
+              label: "Ver favoritos",
+              action: () => navigation.navigate("UserFavorites"),
+            },
+            { label: "Contacto", action: goToContact },
+          ].map((item, i) => (
+            <Pressable
+              key={i}
+              onPress={() => {
+                toggleMenu();
+                item.action();
+              }}
+              style={{ marginBottom: 25 }}
+            >
+              <Text
+                style={{
+                  color: "#014869",
+                  fontSize: 18,
+                  fontWeight: "700",
+                  cursor: "pointer",
                 }}
-                style={{ marginBottom: 25 }}
               >
-                <Text
-                  style={{
-                    color: "#014869",
-                    fontSize: 18,
-                    fontWeight: "700",
-                    cursor: "pointer",
-                  }}
-                >
-                  {item.label}
-                </Text>
-              </Pressable>
-            ))}
-          </Animated.View>
-        </>
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+        </Animated.View>
       )}
 
+      {/* ===== CONTENT RESPONSIVE ===== */}
       <View
         style={{
           flex: 1,
-          paddingHorizontal: 24,
+          paddingHorizontal: pagePaddingHorizontal,
           paddingTop: 10,
+          paddingBottom: pagePaddingBottom,
           backgroundColor: "#f5f6f7",
+          alignItems: "center",
         }}
       >
         <Text
@@ -268,6 +317,7 @@ export default function UserNotifications({ navigation }) {
             color: "#014869",
             marginBottom: 20,
             textAlign: "center",
+            width: notificationsContainerWidth,
           }}
         >
           Notificaciones
@@ -276,7 +326,8 @@ export default function UserNotifications({ navigation }) {
         <ScrollView
           style={{
             flex: 1,
-            maxHeight: Platform.OS === "web" ? "65vh" : 500,
+            maxHeight: isWeb ? "65vh" : 500,
+            width: notificationsContainerWidth,
           }}
           contentContainerStyle={{
             alignItems: "center",
@@ -296,7 +347,8 @@ export default function UserNotifications({ navigation }) {
                   borderRadius: 25,
                   marginBottom: 12,
                   alignItems: "center",
-                  width: "80%",
+                  width: Platform.OS === "web" ? "100%" : "100%",
+                  alignSelf: "center",
                   cursor: "pointer",
                   shadowColor: "#000",
                   shadowOpacity: 0.2,
@@ -318,7 +370,8 @@ export default function UserNotifications({ navigation }) {
         </ScrollView>
       </View>
 
-      {menuVisible && Platform.OS !== "web" && (
+      {/* ===== MOBILE MENU (NATIVO EXACTO) ===== */}
+      {menuVisible && !isWeb && (
         <View
           style={{
             position: "absolute",
@@ -332,6 +385,7 @@ export default function UserNotifications({ navigation }) {
             paddingTop: 50,
           }}
         >
+          {/* HEADER MÓVIL */}
           <View
             style={{
               flexDirection: "row",
@@ -359,6 +413,7 @@ export default function UserNotifications({ navigation }) {
             </Text>
           </View>
 
+          {/* OPCIONES MÓVIL */}
           <View style={{ flex: 1 }}>
             {[
               {
@@ -418,12 +473,17 @@ export default function UserNotifications({ navigation }) {
 
                 <Image
                   source={require("../assets/iconos/siguiente.png")}
-                  style={{ width: 18, height: 18, tintColor: "#014869" }}
+                  style={{
+                    width: 18,
+                    height: 18,
+                    tintColor: "#014869",
+                  }}
                 />
               </Pressable>
             ))}
           </View>
 
+          {/* FOOTER MÓVIL */}
           <View
             style={{
               position: "absolute",
@@ -445,12 +505,14 @@ export default function UserNotifications({ navigation }) {
                 style={{ width: 24, height: 24, tintColor: "#014869" }}
               />
             </Pressable>
+
             <Pressable onPress={goToCalendar}>
               <Image
                 source={require("../assets/iconos/calendar.png")}
                 style={{ width: 24, height: 24, tintColor: "#014869" }}
               />
             </Pressable>
+
             <Pressable onPress={goToProfile}>
               <Image
                 source={require("../assets/iconos/user.png")}
@@ -461,7 +523,8 @@ export default function UserNotifications({ navigation }) {
         </View>
       )}
 
-      {Platform.OS === "web" && (
+      {/* ===== FOOTER WEB SOLO EN PANTALLAS GRANDES ===== */}
+      {isWeb && isLargeWeb && (
         <View
           style={{
             position: "fixed",
@@ -480,6 +543,7 @@ export default function UserNotifications({ navigation }) {
         </View>
       )}
 
+      {/* ===== TOAST ===== */}
       {toast.visible && (
         <Animated.View
           style={{

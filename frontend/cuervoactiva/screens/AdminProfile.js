@@ -9,7 +9,8 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Alert,
-  TextInput, // ⭐ NUEVO
+  TextInput,
+  Dimensions,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -25,10 +26,47 @@ export default function AdminProfile() {
   const [menuAnim] = useState(new Animated.Value(-250));
   const [adminData, setAdminData] = useState({ name: "Admin", email: "" });
 
-  // ⭐ NUEVO: estado para editar perfil
   const [editVisible, setEditVisible] = useState(false);
   const [newName, setNewName] = useState("");
 
+  /* ======== RESPONSIVE BREAKPOINTS ======== */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const resize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+  const isMobileWeb = isWeb && winWidth < 768;
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
+  const isDesktopWeb = isWeb && winWidth >= 1440;
+  const isLargeWeb = isLaptopWeb || isDesktopWeb;
+
+  const pagePaddingHorizontal = isMobileWeb
+    ? 20
+    : isTabletWeb
+    ? 40
+    : isLaptopWeb
+    ? 55
+    : 80;
+
+  const pagePaddingBottom = isLargeWeb ? 100 : 40;
+
+  const profileContainerWidth = isMobileWeb
+    ? "92%"
+    : isTabletWeb
+    ? "85%"
+    : isLaptopWeb
+    ? "60%"
+    : "45%";
+
+  /* ======== LOAD USER ======== */
   useEffect(() => {
     const loadUser = () => {
       try {
@@ -51,6 +89,7 @@ export default function AdminProfile() {
     }
   }, []);
 
+  /* ======== LOGOUT ======== */
   const handleLogout = async () => {
     try {
       if (Platform.OS === "web") {
@@ -67,13 +106,11 @@ export default function AdminProfile() {
     }
   };
 
-  // ⭐ NUEVO: abrir modal de edición
+  /* ======== EDIT PROFILE ======== */
   const openEditModal = () => {
     setNewName(adminData.name || "");
     setEditVisible(true);
   };
-
-  // ⭐ NUEVO: guardar cambios llamando al backend
 
   const saveProfileChanges = async () => {
     try {
@@ -82,7 +119,7 @@ export default function AdminProfile() {
         return;
       }
 
-      const session = await getSession(); // 🔥 AHORA FUNCIONA EN WEB Y MÓVIL
+      const session = await getSession();
 
       if (!session?.token) {
         Alert.alert("Error", "Sesión no encontrada.");
@@ -93,7 +130,7 @@ export default function AdminProfile() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.token}`, // 🔥 Token correcto SIEMPRE
+          Authorization: `Bearer ${session.token}`,
         },
         body: JSON.stringify({ name: newName.trim() }),
       });
@@ -105,10 +142,7 @@ export default function AdminProfile() {
         return;
       }
 
-      // Actualizar estado local (pantalla)
       setAdminData((prev) => ({ ...prev, name: data.name }));
-
-      // 🔥 Guardar sesión actualizada (funciona web + móvil)
       await saveSession({ ...session, name: data.name });
 
       setEditVisible(false);
@@ -119,6 +153,7 @@ export default function AdminProfile() {
     }
   };
 
+  /* ======== NAVIGATION ======== */
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -129,6 +164,7 @@ export default function AdminProfile() {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToUsers = () => navigation.navigate("AdminUsers");
 
+  /* ======== MENU ======== */
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -146,10 +182,12 @@ export default function AdminProfile() {
     }
   };
 
+  /* ======== RENDER ======== */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
+      {/* TOPBAR */}
       <View
         style={{
           flexDirection: "row",
@@ -189,6 +227,7 @@ export default function AdminProfile() {
               }}
             />
           </View>
+
           <View>
             <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
               Admin.
@@ -207,7 +246,7 @@ export default function AdminProfile() {
             onPress={goToNotifications}
             style={{
               marginRight: 20,
-              ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+              ...(isWeb ? { cursor: "pointer" } : {}),
             }}
           >
             <Image
@@ -220,7 +259,7 @@ export default function AdminProfile() {
             onPress={goToCalendar}
             style={{
               marginRight: 20,
-              ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+              ...(isWeb ? { cursor: "pointer" } : {}),
             }}
           >
             <Image
@@ -231,7 +270,7 @@ export default function AdminProfile() {
 
           <Pressable
             onPress={toggleMenu}
-            style={Platform.OS === "web" ? { cursor: "pointer" } : {}}
+            style={isWeb ? { cursor: "pointer" } : {}}
           >
             <Image
               source={
@@ -245,7 +284,8 @@ export default function AdminProfile() {
         </View>
       </View>
 
-      {Platform.OS === "web" && menuVisible && (
+      {/* MENU WEB */}
+      {isWeb && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
             <View
@@ -302,32 +342,32 @@ export default function AdminProfile() {
         </>
       )}
 
+      {/* CONTENT */}
       <ScrollView
         contentContainerStyle={{
-          flexGrow: 1,
+          paddingTop: 20,
+          paddingBottom: pagePaddingBottom,
+          paddingHorizontal: pagePaddingHorizontal,
+          backgroundColor: "#f5f6f7",
           alignItems: "center",
-          justifyContent: "flex-start",
-          paddingVertical: 65,
-          backgroundColor: "#fff",
         }}
       >
         <View
           style={{
             backgroundColor: "#f5f5f5",
             borderRadius: 8,
-            width: "90%",
-            maxWidth: 420,
+            width: profileContainerWidth,
             paddingVertical: 20,
             alignItems: "center",
             shadowColor: "#000",
-            shadowOpacity: 0.1,
+            shadowOpacity: 0.08,
             shadowRadius: 5,
-            marginTop: 30,
+            marginTop: 20,
           }}
         >
           <Text
             style={{
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: "bold",
               color: "#014869",
               marginBottom: 15,
@@ -336,6 +376,7 @@ export default function AdminProfile() {
             Perfil
           </Text>
 
+          {/* Avatar */}
           <View
             style={{
               position: "relative",
@@ -365,7 +406,7 @@ export default function AdminProfile() {
             />
           </View>
 
-          <View style={{ width: "80%" }}>
+          <View style={{ width: "85%" }}>
             <Text
               style={{ fontWeight: "bold", color: "#014869", marginBottom: 5 }}
             >
@@ -404,7 +445,7 @@ export default function AdminProfile() {
               {adminData.email}
             </Text>
 
-            {/* ⭐ NUEVO BOTÓN EDITAR PERFIL */}
+            {/* EDIT BUTTON */}
             <Pressable
               onPress={openEditModal}
               style={{
@@ -413,7 +454,6 @@ export default function AdminProfile() {
                 paddingHorizontal: 25,
                 borderRadius: 30,
                 alignSelf: "center",
-                marginTop: 10,
                 marginBottom: 10,
               }}
             >
@@ -422,6 +462,7 @@ export default function AdminProfile() {
               </Text>
             </Pressable>
 
+            {/* LOGOUT */}
             <Pressable
               onPress={handleLogout}
               style={{
@@ -430,7 +471,7 @@ export default function AdminProfile() {
                 paddingHorizontal: 25,
                 borderRadius: 30,
                 alignSelf: "center",
-                marginTop: 10,
+                marginBottom: 10,
               }}
             >
               <Text style={{ color: "#fff", fontWeight: "bold" }}>
@@ -441,11 +482,11 @@ export default function AdminProfile() {
         </View>
       </ScrollView>
 
-      {/* ⭐ NUEVO MODAL DE EDICIÓN */}
+      {/* MODAL EDIT */}
       {editVisible && (
         <View
           style={{
-            position: "absolute",
+            position: "fixed",
             top: 0,
             left: 0,
             right: 0,
@@ -526,7 +567,7 @@ export default function AdminProfile() {
         </View>
       )}
 
-      {Platform.OS === "web" && (
+      {isWeb && isLargeWeb && (
         <Footer
           onAboutPress={goToAboutUs}
           onPrivacyPress={goToPrivacy}

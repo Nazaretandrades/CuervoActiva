@@ -9,6 +9,7 @@ import {
   Animated,
   ScrollView,
   TextInput,
+  Dimensions,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -24,14 +25,52 @@ export default function UserProfile() {
   const [menuAnim] = useState(new Animated.Value(-250));
   const [userData, setUserData] = useState({ name: "Usuario", email: "" });
 
-  // ⭐ NUEVO — estado del modal
   const [editVisible, setEditVisible] = useState(false);
   const [newName, setNewName] = useState("");
 
+  /* ================= RESPONSIVE BREAKPOINTS (como AdminProfile) ================ */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const resize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+  const isMobileWeb = isWeb && winWidth < 768;
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
+  const isDesktopWeb = isWeb && winWidth >= 1440;
+  const isLargeWeb = isLaptopWeb || isDesktopWeb;
+
+  const pagePaddingHorizontal = isMobileWeb
+    ? 20
+    : isTabletWeb
+    ? 40
+    : isLaptopWeb
+    ? 55
+    : 80;
+
+  const pagePaddingBottom = isLargeWeb ? 100 : 40;
+
+  const profileContainerWidth = isMobileWeb
+    ? "92%"
+    : isTabletWeb
+    ? "85%"
+    : isLaptopWeb
+    ? "60%"
+    : "45%";
+
+  /* ================= LOAD SESSION ================= */
   useEffect(() => {
     const loadUser = async () => {
       try {
         let session;
+
         if (Platform.OS === "web") {
           session = JSON.parse(localStorage.getItem("USER_SESSION"));
         } else {
@@ -49,6 +88,7 @@ export default function UserProfile() {
     loadUser();
   }, []);
 
+  /* ================= LOGOUT ================= */
   const handleLogout = async () => {
     try {
       if (Platform.OS === "web") {
@@ -62,13 +102,12 @@ export default function UserProfile() {
     }
   };
 
-  // ⭐ NUEVO: abrir modal
+  /* ================= EDIT MODAL ================= */
   const openEditModal = () => {
     setNewName(userData.name);
     setEditVisible(true);
   };
 
-  // ⭐ NUEVO: guardar cambios
   const saveProfileChanges = async () => {
     try {
       if (!newName.trim()) {
@@ -102,10 +141,8 @@ export default function UserProfile() {
         return;
       }
 
-      // Actualiza estado
       setUserData((prev) => ({ ...prev, name: data.name }));
 
-      // Actualiza storage
       const updatedSession = { ...session, name: data.name };
 
       if (Platform.OS === "web") {
@@ -122,6 +159,7 @@ export default function UserProfile() {
     }
   };
 
+  /* ================= NAVIGATION ================= */
   const goToProfile = () => navigation.navigate("UserProfile");
   const goToNotifications = () => navigation.navigate("UserNotifications");
   const goToFavorites = () => navigation.navigate("UserFavorites");
@@ -133,8 +171,9 @@ export default function UserProfile() {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToHome = () => navigation.navigate("User");
 
+  /* ================= MENU ================= */
   const toggleMenu = () => {
-    if (Platform.OS !== "web") {
+    if (!isWeb) {
       setMenuVisible(!menuVisible);
       return;
     }
@@ -155,6 +194,7 @@ export default function UserProfile() {
     }
   };
 
+  /* ================= TOP BAR ================= */
   const renderTopBar = () => (
     <View
       style={{
@@ -183,6 +223,7 @@ export default function UserProfile() {
             style={{ width: 24, height: 24, tintColor: "#fff" }}
           />
         </View>
+
         <View>
           <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
             Usuario
@@ -201,7 +242,7 @@ export default function UserProfile() {
           />
         </Pressable>
 
-        {Platform.OS === "web" && (
+        {isWeb && (
           <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
             <Image
               source={require("../assets/iconos/calendar.png")}
@@ -224,13 +265,14 @@ export default function UserProfile() {
     </View>
   );
 
+  /* ================= RENDER ================= */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
       {renderTopBar()}
 
-      {/* Menú web */}
-      {Platform.OS === "web" && menuVisible && (
+      {/* ===================== MENÚ WEB ===================== */}
+      {isWeb && menuVisible && (
         <Animated.View
           style={{
             position: "fixed",
@@ -274,9 +316,8 @@ export default function UserProfile() {
         </Animated.View>
       )}
 
-      {/* Menú móvil */}
-      {menuVisible && Platform.OS !== "web" && (
-        /* --- AQUÍ NO TOCO NADA, TU MENÚ ORIGINAL --- */
+      {/* ===================== MENÚ MÓVIL (TU DISEÑO ORIGINAL) ===================== */}
+      {menuVisible && !isWeb && (
         <View
           style={{
             position: "absolute",
@@ -321,7 +362,6 @@ export default function UserProfile() {
           {/* OPCIONES */}
           <View style={{ flex: 1 }}>
             {[
-
               {
                 label: "Cultura e Historia",
                 icon: require("../assets/iconos/museo-usuario.png"),
@@ -384,7 +424,7 @@ export default function UserProfile() {
             ))}
           </View>
 
-          {/* FOOTER MENÚ */}
+          {/* FOOTER DEL MENÚ MÓVIL */}
           <View
             style={{
               position: "absolute",
@@ -422,28 +462,28 @@ export default function UserProfile() {
         </View>
       )}
 
-      {/* PERFIL */}
+      {/* ===================== PERFIL ===================== */}
       <ScrollView
         contentContainerStyle={{
-          flexGrow: 1,
+          paddingTop: 20,
+          paddingBottom: Platform.OS === "web" ? pagePaddingBottom : 65,
+          paddingHorizontal: Platform.OS === "web" ? pagePaddingHorizontal : 20,
+          backgroundColor: "#f5f6f7",
           alignItems: "center",
-          justifyContent: "flex-start",
-          paddingVertical: 65,
-          backgroundColor: "#fff",
         }}
       >
         <View
           style={{
             backgroundColor: "#f5f5f5",
             borderRadius: 8,
-            width: "90%",
-            maxWidth: 420,
+            width: Platform.OS === "web" ? profileContainerWidth : "90%",
+            maxWidth: Platform.OS === "web" ? "100%" : 420,
             paddingVertical: 20,
             alignItems: "center",
             shadowColor: "#000",
             shadowOpacity: 0.1,
             shadowRadius: 5,
-            marginTop: 30,
+            marginTop: 20,
           }}
         >
           <Text
@@ -513,7 +553,6 @@ export default function UserProfile() {
               {userData.email}
             </Text>
 
-            {/* ⭐ BOTÓN EDITAR PERFIL */}
             <Pressable
               onPress={openEditModal}
               style={{
@@ -548,7 +587,7 @@ export default function UserProfile() {
         </View>
       </ScrollView>
 
-      {/* ⭐ MODAL PARA EDITAR PERFIL */}
+      {/* ===================== MODAL EDITAR PERFIL ===================== */}
       {editVisible && (
         <View
           style={{
@@ -633,7 +672,7 @@ export default function UserProfile() {
         </View>
       )}
 
-      {Platform.OS === "web" && (
+      {isWeb && isLargeWeb && (
         <Footer
           onAboutPress={goToAboutUs}
           onPrivacyPress={goToPrivacy}

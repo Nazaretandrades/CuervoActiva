@@ -9,6 +9,7 @@ import {
   Animated,
   ScrollView,
   TextInput,
+  Dimensions,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -28,10 +29,47 @@ export default function OrganizerProfile() {
   });
 
   // ============================
-  // ⭐ NUEVO: ESTADOS DEL MODAL
+  // ⭐ ESTADOS DEL MODAL
   // ============================
   const [editVisible, setEditVisible] = useState(false);
   const [newName, setNewName] = useState("");
+
+  /* ================= RESPONSIVE BREAKPOINTS (como AdminProfile) ================ */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const resize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+  const isMobileWeb = isWeb && winWidth < 768;
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
+  const isDesktopWeb = isWeb && winWidth >= 1440;
+  const isLargeWeb = isLaptopWeb || isDesktopWeb;
+
+  const pagePaddingHorizontal = isMobileWeb
+    ? 20
+    : isTabletWeb
+    ? 40
+    : isLaptopWeb
+    ? 55
+    : 80;
+
+  const pagePaddingBottom = isLargeWeb ? 100 : 40;
+
+  const profileContainerWidth = isMobileWeb
+    ? "92%"
+    : isTabletWeb
+    ? "85%"
+    : isLaptopWeb
+    ? "60%"
+    : "45%";
 
   // ============================
   // CARGA DE SESIÓN
@@ -76,7 +114,7 @@ export default function OrganizerProfile() {
   };
 
   // ============================
-  // ⭐ NUEVO: ABRIR MODAL
+  // ⭐ ABRIR MODAL
   // ============================
   const openEditModal = () => {
     setNewName(organizerData.name);
@@ -84,7 +122,7 @@ export default function OrganizerProfile() {
   };
 
   // ============================
-  // ⭐ NUEVO: GUARDAR CAMBIOS
+  // ⭐ GUARDAR CAMBIOS
   // ============================
   const saveProfileChanges = async () => {
     try {
@@ -122,16 +160,17 @@ export default function OrganizerProfile() {
         return;
       }
 
-      // Actualiza estado local
       setOrganizerData((prev) => ({ ...prev, name: data.name }));
 
-      // Actualiza almacenamiento local
       const updatedSession = { ...session, name: data.name };
 
       if (Platform.OS === "web") {
         localStorage.setItem("USER_SESSION", JSON.stringify(updatedSession));
       } else {
-        await AsyncStorage.setItem("USER_SESSION", JSON.stringify(updatedSession));
+        await AsyncStorage.setItem(
+          "USER_SESSION",
+          JSON.stringify(updatedSession)
+        );
       }
 
       setEditVisible(false);
@@ -146,14 +185,14 @@ export default function OrganizerProfile() {
   // NAVEGACIÓN
   // ============================
   const goToProfile = () => navigation.navigate("OrganizerProfile");
-  const goToNotifications = () => navigation.navigate("OrganizerNotifications");
+  const goToNotifications = () =>
+    navigation.navigate("OrganizerNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
   const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToContact = () => navigation.navigate("Contacto");
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
-
   // ============================
   // MENÚ
   // ============================
@@ -269,9 +308,7 @@ export default function OrganizerProfile() {
       <Header hideAuthButtons />
       {renderTopBar()}
 
-      {/* ===================== */}
       {/* MENÚ WEB */}
-      {/* ===================== */}
       {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
@@ -315,9 +352,7 @@ export default function OrganizerProfile() {
         </Animated.View>
       )}
 
-      {/* ===================== */}
       {/* MENÚ MÓVIL — INTACTO */}
-      {/* ===================== */}
       {menuVisible && Platform.OS !== "web" && (
         <View
           style={{
@@ -331,7 +366,7 @@ export default function OrganizerProfile() {
             justifyContent: "space-between",
           }}
         >
-          {/* ESTE ES TU MENÚ ORIGINAL. NO TOQUÉ NADA. */}
+          {/* CABECERA MENÚ MÓVIL */}
           <View
             style={{
               flexDirection: "row",
@@ -348,7 +383,9 @@ export default function OrganizerProfile() {
                 style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
               />
             </Pressable>
-            <Text style={{ fontSize: 18, fontWeight: "bold", color: "#F3B23F" }}>
+            <Text
+              style={{ fontSize: 18, fontWeight: "bold", color: "#F3B23F" }}
+            >
               Menú
             </Text>
             <View style={{ width: 24 }} />
@@ -466,25 +503,31 @@ export default function OrganizerProfile() {
       {/* ===================== */}
       <ScrollView
         contentContainerStyle={{
-          flexGrow: 1,
+          paddingTop: 20,
+
+          /* ⭐ AQUÍ RESTAURÉ TU MÓVIL TAL CUAL ⭐ */
+          paddingBottom: Platform.OS === "web" ? pagePaddingBottom : 65,
+          paddingHorizontal: Platform.OS === "web" ? pagePaddingHorizontal : 20,
+
+          backgroundColor: "#f5f6f7",
           alignItems: "center",
-          justifyContent: "flex-start",
-          paddingVertical: 65,
-          backgroundColor: "#fff",
         }}
       >
         <View
           style={{
             backgroundColor: "#f5f5f5",
+
+            /* ⭐ AQUÍ RESTAURÉ TU MÓVIL ⭐ */
+            width: Platform.OS === "web" ? profileContainerWidth : "90%",
+            maxWidth: Platform.OS === "web" ? "100%" : 420,
+
             borderRadius: 8,
-            width: "90%",
-            maxWidth: 420,
             paddingVertical: 20,
             alignItems: "center",
             shadowColor: "#000",
             shadowOpacity: 0.1,
             shadowRadius: 5,
-            marginTop: 30,
+            marginTop: 20,
           }}
         >
           <Text
@@ -567,7 +610,6 @@ export default function OrganizerProfile() {
               {organizerData.email}
             </Text>
 
-            {/* ⭐ BOTÓN EDITAR PERFIL */}
             <Pressable
               onPress={openEditModal}
               style={{
@@ -603,9 +645,7 @@ export default function OrganizerProfile() {
         </View>
       </ScrollView>
 
-      {/* ===================== */}
-      {/* ⭐ MODAL EDITAR PERFIL */}
-      {/* ===================== */}
+      {/* MODAL EDITAR */}
       {editVisible && (
         <View
           style={{
@@ -690,7 +730,7 @@ export default function OrganizerProfile() {
         </View>
       )}
 
-      {Platform.OS === "web" && (
+      {isWeb && isLargeWeb && (
         <Footer
           onAboutPress={goToAboutUs}
           onPrivacyPress={goToPrivacy}
