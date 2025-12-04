@@ -37,6 +37,10 @@ const commentSchema = new mongoose.Schema(
       required: true,
     },
 
+    /**
+     * text
+     * Texto que escribe el usuario valorando el evento.
+     */
     text: { type: String, default: "" } 
   },
   {

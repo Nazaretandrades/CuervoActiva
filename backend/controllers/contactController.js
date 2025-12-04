@@ -1,11 +1,13 @@
+// Importamos el modelo Contacto
 const Contact = require("../models/Contact");
 
 // Controlador para guardar mensajes de contacto
 exports.sendContactMessage = async (req, res) => {
   try {
+    // Extrae los campos enviados desde el frontend
     const { name, lastname, email, phone, message, role } = req.body;
 
-    // Campos obligatorios
+    // Comprueba que nombre, email y mensaje están presentes
     if (!name || !email || !message) {
       return res.status(400).json({ error: "Faltan campos obligatorios." });
     }
@@ -23,6 +25,7 @@ exports.sendContactMessage = async (req, res) => {
 
     console.log("📝 Mensaje guardado:", contact);
 
+    // Devuelve una respuesta con un mensaje
     return res.status(200).json({
       success: true,
       message: "Mensaje guardado correctamente.",
