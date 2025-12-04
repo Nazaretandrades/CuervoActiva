@@ -52,20 +52,21 @@ export default function UserFavorites() {
   const pagePaddingHorizontal = isMobileWeb
     ? 20
     : isTabletWeb
-    ? 40
-    : isLaptopWeb
-    ? 55
-    : 80;
+      ? 40
+      : isLaptopWeb
+        ? 55
+        : 80;
 
   const pagePaddingBottom = isLargeWeb ? 80 : 20;
 
-  const favoritesListWidth = isMobileWeb
-  ? 300
-  : isTabletWeb
-  ? 580
-  : isLaptopWeb
-  ? 720
-  : 1000;
+  const favoritesListWidth = isWeb
+    ? (isMobileWeb ? 300
+      : isTabletWeb ? 580
+        : isLaptopWeb ? 720
+          : 1000)
+    : 320; 
+
+
 
 
   /* ================== SESSION + USERNAME ================== */

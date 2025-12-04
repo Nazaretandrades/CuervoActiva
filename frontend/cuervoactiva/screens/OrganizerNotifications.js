@@ -50,22 +50,22 @@ export default function OrganizerNotifications({ navigation }) {
   const pagePaddingHorizontal = isMobileWeb
     ? 20
     : isTabletWeb
-    ? 40
-    : isLaptopWeb
-    ? 55
-    : 80;
+      ? 40
+      : isLaptopWeb
+        ? 55
+        : 80;
 
   /* Paddings verticales para dejar espacio para footer */
   const pagePaddingBottom = isLargeWeb ? 80 : 20;
 
   /* Ancho contenedor notificaciones */
-  const notificationsContainerWidth = isMobileWeb
-    ? "100%"
-    : isTabletWeb
-    ? "95%"
-    : isLaptopWeb
-    ? "85%"
-    : "70%";
+  const notificationsContainerWidth = Platform.OS === "web"
+    ? (isMobileWeb ? "100%"
+      : isTabletWeb ? "95%"
+        : isLaptopWeb ? "85%"
+          : "70%")
+    : "120%"; // ancho único para móvil nativo
+
 
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
@@ -554,8 +554,8 @@ export default function OrganizerNotifications({ navigation }) {
               toast.type === "success"
                 ? "#4BB543"
                 : toast.type === "error"
-                ? "#D9534F"
-                : "#014869",
+                  ? "#D9534F"
+                  : "#014869",
             paddingVertical: 12,
             paddingHorizontal: 25,
             borderRadius: 25,
