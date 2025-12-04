@@ -28,7 +28,7 @@ export default function Intro() {
       <Header
         onLogin={() => handleSeenIntro("Login")}
         onRegister={() => handleSeenIntro("Register")}
-        onHeaderHeight={(h) => setHeaderHeight(h)} // ⬅ ALTURA DEL HEADER
+        onHeaderHeight={(h) => setHeaderHeight(h)}
       />
 
       {/* HERO con altura exacta */}

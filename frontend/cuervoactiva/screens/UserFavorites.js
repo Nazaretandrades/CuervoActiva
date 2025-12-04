@@ -59,13 +59,14 @@ export default function UserFavorites() {
 
   const pagePaddingBottom = isLargeWeb ? 80 : 20;
 
-  const favoritesContainerWidth = isMobileWeb
-    ? "100%"
-    : isTabletWeb
-    ? "95%"
-    : isLaptopWeb
-    ? "85%"
-    : "70%";
+  const favoritesListWidth = isMobileWeb
+  ? 300
+  : isTabletWeb
+  ? 580
+  : isLaptopWeb
+  ? 720
+  : 1000;
+
 
   /* ================== SESSION + USERNAME ================== */
   const getToken = async () => {
@@ -403,7 +404,7 @@ export default function UserFavorites() {
           style={{
             flex: 1,
             maxHeight: isWeb ? "65vh" : 500,
-            width: 300,
+            width: favoritesListWidth
           }}
           contentContainerStyle={{
             alignItems: "center",

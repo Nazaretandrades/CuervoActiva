@@ -203,14 +203,24 @@ export default function AdminEventDetail({ route }) {
 
   const shareWhatsApp = () => {
     if (!event) return;
-    const msg = `¡Mira este evento! ${event.title} - ${event.location}`;
+
+    const msg = `¡Mira este evento!
+Título: ${event.title}
+Lugar: ${event.location}
+Fecha: ${event.date}
+Hora: ${event.hour}`;
+
     const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
     Linking.openURL(url);
   };
 
   const shareTwitter = () => {
     if (!event) return;
-    const msg = `¡Mira este evento! ${event.title} - ${event.location}`;
+
+    const msg = `¡Mira este evento! 
+${event.title} - ${event.location} 
+📅 ${event.date} | ⏰ ${event.hour}`;
+
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       msg
     )}`;
@@ -525,7 +535,7 @@ export default function AdminEventDetail({ route }) {
                 style={{
                   fontWeight: "bold",
                   color: "#014869",
-                  marginBottom: isTabletWeb ? 1 : 0, 
+                  marginBottom: isTabletWeb ? 1 : 0,
                   fontSize: 14,
                 }}
               >
