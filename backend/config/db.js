@@ -1,17 +1,19 @@
+// Importa la librería mongoose, que permite trabajar con MongoDB.
 const mongoose = require('mongoose');
-//Carga las variables de entorno 
+// Carga las variables de entorno (paquete dotenv que se usa para leer el archivo .env)
 const dotenv = require('dotenv');
+// Ejecuta la función config (), que carga esas variables.
 dotenv.config();
 
-//Función asíncrona para conectar mi app a mongodb
+// Función asíncrona para conectar mi app a mongodb
 const connectDB = async () => {
   try {
-    //Con esto se realiza la conexión
+    // Con esto se realiza la conexión
     await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
+      useNewUrlParser: true, // Obliga a usar el nuevo parser del driver de MongoDB
+      useUnifiedTopology: true // Activa el nuevo motor de topología de MongoDB
     });
-    //Si se conecta lanzará este mensaje en la consola sino captará un error y terminará el proceso
+    // Si se conecta lanzará este mensaje en la consola sino captará un error y terminará el proceso
     console.log('MongoDB Atlas conectado correctamente');
   } catch (err) {
     console.error(err.message);

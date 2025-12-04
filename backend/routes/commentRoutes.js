@@ -1,4 +1,6 @@
 const express = require("express");
+
+// Creamos una nueva instancia del router
 const router = express.Router();
 
 const {

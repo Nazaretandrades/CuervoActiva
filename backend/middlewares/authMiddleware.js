@@ -1,17 +1,20 @@
+// Importo la librería para verificar tokens JWT
 const jwt = require("jsonwebtoken");
+// Importo el modelo User
 const User = require("../models/user");
 
 // Middleware de autenticación (verifica el token JWT)
+// Recibe solicitud del usuario, respuesta y continuar al siguiente middleware/controlador.
 const auth = async (req, res, next) => {
+  // Variable donde se guardará el token
   let token;
-
-  // Verifico si el header de autorización está presente y usa el formato "Bearer ..."
+  // Verifico si el header de autorización está presente y usa el formato Bearer 
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
   ) {
     try {
-      // Extraigo el token del header
+      // Extraigo el token del header de la posición 1 
       token = req.headers.authorization.split(" ")[1];
       if (!token) {
         return res.status(401).json({ error: "Token no proporcionado" });
@@ -21,7 +24,7 @@ const auth = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       // Busco al usuario asociado al token
-      const user = await User.findById(decoded.id).select("-password");
+      const user = await User.findById(decoded.id).select("-password"); // Se oculta la contraseña para mayor seguridad
       if (!user) {
         console.error("❌ Usuario no encontrado con ID:", decoded.id);
         return res.status(401).json({ error: "Usuario no encontrado" });

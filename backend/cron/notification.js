@@ -1,10 +1,13 @@
+// Importa la librería node-cron, que sirve para programar tareas repetitivas automáticamente en base a expresiones tipo cron
 const cron = require("node-cron");
-const { DateTime } = require("luxon"); //Manejo de fechas/zonas horarias de forma segura
+// Manejo de fechas/zonas horarias de forma segura
+const { DateTime } = require("luxon");
+// Importo los modelos necesarios
 const Notification = require("../models/notification");
 const Event = require("../models/event");
 const User = require("../models/user");
 
-//Z ona horaria oficial que uso para decidir cuándo es “mañana”
+// Zona horaria oficial que uso para decidir cuándo es “mañana”
 const TZ = "Europe/Madrid";
 
 /* Calcula el intervalo de tiempo que corresponde a “mañana” en la zona horaria de Madrid, y lo devuelve convertido a UTC
@@ -22,20 +25,19 @@ function getTomorrowWindowUTC() {
 
   //Convertimos a UTC (Date) para las consultas en Mongo
   return {
-    startUTC: tomorrowStart.toUTC().toJSDate(),
-    endUTC: tomorrowEnd.toUTC().toJSDate(),
-    dateKey: tomorrowStart.toFormat("yyyy-LL-dd"), 
+    startUTC: tomorrowStart.toUTC().toJSDate(), // Convierte ese DateTime a UTC y luego a un objeto Date nativo de JavaScript
+    endUTC: tomorrowEnd.toUTC().toJSDate(), // lo mismo para el final del día
+    dateKey: tomorrowStart.toFormat("yyyy-LL-dd"),
   };
 }
 
-/* Busca eventos que ocurren “mañana”, localiza usuarios que los tienen en favoritos y les crea una notificación recordatorio (“mañana es el evento…”).*/
+/* Busca eventos que ocurren “mañana”, localiza usuarios que los tienen en favoritos y  crea una notificación recordatorio (“mañana es el evento…”).*/
 async function sendOneDayBeforeReminders() {
   try {
     //1) Calculamos la ventana [inicio, fin] de mañana (en UTC)
     const { startUTC, endUTC, dateKey } = getTomorrowWindowUTC();
 
     //2) Buscamos eventos cuya fecha (date) caiga mañana (día completo)
-    //NOTA: se asume que Event.date está guardado en UTC.
     const events = await Event.find({
       date: { $gte: startUTC, $lte: endUTC },
     })

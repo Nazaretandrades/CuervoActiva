@@ -1,5 +1,8 @@
+// Librería estándar para manejar uploads en Express
 const multer = require("multer");
+// Manejar rutas y extensiones de archivo de manera segura
 const path = require("path");
+// Permite trabajar con el sistema de archivos
 const fs = require("fs");
 
 // Defino la ruta absoluta donde se guardarán los archivos subidos

@@ -1,6 +1,8 @@
+// Importa los modelos necesarios
 const User = require("../models/user");
 const Event = require("../models/event");
 const Notification = require("../models/notification");
+// Función que devuelve una clave de fecha
 const { getDateKey } = require("../utils/dateKey");
 
 // Agregar un evento a los favoritos del usuario
@@ -64,6 +66,7 @@ exports.removeFavorite = async (req, res) => {
     if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
 
     // Elimino el evento de la lista de favoritos (si existe)
+    // .filter() crea una nueva lista excluyendo el eventId
     user.favorites = user.favorites.filter(
       (e) => e.toString() !== req.params.eventId
     );

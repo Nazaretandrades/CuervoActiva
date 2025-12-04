@@ -1,18 +1,24 @@
+// Importaciones de los modelos necesarios
 const Event = require("../models/event");
 const User = require("../models/user");
 const Notification = require("../models/notification");
+// Función que devuelve una clave de fecha
 const { getDateKey } = require("../utils/dateKey");
 
-// Listar todos los eventos (para usuarios normales)
+// Listar todos los eventos (para usuarios normales y administrador)
 exports.listEvents = async (req, res) => {
   try {
+    // Crea un objeto fecha con la fecha actual
     const today = new Date();
+    // Se configuran las horas a 00:00:00 para que el filtro funcione correctamente
     today.setHours(0, 0, 0, 0);
 
+    //Busca todos los eventos cuya fecha sea igual o mayor a hoy
     const events = await Event.find({
       date: { $gte: today },
     });
 
+    // Responde con la lista de eventos
     res.json(events);
   } catch (err) {
     console.error("❌ Error al listar eventos:", err);
@@ -23,17 +29,22 @@ exports.listEvents = async (req, res) => {
 // Listar eventos creados por el organizador autenticado
 exports.listOrganizerEvents = async (req, res) => {
   try {
+    // Verifica el usuario (Solo funciona si el usuario está logueado)
     if (!req.user || !req.user.id)
       return res.status(401).json({ error: "Usuario no autenticado" });
 
+    // Crea un objeto fecha con la fecha actual
     const today = new Date();
+    // Se configuran las horas a 00:00:00 para que el filtro funcione correctamente
     today.setHours(0, 0, 0, 0);
 
+    // Buscar solo eventos creados por el organizador y por date >= today
     const events = await Event.find({
       createdBy: req.user.id,
       date: { $gte: today },
     });
 
+    // Responde con la lista de eventos
     res.json(events);
   } catch (err) {
     console.error("❌ Error en listOrganizerEvents:", err);
@@ -44,9 +55,11 @@ exports.listOrganizerEvents = async (req, res) => {
 // Obtener un evento específico
 exports.getEvent = async (req, res) => {
   try {
+    // Busca un evento por su ID
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
+    // Responde con la lista de eventos
     res.json(event);
   } catch (err) {
     console.error("❌ Error en getEvent:", err);
@@ -57,12 +70,15 @@ exports.getEvent = async (req, res) => {
 // Crear un evento
 exports.createEvent = async (req, res) => {
   try {
+    // Se verifica el rol (Solo organizadores y administradores pueden crear eventos)
     if (!["organizer", "admin"].includes(req.user.role))
       return res.status(403).json({ error: "No autorizado" });
 
+    // Cogen los campos de la url
     let { title, description, date, hour, location, category, image_url } =
       req.body;
 
+      // Verifica si no está vacío cada campo
     if (!title)
       return res.status(400).json({ error: "El título es obligatorio" });
     if (!description)
@@ -77,6 +93,13 @@ exports.createEvent = async (req, res) => {
     if (!image_url)
       return res.status(400).json({ error: "La imagen es obligatoria" });
 
+    // Aquí se formatea la fecha
+    /**
+     * En ambos casos (if y else if) se comprueba primero que date sea un string
+     * Regex de la fecha dd/mm/aaaa
+     * const [dd, mm, yyyy] -> Convierte cada string en número
+     * Se crea un objeto Date real de JavaScript
+     */
     if (typeof date === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
       const [dd, mm, yyyy] = date.split("/").map(Number);
       date = new Date(yyyy, mm - 1, dd, 12, 0, 0);
@@ -85,9 +108,11 @@ exports.createEvent = async (req, res) => {
       date = new Date(y, m - 1, d, 12, 0, 0);
     }
 
+    // Y se valida la fecha final
     if (!(date instanceof Date) || isNaN(date.getTime()))
       return res.status(400).json({ error: "Formato de fecha inválido" });
 
+    // Se guarda el evento con el usuario creador asignado a createdBy
     const event = await Event.create({
       title,
       description,
@@ -130,6 +155,7 @@ exports.createEvent = async (req, res) => {
       await Notification.insertMany(notifs);
     }
 
+    // Devuelve la respuesta
     res.status(201).json(event);
   } catch (err) {
     console.error("❌ Error al crear evento:", err);
@@ -137,14 +163,25 @@ exports.createEvent = async (req, res) => {
   }
 };
 
-// Editar
+// Editar un evento 
 exports.updateEvent = async (req, res) => {
   try {
+    // Busca evento por id 
     const event = await Event.findById(req.params.id);
+    // Comprueba si existe
     if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
+    // Coge la fecha de la url
     let { date } = req.body;
 
+
+    // Aquí se formatea la fecha
+    /**
+     * En ambos casos (if y else if) se comprueba primero que date sea un string
+     * Regex de la fecha dd/mm/aaaa
+     * const [dd, mm, yyyy] -> Convierte cada string en número
+     * Se crea un objeto Date real de JavaScript
+     */
     if (typeof date === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
       const [dd, mm, yyyy] = date.split("/").map(Number);
       date = new Date(yyyy, mm - 1, dd, 12, 0, 0);
@@ -155,9 +192,12 @@ exports.updateEvent = async (req, res) => {
       req.body.date = date;
     }
 
+    // Se aplica los cambios
     Object.assign(event, req.body);
+    // Se guarda el evento, es decir, se actualiza
     const updated = await event.save();
 
+    // Se crea la notificación para el organizador
     await Notification.findOneAndUpdate(
       {
         user: req.user.id,
@@ -175,8 +215,10 @@ exports.updateEvent = async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
+    // Buscamos a los administradores
     const adminUser = await User.findOne({ role: "admin" });
     if (adminUser) {
+      // Si hay admistrador, se creará una notificación
       await Notification.create({
         user: adminUser._id,
         message: `Has editado el evento "${event.title}".`,
@@ -185,6 +227,7 @@ exports.updateEvent = async (req, res) => {
       });
     }
 
+    // Enviar respuesta
     res.json(updated);
   } catch (err) {
     console.error("❌ Error al editar evento:", err);
@@ -192,15 +235,19 @@ exports.updateEvent = async (req, res) => {
   }
 };
 
-// Eliminar
+// Eliminar evento
 exports.deleteEvent = async (req, res) => {
   try {
+    // Busca un evento por su ID
     const event = await Event.findById(req.params.id);
+    // Comprueba que se encuentra ese evento
     if (!event) return res.status(404).json({ error: "Evento no encontrado" });
 
+    // Verificar que el usuario sea admin, para poder eliminar el evento
     if (req.user.role !== "admin")
       return res.status(403).json({ error: "No autorizado" });
 
+    // Se crea la notificación al administrador
     const adminUser = await User.findOne({ role: "admin" });
     if (adminUser) {
       await Notification.create({
@@ -211,8 +258,10 @@ exports.deleteEvent = async (req, res) => {
       });
     }
 
+    // Se borra el evento
     await event.deleteOne();
 
+    // Se envía la respuesta
     res.json({ message: "Evento eliminado correctamente" });
   } catch (err) {
     console.error("❌ Error al eliminar evento:", err);
