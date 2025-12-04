@@ -18,6 +18,14 @@ app.use(express.json());
 // Conectamos con MongoDB
 connectDB();
 
+// Crear el administrador
+const createAdminOnStart = require("./config/createAdminOnStart");
+
+// Esperar a que MongoDB se conecte antes de crear el admin
+setTimeout(() => {
+  createAdminOnStart();
+}, 500);
+
 // Ruta absoluta a "uploads"
 const uploadsPath = path.join(__dirname, "uploads");
 
