@@ -9,6 +9,8 @@ import {
   Animated,
   Platform,
   Alert,
+  Dimensions,
+  TouchableWithoutFeedback,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -32,6 +34,43 @@ export default function User() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [hoveredCategory, setHoveredCategory] = useState(null);
+
+  // NUEVO: estado para el desplegable de categorías en móvil web
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+
+  /* ---------- Responsive web (como Admin / Organizer) ---------- */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const handleResize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+
+  const isMobileWeb = isWeb && winWidth < 768;
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
+  const isLargeWeb = isWeb && winWidth >= 1440;
+
+  const showFooterFixed = isLaptopWeb || isLargeWeb;
+
+  const searchBarWidth = isWeb
+    ? isMobileWeb
+      ? "100%"
+      : isTabletWeb
+      ? 420
+      : 700
+    : "60%";
+
+  // Altura máx. del scroll interno del listado
+  const listMaxHeight = isMobileWeb ? 360 : isTabletWeb ? 400 : 500;
+
+  const showTwoColumns = !isWeb ? true : !isMobileWeb;
 
   const getSessionToken = async () => {
     try {
@@ -198,17 +237,20 @@ export default function User() {
     }
   };
 
+  /* ---------- TOP BAR WEB RESPONSIVE (como Admin / Organizer) ---------- */
   const renderTopBarWeb = () => (
     <View
       style={{
-        flexDirection: "row",
-        alignItems: "center",
+        flexDirection: isMobileWeb ? "column" : "row",
+        alignItems: isMobileWeb ? "flex-start" : "center",
+        gap: isMobileWeb ? 10 : 0,
         paddingHorizontal: 24,
         paddingVertical: 14,
         justifyContent: "space-between",
         backgroundColor: "#fff",
       }}
     >
+      {/* Avatar + nombre */}
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
@@ -235,6 +277,7 @@ export default function User() {
         </View>
       </View>
 
+      {/* Buscador responsive */}
       <View
         style={{
           flexDirection: "row",
@@ -244,9 +287,10 @@ export default function User() {
           borderRadius: 3,
           paddingHorizontal: 10,
           backgroundColor: "#fff",
-          width: 700,
+          width: searchBarWidth,
           height: 36,
-          marginHorizontal: 16,
+          marginHorizontal: isMobileWeb ? 0 : 16,
+          marginTop: isMobileWeb ? 8 : 0,
         }}
       >
         <TextInput
@@ -267,7 +311,14 @@ export default function User() {
         />
       </View>
 
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      {/* Iconos derecha */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginTop: isMobileWeb ? 8 : 0,
+        }}
+      >
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
             source={require("../assets/iconos/bell.png")}
@@ -356,10 +407,24 @@ export default function User() {
     </View>
   );
 
+  /* ---------- MENÚ WEB CON OVERLAY ---------- */
   const renderWebMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
       <>
+        <TouchableWithoutFeedback onPress={toggleMenu}>
+          <View
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              zIndex: 9,
+            }}
+          />
+        </TouchableWithoutFeedback>
+
         <Animated.View
           style={{
             position: "fixed",
@@ -404,6 +469,7 @@ export default function User() {
       </>
     );
 
+  /* ---------- MENÚ MÓVIL ---------- */
   const renderMobileMenu = () =>
     Platform.OS !== "web" &&
     menuVisible && (
@@ -509,6 +575,7 @@ export default function User() {
           ))}
         </View>
 
+        {/* Bottom nav móvil */}
         <View
           style={{
             position: "absolute",
@@ -546,6 +613,18 @@ export default function User() {
       </View>
     );
 
+  const getSelectedCategoryLabel = () => {
+    const cats = [
+      { label: "Todos", value: "all" },
+      { label: "Deporte", value: "deporte" },
+      { label: "Concurso y taller", value: "concurso" },
+      { label: "Cultura e Historia", value: "cultura" },
+      { label: "Arte y Música", value: "arte" },
+    ];
+    const found = cats.find((c) => c.value === selectedCategory);
+    return found ? found.label : "Todos";
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", position: "relative" }}>
       <Header hideAuthButtons />
@@ -553,214 +632,340 @@ export default function User() {
       {renderWebMenu()}
       {renderMobileMenu()}
 
+      {/* WEB RESPONSIVE */}
       {Platform.OS === "web" ? (
-        <View
-          style={{
-            flex: 1,
-            flexDirection: "row",
-            justifyContent: "center",
-            gap: 30,
-            paddingVertical: 40,
-            backgroundColor: "#f4f6f7",
-            minHeight: "calc(100vh - 200px)",
+        <ScrollView
+          style={{ flex: 1, backgroundColor: "#f4f6f7" }}
+          contentContainerStyle={{
+            padding: 16,
+            paddingTop: isMobileWeb
+              ? 20
+              : isLaptopWeb
+              ? 40
+              : isLargeWeb
+              ? 20
+              : 60,
+            paddingBottom: showFooterFixed ? 110 : 40,
           }}
+          showsVerticalScrollIndicator={true}
         >
           <View
             style={{
-              backgroundColor: "#f4f6f7",
-              padding: 20,
-              borderRadius: 10,
-              width: 300,
+              flex: 1,
+              flexDirection: showTwoColumns ? "row" : "column",
+              justifyContent: "space-between",
             }}
           >
-            <Text
+            {/* ---------- CATEGORÍAS IZQUIERDA ---------- */}
+            <View
               style={{
-                fontWeight: "bold",
-                marginBottom: 20,
-                color: "#014869",
-                fontSize: 16,
+                width: showTwoColumns ? (isTabletWeb ? "35%" : "30%") : "100%",
+                paddingRight: showTwoColumns ? 16 : 0,
+                borderRightWidth: showTwoColumns ? 1 : 0,
+                borderRightColor: "#e0e0e0",
+                marginBottom: showTwoColumns ? 0 : 20,
+                marginTop: isLaptopWeb ? -20 : isLargeWeb ? -10 : 0,
               }}
             >
-              Categorías
-            </Text>
-
-            {[
-              { label: "Todos", value: "all", color: "#b0bec5" },
-              {
-                label: "Deporte",
-                value: "deporte",
-                color: "#E67E22",
-                icon: require("../assets/iconos/deporte.png"),
-              },
-              {
-                label: "Concurso y taller",
-                value: "concurso",
-                color: "#F3B23F",
-                icon: require("../assets/iconos/taller.png"),
-              },
-              {
-                label: "Cultura e Historia",
-                value: "cultura",
-                color: "#784BA0",
-                icon: require("../assets/iconos/museo-usuario.png"),
-              },
-              {
-                label: "Arte y Música",
-                value: "arte",
-                color: "#2BBBAD",
-                icon: require("../assets/iconos/arte.png"),
-              },
-            ].map((cat, i) => (
-              <Pressable
-                key={i}
-                onPress={() => setSelectedCategory(cat.value)}
-                onHoverIn={() => setHoveredCategory(cat.value)}
-                onHoverOut={() => setHoveredCategory(null)}
+              <Text
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  backgroundColor:
-                    hoveredCategory === cat.value
-                      ? cat.color + "cc"
-                      : cat.color,
-                  paddingVertical: 12,
-                  paddingHorizontal: 14,
-                  borderRadius: 8,
-                  marginBottom: 15,
-                  transform:
-                    hoveredCategory === cat.value
-                      ? [{ scale: 1.05 }]
-                      : [{ scale: 1 }],
-                  shadowColor:
-                    hoveredCategory === cat.value ? cat.color : "transparent",
-                  shadowOpacity: hoveredCategory === cat.value ? 0.4 : 0,
-                  shadowRadius: hoveredCategory === cat.value ? 8 : 0,
-                  transitionDuration: "200ms",
-                  elevation: hoveredCategory === cat.value ? 4 : 0,
+                  fontWeight: "bold",
+                  marginBottom: 12,
+                  color: "#014869",
+                  fontSize: 16,
                 }}
               >
-                {cat.icon && (
-                  <Image
-                    source={cat.icon}
+                Categorías
+              </Text>
+
+              {/* ---------- DESPLEGABLE SOLO EN MÓVIL WEB ---------- */}
+              {isMobileWeb && (
+                <View style={{ marginBottom: 16 }}>
+                  <Pressable
+                    onPress={() =>
+                      setCategoryDropdownOpen((prevOpen) => !prevOpen)
+                    }
                     style={{
-                      width: 20,
-                      height: 20,
-                      tintColor: "#fff",
-                      marginRight: 10,
+                      borderWidth: 1,
+                      borderColor: "#014869",
+                      borderRadius: 6,
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      backgroundColor: "#fff",
                     }}
-                  />
-                )}
-                <Text
-                  style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}
-                >
-                  {cat.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <View
-            style={{
-              backgroundColor: "#f4f6f7",
-              padding: 20,
-              borderRadius: 10,
-              width: 650,
-              flex: 1,
-            }}
-          >
-            <Text
-              style={{
-                fontWeight: "bold",
-                marginBottom: 20,
-                color: "#014869",
-                fontSize: 16,
-              }}
-            >
-              Listado de eventos
-            </Text>
-
-            <ScrollView
-              style={{ maxHeight: 600 }}
-              showsVerticalScrollIndicator={true}
-            >
-              {filtered.length > 0 ? (
-                filtered.map((ev) => {
-                  const isFav = favorites.includes(ev._id);
-                  const bgColor = isFav ? "#2BBBAD" : "#014869";
-                  const iconColor = isFav ? "#2BBBAD" : "#014869";
-                  return (
+                  >
                     <View
-                      key={ev._id}
                       style={{
                         flexDirection: "row",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        marginBottom: 14,
                       }}
                     >
-                      <Pressable
-                        onPress={() =>
-                          navigation.navigate("UserEventDetail", {
-                            eventId: ev._id,
-                          })
-                        }
+                      <Text
                         style={{
-                          flex: 1,
-                          backgroundColor: bgColor,
-                          paddingVertical: 14,
-                          paddingHorizontal: 18,
-                          borderRadius: 6,
-                          marginRight: 10,
+                          color: "#014869",
+                          fontSize: 14,
+                          fontWeight: "500",
                         }}
                       >
-                        <Text
-                          numberOfLines={1}
+                        {getSelectedCategoryLabel()}
+                      </Text>
+                      <Text
+                        style={{
+                          color: "#014869",
+                          fontSize: 14,
+                          marginLeft: 8,
+                        }}
+                      >
+                        {categoryDropdownOpen ? "▲" : "▼"}
+                      </Text>
+                    </View>
+                  </Pressable>
+
+                  {categoryDropdownOpen && (
+                    <View
+                      style={{
+                        marginTop: 4,
+                        borderWidth: 1,
+                        borderColor: "#014869",
+                        borderRadius: 6,
+                        backgroundColor: "#fff",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {[
+                        { label: "Todos", value: "all" },
+                        { label: "Deporte", value: "deporte" },
+                        { label: "Concurso y taller", value: "concurso" },
+                        { label: "Cultura e Historia", value: "cultura" },
+                        { label: "Arte y Música", value: "arte" },
+                      ].map((opt, idx) => (
+                        <Pressable
+                          key={idx}
+                          onPress={() => {
+                            setSelectedCategory(opt.value);
+                            setCategoryDropdownOpen(false);
+                          }}
                           style={{
-                            color: "#fff",
-                            fontWeight: "600",
-                            fontSize: 15,
+                            paddingVertical: 8,
+                            paddingHorizontal: 12,
+                            backgroundColor:
+                              selectedCategory === opt.value
+                                ? "#e3f2fd"
+                                : "#fff",
+                            borderBottomWidth: idx === 4 ? 0 : 1,
+                            borderBottomColor: "#eee",
                           }}
                         >
-                          {ev.title}
-                        </Text>
-                      </Pressable>
-                      <Pressable
-                        onPress={() => toggleFavorite(ev._id)}
+                          <Text
+                            style={{
+                              color: "#014869",
+                              fontSize: 14,
+                            }}
+                          >
+                            {opt.label}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              )}
+              {/* ---------- TARJETAS DE COLORES (SOLO SI NO ES MÓVIL WEB) ---------- */}
+              {!isMobileWeb &&
+                [
+                  { label: "Todos", value: "all", color: "#b0bec5" },
+                  {
+                    label: "Deporte",
+                    value: "deporte",
+                    color: "#E67E22",
+                    icon: require("../assets/iconos/deporte.png"),
+                  },
+                  {
+                    label: "Concurso y taller",
+                    value: "concurso",
+                    color: "#F3B23F",
+                    icon: require("../assets/iconos/taller.png"),
+                  },
+                  {
+                    label: "Cultura e Historia",
+                    value: "cultura",
+                    color: "#784BA0",
+                    icon: require("../assets/iconos/museo-usuario.png"),
+                  },
+                  {
+                    label: "Arte y Música",
+                    value: "arte",
+                    color: "#2BBBAD",
+                    icon: require("../assets/iconos/arte.png"),
+                  },
+                ].map((cat, i) => (
+                  <Pressable
+                    key={i}
+                    onPress={() => setSelectedCategory(cat.value)}
+                    onHoverIn={() => setHoveredCategory(cat.value)}
+                    onHoverOut={() => setHoveredCategory(null)}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      backgroundColor:
+                        hoveredCategory === cat.value
+                          ? cat.color + "cc"
+                          : cat.color,
+                      paddingVertical: 12,
+                      paddingHorizontal: 14,
+                      borderRadius: 8,
+                      marginBottom: 15,
+                      transform:
+                        hoveredCategory === cat.value
+                          ? [{ scale: 1.05 }]
+                          : [{ scale: 1 }],
+                      shadowColor:
+                        hoveredCategory === cat.value
+                          ? cat.color
+                          : "transparent",
+                      shadowOpacity: hoveredCategory === cat.value ? 0.4 : 0,
+                      shadowRadius: hoveredCategory === cat.value ? 8 : 0,
+                      transitionDuration: "200ms",
+                      elevation: hoveredCategory === cat.value ? 4 : 0,
+                    }}
+                  >
+                    {cat.icon && (
+                      <Image
+                        source={cat.icon}
                         style={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 6,
-                          backgroundColor: iconColor,
+                          width: 20,
+                          height: 20,
+                          tintColor: "#fff",
+                          marginRight: 10,
+                        }}
+                      />
+                    )}
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontWeight: "600",
+                        fontSize: 14,
+                      }}
+                    >
+                      {cat.label}
+                    </Text>
+                  </Pressable>
+                ))}
+            </View>
+
+            {/* ---------- LISTADO DE EVENTOS (DERECHA) ---------- */}
+            <View
+              style={{
+                flex: 1,
+                paddingHorizontal: showTwoColumns ? 16 : 0,
+                marginTop: isLaptopWeb ? -30 : isLargeWeb ? -10 : 0,
+              }}
+            >
+              <Text
+                style={{
+                  fontWeight: "bold",
+                  marginBottom: 20,
+                  color: "#014869",
+                  fontSize: 16,
+                }}
+              >
+                Listado de eventos
+              </Text>
+
+              {/* ---------- SCROLL PROPIO DEL LISTADO ---------- */}
+              <ScrollView
+                style={{
+                  maxHeight: listMaxHeight,
+                }}
+                showsVerticalScrollIndicator={true}
+              >
+                {filtered.length > 0 ? (
+                  filtered.map((ev) => {
+                    const isFav = favorites.includes(ev._id);
+                    const bgColor = isFav ? "#2BBBAD" : "#014869";
+                    const iconColor = isFav ? "#2BBBAD" : "#014869";
+
+                    return (
+                      <View
+                        key={ev._id}
+                        style={{
+                          flexDirection: "row",
                           alignItems: "center",
-                          justifyContent: "center",
+                          justifyContent: "space-between",
+                          marginBottom: 14,
                         }}
                       >
-                        <Image
-                          source={require("../assets/iconos/marcador.png")}
-                          style={{ width: 18, height: 18, tintColor: "#fff" }}
-                        />
-                      </Pressable>
-                    </View>
-                  );
-                })
-              ) : (
-                <Text
-                  style={{
-                    textAlign: "center",
-                    marginTop: 40,
-                    color: "#777",
-                    fontStyle: "italic",
-                  }}
-                >
-                  {search.trim()
-                    ? "🔍 No se encontraron eventos."
-                    : "📭 No hay eventos disponibles."}
-                </Text>
-              )}
-            </ScrollView>
+                        <Pressable
+                          onPress={() =>
+                            navigation.navigate("UserEventDetail", {
+                              eventId: ev._id,
+                            })
+                          }
+                          style={{
+                            flex: 1,
+                            backgroundColor: bgColor,
+                            paddingVertical: 14,
+                            paddingHorizontal: 18,
+                            borderRadius: 6,
+                            marginRight: 10,
+                          }}
+                        >
+                          <Text
+                            numberOfLines={1}
+                            style={{
+                              color: "#fff",
+                              fontWeight: "600",
+                              fontSize: 15,
+                            }}
+                          >
+                            {ev.title}
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          onPress={() => toggleFavorite(ev._id)}
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 6,
+                            backgroundColor: iconColor,
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Image
+                            source={require("../assets/iconos/marcador.png")}
+                            style={{
+                              width: 18,
+                              height: 18,
+                              tintColor: "#fff",
+                            }}
+                          />
+                        </Pressable>
+                      </View>
+                    );
+                  })
+                ) : (
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      marginTop: 40,
+                      color: "#777",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    {search.trim()
+                      ? "🔍 No se encontraron eventos."
+                      : "📭 No hay eventos disponibles."}
+                  </Text>
+                )}
+              </ScrollView>
+            </View>
           </View>
-        </View>
+        </ScrollView>
       ) : (
+        /* ---------- MÓVIL NATIVO (NO SE TOCA) ---------- */
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
@@ -833,7 +1038,11 @@ export default function User() {
                   />
                 )}
                 <Text
-                  style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}
+                  style={{
+                    color: "#fff",
+                    fontWeight: "600",
+                    fontSize: 14,
+                  }}
                 >
                   {cat.label}
                 </Text>
@@ -858,6 +1067,7 @@ export default function User() {
                 const isFav = favorites.includes(ev._id);
                 const bgColor = isFav ? "#2BBBAD" : "#014869";
                 const iconColor = isFav ? "#2BBBAD" : "#014869";
+
                 return (
                   <View
                     key={ev._id}
@@ -908,7 +1118,11 @@ export default function User() {
                     >
                       <Image
                         source={require("../assets/iconos/marcador.png")}
-                        style={{ width: 18, height: 18, tintColor: "#fff" }}
+                        style={{
+                          width: 18,
+                          height: 18,
+                          tintColor: "#fff",
+                        }}
                       />
                     </Pressable>
                   </View>
@@ -933,7 +1147,8 @@ export default function User() {
         </ScrollView>
       )}
 
-      {Platform.OS === "web" && (
+      {/* ---------- FOOTER WEB FIJO EN LAPTOP/DESKTOP ---------- */}
+      {Platform.OS === "web" && showFooterFixed && (
         <View
           style={{
             position: "fixed",

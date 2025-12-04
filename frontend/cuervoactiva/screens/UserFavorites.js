@@ -393,7 +393,7 @@ export default function UserFavorites() {
             color: "#014869",
             marginBottom: 20,
             textAlign: "center",
-            width: favoritesContainerWidth,
+            width: 200,
           }}
         >
           Favoritos
@@ -403,7 +403,7 @@ export default function UserFavorites() {
           style={{
             flex: 1,
             maxHeight: isWeb ? "65vh" : 500,
-            width: favoritesContainerWidth,
+            width: 300,
           }}
           contentContainerStyle={{
             alignItems: "center",
