@@ -8,6 +8,7 @@ import {
   Animated,
   TouchableWithoutFeedback,
   Image,
+  Dimensions,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
@@ -25,6 +26,46 @@ export default function OrganizerNotifications({ navigation }) {
     message: "",
     type: "info",
   });
+
+  /* ======== RESPONSIVE BREAKPOINTS ======== */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const resize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+  const isMobileWeb = isWeb && winWidth < 768;
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
+  const isDesktopWeb = isWeb && winWidth >= 1440;
+  const isLargeWeb = isLaptopWeb || isDesktopWeb;
+
+  /* Paddings laterales */
+  const pagePaddingHorizontal = isMobileWeb
+    ? 20
+    : isTabletWeb
+    ? 40
+    : isLaptopWeb
+    ? 55
+    : 80;
+
+  /* Paddings verticales para dejar espacio para footer */
+  const pagePaddingBottom = isLargeWeb ? 80 : 20;
+
+  /* Ancho contenedor notificaciones */
+  const notificationsContainerWidth = isMobileWeb
+    ? "100%"
+    : isTabletWeb
+    ? "95%"
+    : isLaptopWeb
+    ? "85%"
+    : "70%";
 
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
@@ -262,14 +303,16 @@ export default function OrganizerNotifications({ navigation }) {
         </>
       )}
 
+      {/* CONTENIDO RESPONSIVE */}
       <View
         style={{
           flex: 1,
-          paddingHorizontal: 24,
+          paddingHorizontal: pagePaddingHorizontal,
           paddingTop: 10,
-          paddingBottom: 0,
+          paddingBottom: pagePaddingBottom,
           backgroundColor: "#f5f6f7",
           overflow: "hidden",
+          alignItems: "center",
         }}
       >
         <Text
@@ -279,6 +322,7 @@ export default function OrganizerNotifications({ navigation }) {
             color: "#014869",
             marginBottom: 20,
             textAlign: "center",
+            width: notificationsContainerWidth,
           }}
         >
           Notificaciones
@@ -288,6 +332,7 @@ export default function OrganizerNotifications({ navigation }) {
           style={{
             flex: 1,
             maxHeight: Platform.OS === "web" ? "65vh" : 500,
+            width: notificationsContainerWidth,
           }}
           contentContainerStyle={{
             alignItems: "center",
@@ -307,7 +352,8 @@ export default function OrganizerNotifications({ navigation }) {
                   borderRadius: 25,
                   marginBottom: 12,
                   alignItems: "center",
-                  width: "80%",
+                  width: Platform.OS === "web" ? "100%" : "100%",
+                  alignSelf: "center",
                   cursor: "pointer",
                   shadowColor: "#000",
                   shadowOpacity: 0.2,
@@ -479,7 +525,7 @@ export default function OrganizerNotifications({ navigation }) {
         </View>
       )}
 
-      {Platform.OS === "web" && (
+      {isWeb && isLargeWeb && (
         <View
           style={{
             position: "fixed",

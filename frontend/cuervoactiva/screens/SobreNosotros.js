@@ -10,6 +10,7 @@ import {
   Pressable,
   StyleSheet,
   ImageBackground,
+  useWindowDimensions,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -22,6 +23,16 @@ export default function SobreNosotros({ navigation }) {
   const [userName, setUserName] = useState("Usuario");
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
+
+  // 🔹 Breakpoints / dimensiones (igual estilo que en Condiciones)
+  const { width, height } = useWindowDimensions();
+  const isMobile = width < 600;
+  const isTablet = width >= 600 && width < 900;
+  const isLaptop = width >= 900 && width < 1400;
+  const isDesktop = width >= 1400;
+
+  const dynamicPadding = isMobile ? 14 : isTablet ? 18 : 24;
+  const cardMinHeight = isMobile ? 260 : isTablet ? 320 : 350;
 
   useEffect(() => {
     const loadSession = async () => {
@@ -73,18 +84,20 @@ export default function SobreNosotros({ navigation }) {
       setMenuVisible(!menuVisible);
       return;
     }
+
+    // 🔥 FIX WEB: useNativeDriver debe ser false
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }).start(() => setMenuVisible(false));
     } else {
       setMenuVisible(true);
       Animated.timing(menuAnim, {
         toValue: 0,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }).start();
     }
   };
@@ -194,8 +207,16 @@ export default function SobreNosotros({ navigation }) {
             <Image
               source={
                 menuVisible
-                  ? require("../assets/iconos/close-organizador.png")
-                  : require("../assets/iconos/menu-organizador.png")
+                  ? role === "admin"
+                    ? require("../assets/iconos/close-admin.png")
+                    : role === "organizer"
+                    ? require("../assets/iconos/close-organizador.png")
+                    : require("../assets/iconos/close.png")
+                  : role === "admin"
+                  ? require("../assets/iconos/menu-admin.png")
+                  : role === "organizer"
+                  ? require("../assets/iconos/menu-organizador.png")
+                  : require("../assets/iconos/menu-usuario.png")
               }
               style={{ width: 24, height: 24, tintColor: tint }}
             />
@@ -236,6 +257,7 @@ export default function SobreNosotros({ navigation }) {
         <TouchableWithoutFeedback onPress={toggleMenu}>
           <View style={styles.overlay} />
         </TouchableWithoutFeedback>
+
         <Animated.View
           style={[styles.sideMenu, { transform: [{ translateX: menuAnim }] }]}
         >
@@ -278,34 +300,41 @@ Cuervo Activa busca modernizar la comunicación entre la administración y la ci
           <UserMenu onClose={toggleMenu} />
         ))}
 
+      {/* 🔥 AJUSTE DE BACKGROUND SUBIDO EN LAPTOP Y ESCRITORIO */}
       <ImageBackground
         source={require("../assets/logo.png")}
         resizeMode="contain"
         imageStyle={{
-          opacity: 0.12,
+          opacity: 0.3,
           position: "absolute",
           width: "100%",
           height: "100%",
         }}
-        style={{ flex: 1 }}
+        style={{
+          flex: 1,
+          marginTop: isLaptop ? -40 : isDesktop ? -60 : 0,
+          zIndex: 0, // <-- AÑADIR
+          position: "relative", // <-- AÑADIR
+        }}
       >
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{
-            padding: 24,
+            padding: dynamicPadding,
             alignItems: "center",
             flexGrow: 1,
-            paddingBottom: 120,
-            marginTop: 60,
+
+            marginTop: isTablet ? 20 : isMobile ? 30 : 60,
+            paddingBottom: isMobile ? 30 : isTablet ? 220 : 160,
           }}
         >
           <Text
             style={{
-              fontSize: 22,
+              fontSize: isMobile ? 20 : 22,
               fontWeight: "bold",
               color: "#014869",
               textAlign: "center",
-              marginBottom: 30,
+              marginBottom: isMobile ? 20 : 24,
             }}
           >
             Sobre Nosotros
@@ -313,31 +342,45 @@ Cuervo Activa busca modernizar la comunicación entre la administración y la ci
 
           <View
             style={{
-              backgroundColor: "#fff",
+              backgroundColor: "#fcfcfcff",
               borderRadius: 16,
-              padding: 20,
+              padding: isMobile ? 16 : 20,
+              width: "100%",
               maxWidth: 900,
+              minHeight: cardMinHeight,
+              maxHeight: isMobile
+                ? height * 0.65
+                : isTablet
+                ? height * 0.6
+                : "none",
               shadowColor: "#000",
               shadowOpacity: 0.1,
               shadowRadius: 5,
               elevation: 3,
+              overflow: "hidden",
             }}
           >
-            <Text
-              style={{
-                color: "#333",
-                lineHeight: 22,
-                textAlign: "justify",
-                fontSize: 14,
-              }}
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ paddingBottom: 10 }}
+              showsVerticalScrollIndicator={false}
             >
-              {content}
-            </Text>
+              <Text
+                style={{
+                  color: "#333",
+                  lineHeight: isMobile ? 20 : 22,
+                  textAlign: "justify",
+                  fontSize: isMobile ? 13 : 14,
+                }}
+              >
+                {content}
+              </Text>
+            </ScrollView>
           </View>
         </ScrollView>
       </ImageBackground>
 
-      {Platform.OS === "web" && (
+      {Platform.OS === "web" && width >= 1024 && (
         <View
           style={{
             position: "fixed",
@@ -367,7 +410,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     justifyContent: "space-between",
     backgroundColor: "#fff",
+
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1,
   },
+
   sideMenu: {
     position: "absolute",
     top: 0,

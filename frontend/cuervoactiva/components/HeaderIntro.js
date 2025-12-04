@@ -15,39 +15,33 @@ import { useNavigation } from "@react-navigation/native";
 export default function Header({
   onLogin,
   onRegister,
-  hideAuthButtons = false, 
+  hideAuthButtons = false,
+  onHeaderHeight,
 }) {
-  const navigation = useNavigation(); 
-  const { width } = useWindowDimensions(); 
-  const isMobile = width < 768; 
+  const navigation = useNavigation();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
 
   const [roleColor, setRoleColor] = useState("#02486b");
-  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     const loadRole = async () => {
-      try {
-        let session;
+      let session;
 
-        if (Platform.OS === "web") {
-          session = JSON.parse(localStorage.getItem("USER_SESSION"));
-        } 
-        else {
-          const sessionString = await AsyncStorage.getItem("USER_SESSION");
-          session = sessionString ? JSON.parse(sessionString) : null;
-        }
-
-        const role =
-          session?.user?.role || session?.role || session?.userType || "user";
-        setUserRole(role);
-
-        if (role === "admin") setRoleColor("#0094A2"); 
-        else if (role === "organizer" || role === "organizador")
-          setRoleColor("#F3B23F"); 
-        else setRoleColor("#02486b"); 
-      } catch (err) {
-        console.error("Error detectando rol:", err);
+      if (Platform.OS === "web")
+        session = JSON.parse(localStorage.getItem("USER_SESSION"));
+      else {
+        const s = await AsyncStorage.getItem("USER_SESSION");
+        session = s ? JSON.parse(s) : null;
       }
+
+      const role =
+        session?.user?.role || session?.role || session?.userType || "user";
+
+      if (role === "admin") setRoleColor("#0094A2");
+      else if (role === "organizer" || role === "organizador")
+        setRoleColor("#F3B23F");
+      else setRoleColor("#02486b");
     };
 
     loadRole();
@@ -56,6 +50,7 @@ export default function Header({
   const handleLogoPress = async () => {
     try {
       let session;
+
       if (Platform.OS === "web") {
         session = JSON.parse(localStorage.getItem("USER_SESSION"));
       } else {
@@ -75,7 +70,7 @@ export default function Header({
       else if (role === "organizer" || role === "organizador")
         navigation.navigate("Organizer");
       else navigation.navigate("User");
-    } catch {
+    } catch (error) {
       navigation.navigate("Intro");
     }
   };
@@ -93,7 +88,6 @@ export default function Header({
     logoContainer: {
       width: isMobile ? 38 : 50,
       height: isMobile ? 38 : 50,
-      marginRight: isMobile ? 6 : 10,
       borderRadius: 10,
       overflow: "hidden",
       backgroundColor: "#fff",
@@ -114,25 +108,19 @@ export default function Header({
       paddingVertical: isMobile ? 5 : 8,
       paddingHorizontal: isMobile ? 10 : 14,
       borderRadius: 6,
-      marginRight: isMobile ? 8 : 12,
-      shadowColor: "#000",
-      shadowOpacity: 0.15,
-      shadowRadius: 3,
-      elevation: 3,
+      marginLeft: 10,
     },
     buttonText: {
       color: "#fff",
       fontSize: isMobile ? 12 : 14,
-      fontWeight: "600",
-    },
-    separatorRole: {
-      height: 5,
-      backgroundColor: roleColor,
-      width: "100%",
+      fontWeight: "bold",
     },
   };
 
-  if (Platform.OS === "android" || Platform.OS === "ios") {
+  // ---------------------
+  //     ANDROID / iOS
+  // ---------------------
+  if (Platform.OS === "android") {
     return (
       <View style={{ backgroundColor: "#fff" }}>
         <SafeAreaView
@@ -141,18 +129,36 @@ export default function Header({
             paddingTop:
               Platform.OS === "android" ? StatusBar.currentHeight || 15 : 0,
             borderBottomColor: roleColor,
-            borderBottomWidth: 5, 
+            borderBottomWidth: 5,
           }}
         >
-          <View style={styles.container}>
+          <View
+            style={{
+              backgroundColor: "#02486b",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingHorizontal: 14,
+              paddingVertical: 12,
+              width: "100%",
+            }}
+          >
             <Pressable
               onPress={handleLogoPress}
               style={{ flexDirection: "row", alignItems: "center" }}
             >
-              <View style={styles.logoContainer}>
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  overflow: "hidden",
+                  backgroundColor: "#fff",
+                }}
+              >
                 <Image
                   source={require("../assets/logo.png")}
-                  style={styles.logo}
+                  style={{ width: "100%", height: "100%" }}
                 />
               </View>
             </Pressable>
@@ -161,58 +167,79 @@ export default function Header({
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Pressable
                   onPress={onLogin}
-                  android_ripple={{ color: "rgba(255,255,255,0.2)" }}
-                  style={({ pressed }) => [
-                    styles.button,
-                    pressed && { backgroundColor: "#d99b30" },
-                  ]}
+                  style={{
+                    backgroundColor: "#F3B23F",
+                    paddingVertical: 5,
+                    paddingHorizontal: 10,
+                    borderRadius: 6,
+                    marginRight: 8,
+                  }}
                 >
-                  <Text style={styles.buttonText}>Iniciar Sesión</Text>
+                  <Text
+                    style={{ color: "#fff", fontSize: 12, fontWeight: "600" }}
+                  >
+                    Iniciar Sesión
+                  </Text>
                 </Pressable>
 
                 <Pressable
                   onPress={onRegister}
-                  android_ripple={{ color: "rgba(255,255,255,0.2)" }}
-                  style={({ pressed }) => [
-                    styles.button,
-                    pressed && { backgroundColor: "#d99b30" },
-                  ]}
+                  style={{
+                    backgroundColor: "#F3B23F",
+                    paddingVertical: 5,
+                    paddingHorizontal: 10,
+                    borderRadius: 6,
+                  }}
                 >
-                  <Text style={styles.buttonText}>Registrarse</Text>
+                  <Text
+                    style={{ color: "#fff", fontSize: 12, fontWeight: "600" }}
+                  >
+                    Registrarse
+                  </Text>
                 </Pressable>
               </View>
             )}
           </View>
         </SafeAreaView>
-
-        <View style={styles.separatorWhite} />
       </View>
     );
   }
 
+  // ---------------------
+  //         WEB
+  // ---------------------
   return (
     <>
-      <View style={styles.container}>
-        <Pressable
-          onPress={handleLogoPress}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            cursor: "pointer",
-          }}
-        >
+      <View
+        style={styles.container}
+        onLayout={(e) => onHeaderHeight?.(e.nativeEvent.layout.height)}
+      >
+        <Pressable onPress={handleLogoPress} style={{ flexDirection: "row", alignItems: "center" }}>
           <View style={styles.logoContainer}>
             <Image source={require("../assets/logo.png")} style={styles.logo} />
           </View>
-          <Text style={styles.title}>CUERVO ACTIVA</Text>
+
+          {/* TITULO CON MARGEN RESPONSIVE */}
+          {!isMobile && (
+            <Text
+              style={[
+                styles.title,
+                {
+                  marginLeft:
+                    width < 600 ? 8 : width < 1024 ? 12 : 18,
+                },
+              ]}
+            >
+              CUERVO ACTIVA
+            </Text>
+          )}
         </Pressable>
 
         {!hideAuthButtons && (
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={{ flexDirection: "row" }}>
             <Pressable onPress={onLogin} style={styles.button}>
               <Text style={styles.buttonText}>Iniciar Sesión</Text>
             </Pressable>
-
             <Pressable onPress={onRegister} style={styles.button}>
               <Text style={styles.buttonText}>Registrarse</Text>
             </Pressable>
@@ -220,8 +247,7 @@ export default function Header({
         )}
       </View>
 
-      <View style={styles.separatorWhite} />
-      <View style={styles.separatorRole} />
+      <View style={{ height: 5, backgroundColor: roleColor }} />
     </>
   );
 }

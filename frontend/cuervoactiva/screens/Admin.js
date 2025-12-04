@@ -1,3 +1,5 @@
+// ===== ADMIN.JS — COMPLETO Y RESPONSIVE (con formulario en modal en móvil web) =====
+
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -10,7 +12,9 @@ import {
   Platform,
   Image,
   Modal,
+  Dimensions,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -20,7 +24,7 @@ import { useNavigation } from "@react-navigation/native";
 const API_URL =
   Platform.OS === "android"
     ? "http://10.0.2.2:5000/api/events"
-    : "http://localhost:5000/api/events"; 
+    : "http://localhost:5000/api/events";
 
 export default function Admin() {
   const [events, setEvents] = useState([]);
@@ -52,6 +56,46 @@ export default function Admin() {
     type: "info",
   });
 
+  const navigation = useNavigation();
+  const [hoveredId, setHoveredId] = useState(null);
+  const bottomSafeArea = Platform.OS === "web" ? 110 : 0;
+
+  /* ---------- Responsive web ---------- */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const handleResize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+
+  // Breakpoints web
+  const isMobileWeb = isWeb && winWidth < 768; // ⭐ SOLO aquí modal
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
+  const isLargeWeb = isWeb && winWidth >= 1440;
+
+  // Footer fijo solo en laptop/desktop
+  const showFooterFixed = isLaptopWeb || isLargeWeb;
+
+  // Anchos / alturas responsive
+  const searchBarWidth = isWeb
+    ? isMobileWeb
+      ? "100%"
+      : isTabletWeb
+      ? 420
+      : 700
+    : "60%";
+
+  const listMaxHeight = isMobileWeb ? 260 : isTabletWeb ? 400 : 500;
+
+  const showTwoColumns = !isWeb ? true : !isMobileWeb;
+
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
     setTimeout(
@@ -60,8 +104,7 @@ export default function Admin() {
     );
   };
 
-  const navigation = useNavigation();
-
+  // Cargar eventos
   useEffect(() => {
     const loadData = async () => {
       const session = await getSession();
@@ -87,6 +130,7 @@ export default function Admin() {
     loadData();
   }, []);
 
+  // Filtro por búsqueda
   useEffect(() => {
     if (!search.trim()) setFiltered(events);
     else {
@@ -102,22 +146,10 @@ export default function Admin() {
     }
   }, [search, events]);
 
-  const handleEdit = (ev) => {
-    setForm({
-      _id: ev._id,
-      title: ev.title,
-      description: ev.description,
-      date: ev.date || "",
-      hour: ev.hour || "",
-      location: ev.location,
-      category: ev.category,
-      image_url: ev.image_url || "",
-    });
-    setEditing(true);
-  };
+  // Modal del formulario SOLO en móvil web
+  const [formModalVisible, setFormModalVisible] = useState(false);
 
-  const handleCancel = () => {
-    setEditing(false);
+  const resetForm = () => {
     setForm({
       _id: null,
       title: "",
@@ -130,17 +162,120 @@ export default function Admin() {
     });
   };
 
-  const handleSave = async () => {
-    if (!form.title || !form.description || !form.location)
-      return showToast("⚠️ Completa todos los campos requeridos.", "warning");
+  const openCreateModal = () => {
+    setEditing(false);
+    resetForm();
+    if (isMobileWeb) setFormModalVisible(true);
+  };
+
+  const handleEdit = (ev) => {
+    setForm({
+      _id: ev._id,
+      title: ev.title,
+      description: ev.description,
+      date: ev.date || "",
+      hour: ev.hour || "",
+      location: ev.location,
+      category: ev.category,
+      image_url: ev.image_url || "",
+    });
+    setEditing(true);
+    if (isMobileWeb) setFormModalVisible(true); // ⭐ En móvil se abre modal al editar
+  };
+
+  const handleCancel = () => {
+    setEditing(false);
+    resetForm();
+    if (isMobileWeb) setFormModalVisible(false); // ⭐ En móvil cerramos modal
+  };
+
+  // Subir imagen
+  const pickImage = async () => {
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permission.status !== "granted") {
+        showToast("⚠️ Se necesita acceso a tus fotos", "warning");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        const uri = result.assets[0].uri;
+        const session = await getSession();
+        const token = session?.token;
+        if (!token) {
+          showToast("❌ Sesión no encontrada", "error");
+          return;
+        }
+
+        const formData = new FormData();
+        if (Platform.OS === "web") {
+          const blob = await (await fetch(uri)).blob();
+          formData.append("image", blob, "imagen.jpg");
+        } else {
+          formData.append("image", {
+            uri,
+            type: "image/jpeg",
+            name: "imagen.jpg",
+          });
+        }
+
+        const res = await fetch(`${API_URL}/upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+
+        if (!res.ok) throw new Error("Error al subir la imagen");
+        const data = await res.json();
+        setForm((prev) => ({ ...prev, image_url: data.image_url }));
+        showToast("🖼️ Imagen subida correctamente", "success");
+      }
+    } catch (err) {
+      console.error("❌ Error al subir imagen:", err);
+      showToast("❌ Error al subir la imagen", "error");
+    }
+  };
+
+  // Crear / editar
+  const handleSubmit = async () => {
+    if (!form.title.trim())
+      return showToast("El título es obligatorio", "warning");
+    if (!form.description.trim())
+      return showToast("La descripción es obligatoria", "warning");
+    if (!form.date.trim())
+      return showToast("La fecha es obligatoria", "warning");
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(form.date))
+      return showToast("Fecha debe ser DD/MM/YYYY", "warning");
+    if (!form.hour.trim())
+      return showToast("La hora es obligatoria", "warning");
+    if (!/^\d{2}:\d{2}$/.test(form.hour))
+      return showToast("Hora debe ser HH:MM", "warning");
+    if (!form.location.trim())
+      return showToast("La ubicación es obligatoria", "warning");
+    if (!form.category.trim())
+      return showToast("La categoría es obligatoria", "warning");
+    if (!form.image_url.trim())
+      return showToast("Debes añadir una imagen", "warning");
 
     setLoading(true);
     try {
       const session = await getSession();
       const token = session?.token;
+      if (!token) return showToast("❌ Sesión no encontrada", "error");
 
-      const res = await fetch(`${API_URL}/${form._id}`, {
-        method: "PUT",
+      const method = form._id ? "PUT" : "POST";
+      const url = form._id ? `${API_URL}/${form._id}` : API_URL;
+
+      const res = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -148,17 +283,32 @@ export default function Admin() {
         body: JSON.stringify(form),
       });
 
-      if (!res.ok) throw new Error("Error al guardar el evento");
+      if (!res.ok) throw new Error("Error al guardar evento");
       const data = await res.json();
 
-      setEvents((prev) => prev.map((e) => (e._id === data._id ? data : e)));
-      setFiltered((prev) => prev.map((e) => (e._id === data._id ? data : e)));
+      setEvents((prev) =>
+        form._id
+          ? prev.map((e) => (e._id === data._id ? data : e))
+          : [...prev, data]
+      );
 
-      showToast("✅ Evento actualizado correctamente.", "success");
-      handleCancel();
+      setFiltered((prev) =>
+        form._id
+          ? prev.map((e) => (e._id === data._id ? data : e))
+          : [...prev, data]
+      );
+
+      showToast(
+        form._id ? "✏️ Cambios guardados" : "🎉 Evento creado",
+        "success"
+      );
+
+      resetForm();
+      setEditing(false);
+      if (isMobileWeb) setFormModalVisible(false); // ⭐ cerrar modal en móvil
     } catch (err) {
       console.error(err);
-      showToast("❌ Error al guardar los cambios.", "error");
+      showToast("❌ No se pudo guardar", "error");
     } finally {
       setLoading(false);
     }
@@ -176,6 +326,7 @@ export default function Admin() {
     try {
       const session = await getSession();
       const token = session?.token;
+
       const res = await fetch(`${API_URL}/${eventToDelete}`, {
         method: "DELETE",
         headers: {
@@ -184,14 +335,15 @@ export default function Admin() {
         },
       });
 
-      if (!res.ok) throw new Error("Error al eliminar evento");
+      if (!res.ok) throw new Error("Error al eliminar");
+
       setEvents((prev) => prev.filter((e) => e._id !== eventToDelete));
       setFiltered((prev) => prev.filter((e) => e._id !== eventToDelete));
 
-      showToast("✅ Evento eliminado correctamente.", "success");
+      showToast("✅ Evento eliminado", "success");
     } catch (err) {
       console.error(err);
-      showToast("❌ No se pudo eliminar el evento.", "error");
+      showToast("❌ No se pudo eliminar", "error");
     } finally {
       setEventToDelete(null);
     }
@@ -223,23 +375,322 @@ export default function Admin() {
     }
   };
 
-  const [hoveredId, setHoveredId] = useState(null);
-  const bottomSafeArea = Platform.OS === "web" ? 110 : 0;
+  // === CONTENIDO DEL FORMULARIO REUTILIZABLE (desktop + modal móvil) ===
+  const renderFormContent = () => (
+    <>
+      <Text
+        style={{
+          fontWeight: "bold",
+          marginBottom: 14,
+          fontSize: 18,
+          color: "#02486b",
+          textAlign: "left",
+        }}
+      ></Text>
+
+      {/* CAMPOS SUPERIORES */}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+        <View style={{ flex: 1, minWidth: showTwoColumns ? "45%" : "100%" }}>
+          <Text
+            style={{
+              fontWeight: "600",
+              marginBottom: 4,
+              color: "#014869",
+            }}
+          >
+            Título:
+          </Text>
+          <TextInput
+            value={form.title}
+            onChangeText={(t) => setForm({ ...form, title: t })}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              height: 36,
+              paddingHorizontal: 10,
+              marginBottom: 10,
+            }}
+          />
+
+          <Text
+            style={{
+              fontWeight: "600",
+              marginBottom: 4,
+              color: "#014869",
+            }}
+          >
+            Fecha (DD/MM/YYYY):
+          </Text>
+          <TextInput
+            value={form.date}
+            onChangeText={(t) => setForm({ ...form, date: t })}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              height: 36,
+              paddingHorizontal: 10,
+              marginBottom: 10,
+            }}
+          />
+
+          <Text
+            style={{
+              fontWeight: "600",
+              marginBottom: 4,
+              color: "#014869",
+            }}
+          >
+            Hora (HH:MM):
+          </Text>
+          <TextInput
+            value={form.hour}
+            onChangeText={(t) => setForm({ ...form, hour: t })}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              height: 36,
+              paddingHorizontal: 10,
+              marginBottom: 10,
+            }}
+          />
+        </View>
+
+        {/* DESCRIPCIÓN + LUGAR */}
+        <View style={{ flex: 1, minWidth: showTwoColumns ? "45%" : "100%" }}>
+          <Text
+            style={{
+              fontWeight: "600",
+              marginBottom: 4,
+              color: "#014869",
+            }}
+          >
+            Descripción:
+          </Text>
+          <TextInput
+            value={form.description}
+            onChangeText={(t) => setForm({ ...form, description: t })}
+            multiline
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              height: 80,
+              padding: 10,
+              marginBottom: 10,
+              textAlignVertical: "top",
+            }}
+          />
+
+          <Text
+            style={{
+              fontWeight: "600",
+              marginBottom: 4,
+              color: "#014869",
+            }}
+          >
+            Lugar:
+          </Text>
+          <TextInput
+            value={form.location}
+            onChangeText={(t) => setForm({ ...form, location: t })}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              height: 36,
+              paddingHorizontal: 10,
+              marginBottom: 10,
+            }}
+          />
+        </View>
+      </View>
+
+      {/* CATEGORÍA */}
+      <Text
+        style={{
+          fontWeight: "600",
+          marginBottom: 4,
+          color: "#014869",
+        }}
+      >
+        Categoría:
+      </Text>
+
+      <View style={{ zIndex: 9999 }}>
+        <DropDownPicker
+          open={open}
+          value={form.category}
+          items={[
+            { label: "Deporte", value: "deporte" },
+            { label: "Concurso y Taller", value: "concurso" },
+            { label: "Cultura e Historia", value: "cultura" },
+            { label: "Arte y Música", value: "arte" },
+          ]}
+          setOpen={setOpen}
+          setValue={(cb) =>
+            setForm((prev) => ({ ...prev, category: cb(prev.category) }))
+          }
+          style={{
+            backgroundColor: "#fff",
+            borderColor: "#ddd",
+            borderRadius: 20,
+            height: 40,
+            marginBottom: open ? 200 : 10,
+          }}
+          dropDownContainerStyle={{
+            borderColor: "#ddd",
+            zIndex: 9999,
+            elevation: 20,
+          }}
+        />
+      </View>
+
+      {/* IMAGEN */}
+      <Text
+        style={{
+          fontWeight: "600",
+          color: "#014869",
+        }}
+      >
+        Imagen del evento:
+      </Text>
+
+      <View
+        style={{
+          borderWidth: 1,
+          borderColor: "#ddd",
+          borderRadius: 20,
+          backgroundColor: "#fff",
+          height: 120,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingTop: 8,
+          marginBottom: 20,
+        }}
+      >
+        {form.image_url ? (
+          <Image
+            source={{ uri: form.image_url }}
+            style={{
+              width: 90,
+              height: 90,
+              borderRadius: 10,
+            }}
+          />
+        ) : (
+          <Text style={{ color: "#666" }}>Sin imagen seleccionada</Text>
+        )}
+
+        <Pressable onPress={pickImage}>
+          <Text style={{ color: "#014869", fontSize: 13 }}>
+            🖼️ Añadir imagen
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* BOTONES */}
+      <View
+        style={{
+          alignItems: "center",
+          flexDirection: "row",
+          justifyContent: "center",
+          gap: 12,
+          flexWrap: "wrap",
+          marginTop: isTabletWeb
+            ? -10
+            : isLaptopWeb
+            ? -10
+            : isLargeWeb
+            ? -5
+            : 10,
+        }}
+      >
+        {editing && (
+          <Pressable
+            onPress={handleCancel}
+            disabled={!!loading}
+            style={{
+              backgroundColor: "#ccc",
+              borderRadius: 25,
+              paddingVertical: 12,
+              paddingHorizontal: 24,
+              shadowColor: "#000",
+              shadowOpacity: 0.2,
+              shadowRadius: 3,
+              elevation: 3,
+            }}
+          >
+            <Text
+              style={{
+                color: "#333",
+                fontWeight: "600",
+                fontSize: 14,
+                paddingVertical: 2,
+                paddingHorizontal: 2,
+              }}
+            >
+              Cancelar edición
+            </Text>
+          </Pressable>
+        )}
+
+        <Pressable
+          onPress={handleSubmit}
+          disabled={!!loading}
+          style={{
+            backgroundColor: loading ? "#ccc" : "#F3B23F",
+            borderRadius: 25,
+            paddingVertical: 14,
+            paddingHorizontal: 40,
+            shadowColor: "#000",
+            shadowOpacity: 0.25,
+            shadowRadius: 4,
+            elevation: 5,
+          }}
+        >
+          <Text
+            style={{
+              color: "#fff",
+              fontWeight: "700",
+              fontSize: 16,
+            }}
+          >
+            {loading
+              ? "Guardando..."
+              : form._id
+              ? "Guardar cambios"
+              : "Crear evento"}
+          </Text>
+        </Pressable>
+      </View>
+    </>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
+      {/* TOP BAR ADMIN */}
       <View
         style={{
-          flexDirection: "row",
-          alignItems: "center",
+          flexDirection: isMobileWeb ? "column" : "row",
+          alignItems: isMobileWeb ? "flex-start" : "center",
+          gap: isMobileWeb ? 10 : 0,
           paddingHorizontal: 24,
           paddingVertical: 14,
           justifyContent: "space-between",
           backgroundColor: "#fff",
         }}
       >
+        {/* Avatar + nombre */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View
             style={{
@@ -277,6 +728,7 @@ export default function Admin() {
           </View>
         </View>
 
+        {/* BUSCADOR */}
         <View
           style={{
             flexDirection: "row",
@@ -286,9 +738,10 @@ export default function Admin() {
             borderRadius: 3,
             paddingHorizontal: 10,
             backgroundColor: "#fff",
-            width: 700,
+            width: searchBarWidth,
             height: 36,
-            marginHorizontal: 16,
+            marginHorizontal: isMobileWeb ? 0 : 16,
+            marginTop: isMobileWeb ? 8 : 0,
           }}
         >
           <TextInput
@@ -309,7 +762,14 @@ export default function Admin() {
           />
         </View>
 
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
+        {/* ICONOS DERECHA */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginTop: isMobileWeb ? 8 : 0,
+          }}
+        >
           <Pressable
             onPress={goToNotifications}
             style={{
@@ -352,6 +812,7 @@ export default function Admin() {
         </View>
       </View>
 
+      {/* MENÚ LATERAL WEB */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -410,23 +871,41 @@ export default function Admin() {
         </>
       )}
 
+      {/* CUERPO PRINCIPAL */}
       <View
         style={{
           flex: 1,
           padding: 16,
+          paddingTop: isLaptopWeb ? 40 : isLargeWeb ? 20 : 60,
           backgroundColor: "#f5f6f7",
-          marginTop: 60,
           paddingBottom: bottomSafeArea,
         }}
       >
-        {!editing ? (
-          <>
+        <View
+          style={{
+            flex: 1,
+            flexDirection: showTwoColumns ? "row" : "column",
+            justifyContent: "space-between",
+          }}
+        >
+          {/* LISTADO IZQUIERDA */}
+          <View
+            style={{
+              width: showTwoColumns ? (isTabletWeb ? "35%" : "30%") : "100%",
+              paddingRight: showTwoColumns ? 16 : 0,
+              borderRightWidth: showTwoColumns ? 1 : 0,
+              borderRightColor: "#e0e0e0",
+              marginBottom: showTwoColumns ? 0 : 20,
+              marginTop: isLaptopWeb ? -20 : isLargeWeb ? -10 : 0,
+            }}
+          >
             {filtered.length > 0 && (
               <Text
                 style={{
                   fontWeight: "bold",
                   marginBottom: 12,
                   color: "#02486b",
+                  fontSize: 16,
                 }}
               >
                 Listado de eventos:
@@ -434,7 +913,10 @@ export default function Admin() {
             )}
 
             <ScrollView
-              style={{ maxHeight: 500 }}
+              style={{
+                maxHeight: listMaxHeight,
+                paddingBottom: isLaptopWeb ? 150 : 20,
+              }}
               contentContainerStyle={{
                 flexGrow: 1,
                 justifyContent: filtered.length === 0 ? "center" : "flex-start",
@@ -554,175 +1036,125 @@ export default function Admin() {
                 </Text>
               )}
             </ScrollView>
-          </>
-        ) : (
-          <>
-            <Text
-              style={{
-                fontWeight: "bold",
-                marginBottom: 14,
-                fontSize: 18,
-                color: "#02486b",
-                textAlign: "center",
-              }}
-            >
-              Editar evento
-            </Text>
 
-            <ScrollView
-              style={{
-                backgroundColor: "#fff",
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: "#e2e8f0",
-                shadowColor: "#000",
-                shadowOpacity: 0.05,
-                shadowRadius: 4,
-                elevation: 2,
-              }}
-              contentContainerStyle={{
-                paddingBottom: Platform.OS === "web" ? 150 : 80,
-              }}
-            >
-              {[
-                {
-                  label: "Título",
-                  key: "title",
-                  placeholder: "Ej. Feria de verano",
-                },
-                {
-                  label: "Descripción",
-                  key: "description",
-                  placeholder: "Detalla el evento...",
-                  multiline: true,
-                },
-                {
-                  label: "Fecha (DD/MM/YYYY)",
-                  key: "date",
-                  placeholder: "31/12/2025",
-                },
-                {
-                  label: "Hora (HH:MM)",
-                  key: "hour",
-                  placeholder: "21:00",
-                },
-                {
-                  label: "Lugar",
-                  key: "location",
-                  placeholder: "Plaza Mayor",
-                },
-              ].map((f, i) => (
-                <View key={i} style={{ marginBottom: 12 }}>
-                  <Text
-                    style={{
-                      fontWeight: "600",
-                      color: "#014869",
-                      marginBottom: 6,
-                    }}
-                  >
-                    {f.label}:
-                  </Text>
-                  <TextInput
-                    value={form[f.key]}
-                    onChangeText={(t) => setForm({ ...form, [f.key]: t })}
-                    placeholder={f.placeholder}
-                    placeholderTextColor="#9aa4af"
-                    multiline={f.multiline}
-                    style={{
-                      backgroundColor: "#f9fafb",
-                      borderRadius: 8,
-                      borderWidth: 1,
-                      borderColor: "#cbd5e1",
-                      paddingHorizontal: 12,
-                      paddingVertical: f.multiline ? 10 : 8,
-                      height: f.multiline ? 90 : 40,
-                      textAlignVertical: f.multiline ? "top" : "center",
-                    }}
-                  />
-                </View>
-              ))}
-
-              <Text
-                style={{
-                  fontWeight: "600",
-                  color: "#014869",
-                  marginBottom: 6,
-                }}
-              >
-                Categoría:
-              </Text>
-              <View style={{ zIndex: 5000, marginBottom: 16 }}>
-                <DropDownPicker
-                  open={open}
-                  value={form.category}
-                  items={[
-                    { label: "Deporte", value: "deporte" },
-                    { label: "Concurso y Taller", value: "concurso" },
-                    { label: "Cultura e Historia", value: "cultura" },
-                    { label: "Arte y Música", value: "arte" },
-                  ]}
-                  setOpen={setOpen}
-                  setValue={(callback) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      category: callback(prev.category),
-                    }))
-                  }
-                  style={{
-                    backgroundColor: "#f9fafb",
-                    borderColor: "#cbd5e1",
-                    borderRadius: 8,
-                    height: 44,
-                  }}
-                  dropDownContainerStyle={{
-                    borderColor: "#cbd5e1",
-                  }}
-                />
-              </View>
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  marginTop: 8,
-                  gap: 18,
-                }}
-              >
+            {/* BOTÓN CREAR EVENTO SOLO EN MÓVIL WEB */}
+            {isMobileWeb && (
+              <View style={{ marginTop: 16, alignItems: "center" }}>
                 <Pressable
-                  onPress={handleCancel}
-                  style={{
-                    backgroundColor: "#e5e7eb",
-                    borderRadius: 25,
-                    paddingVertical: 10,
-                    paddingHorizontal: 30,
-                  }}
-                >
-                  <Text style={{ color: "#333", fontWeight: "600" }}>
-                    Cancelar
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={handleSave}
-                  disabled={loading}
+                  onPress={openCreateModal}
                   style={{
                     backgroundColor: "#F3B23F",
                     borderRadius: 25,
                     paddingVertical: 10,
-                    paddingHorizontal: 30,
-                    opacity: loading ? 0.7 : 1,
+                    paddingHorizontal: 24,
+                    shadowColor: "#000",
+                    shadowOpacity: 0.25,
+                    shadowRadius: 4,
+                    elevation: 4,
                   }}
                 >
-                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                    {loading ? "Guardando..." : "Guardar cambios"}
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontWeight: "700",
+                      fontSize: 15,
+                    }}
+                  >
+                    + Crear evento
                   </Text>
                 </Pressable>
               </View>
+            )}
+          </View>
+
+          {/* FORMULARIO DERECHA (EN LAYOUT NORMAL, SOLO NO-MÓVIL WEB) */}
+          {!isMobileWeb && (
+            <ScrollView
+              style={{
+                flex: 1,
+                paddingHorizontal: showTwoColumns ? 16 : 0,
+                marginTop: isLaptopWeb ? -30 : isLargeWeb ? -10 : 0,
+              }}
+              contentContainerStyle={{
+                paddingBottom: isLaptopWeb ? 300 : 200,
+              }}
+            >
+              {renderFormContent()}
             </ScrollView>
-          </>
-        )}
+          )}
+        </View>
       </View>
 
+      {/* MODAL FORMULARIO SOLO MÓVIL WEB */}
+      {isMobileWeb && (
+        <Modal
+          transparent
+          visible={formModalVisible}
+          animationType="slide"
+          onRequestClose={() => {
+            setFormModalVisible(false);
+            setEditing(false);
+            resetForm();
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.4)",
+              justifyContent: "center",
+              alignItems: "center",
+              paddingHorizontal: 16,
+            }}
+          >
+            <View
+              style={{
+                width: "100%",
+                maxHeight: "85%",
+                backgroundColor: "#fff",
+                borderRadius: 16,
+                padding: 16,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 8,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "700",
+                    color: "#02486b",
+                  }}
+                >
+                  {form._id ? "Editar evento" : "Crear evento"}
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    setFormModalVisible(false);
+                    setEditing(false);
+                    resetForm();
+                  }}
+                >
+                  <Text style={{ fontSize: 18, color: "#02486b" }}>✕</Text>
+                </Pressable>
+              </View>
+
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 20 }}
+              >
+                {renderFormContent()}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* MODAL ELIMINAR */}
       <Modal transparent visible={modalVisible} animationType="fade">
         <View
           style={{
@@ -806,11 +1238,15 @@ export default function Admin() {
         </View>
       </Modal>
 
+      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={{
-            position: "absolute",
-            bottom: 80,
+            position: "fixed",
+            bottom: 120,
+            left: "50%",
+            transform: [{ translateX: -150 }],
+            width: 300,
             alignSelf: "center",
             backgroundColor:
               toast.type === "success"
@@ -837,30 +1273,15 @@ export default function Admin() {
         </Animated.View>
       )}
 
-      {Platform.OS === "web" ? (
-        <View
-          style={{
-            position: "fixed",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            width: "100%",
-            zIndex: 20,
-            backgroundColor: "transparent",
-          }}
-        >
+      {/* FOOTER */}
+      {isWeb && showFooterFixed && (
+        <View style={{ position: "fixed", bottom: 0, left: 0, right: 0 }}>
           <Footer
             onAboutPress={goToAboutUs}
             onPrivacyPress={goToPrivacy}
             onConditionsPress={goToConditions}
           />
         </View>
-      ) : (
-        <Footer
-          onAboutPress={goToAboutUs}
-          onPrivacyPress={goToPrivacy}
-          onConditionsPress={goToConditions}
-        />
       )}
     </View>
   );

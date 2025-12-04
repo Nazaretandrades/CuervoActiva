@@ -3,12 +3,14 @@ import {
   View,
   Text,
   Image,
-  Pressable,
   ScrollView,
+  Pressable,
+  Platform,
   Animated,
   TouchableWithoutFeedback,
-  Platform,
+  TextInput,
   StyleSheet,
+  Dimensions,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -30,6 +32,81 @@ export default function AdminUsers() {
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  // Modal eliminar usuario
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
+  // Modales crear / editar usuario
+  const [createVisible, setCreateVisible] = useState(false);
+  const [editVisible, setEditVisible] = useState(false);
+
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "user",
+  });
+
+  const [editUser, setEditUser] = useState({
+    id: "",
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "user",
+  });
+
+  /* ======== RESPONSIVE BREAKPOINTS (como AdminNotifications) ======== */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const resize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+  const isMobileWeb = isWeb && winWidth < 768;
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1000 && winWidth < 1440;
+  const isDesktopWeb = isWeb && winWidth >= 1440;
+  const isLargeWeb = isLaptopWeb || isDesktopWeb;
+
+  // Paddings laterales del scroll principal
+  const pagePaddingHorizontal = isMobileWeb
+    ? 20
+    : isTabletWeb
+    ? 40
+    : isLaptopWeb
+    ? 55
+    : 80;
+
+  // Padding inferior para dejar aire al footer + toast
+  const pagePaddingBottom = isMobileWeb ? 180 : isLargeWeb ? 10 : 40;
+
+  // Ancho responsive del bloque (título + lista usuarios)
+  const mainContainerWidthStyle = isMobileWeb
+    ? { width: "100%", maxWidth: "100%" }
+    : isTabletWeb
+    ? { width: "95%", maxWidth: 1100 }
+    : isLaptopWeb
+    ? { width: "80%", maxWidth: 1100  }
+    : { width: "80%", maxWidth: 1100 };
+
+  // Altura máxima de la lista (ligeramente distinta según tamaño)
+  const listMaxHeight = isMobileWeb
+    ? 380
+    : isTabletWeb
+    ? 420
+    : isLaptopWeb
+    ? 450
+    : 350;
+
+  /* ======== TOAST ======== */
   const showToast = (type, message) => {
     setToast({ visible: true, type, message });
     Animated.timing(fadeAnim, {
@@ -47,9 +124,6 @@ export default function AdminUsers() {
     }, 3000);
   };
 
-  const [confirmVisible, setConfirmVisible] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
-
   const openConfirmModal = (userId) => {
     setUserToDelete(userId);
     setConfirmVisible(true);
@@ -60,7 +134,7 @@ export default function AdminUsers() {
     setConfirmVisible(false);
   };
 
-  //  SESIÓN
+  /* ======== SESIÓN ======== */
   const getSession = async () => {
     try {
       if (Platform.OS === "web") {
@@ -99,6 +173,7 @@ export default function AdminUsers() {
     loadUsers();
   }, []);
 
+  /* ======== NAVIGATION ======== */
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -108,6 +183,7 @@ export default function AdminUsers() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
 
+  /* ======== ELIMINAR USUARIO ======== */
   const handleDelete = async () => {
     if (!userToDelete) return;
     try {
@@ -129,6 +205,7 @@ export default function AdminUsers() {
     }
   };
 
+  /* ======== MENÚ ======== */
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -146,9 +223,189 @@ export default function AdminUsers() {
     }
   };
 
+  // Abrir / cerrar modal CREAR usuario
+  const openCreateModal = () => {
+    setNewUser({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "user",
+    });
+    setCreateVisible(true);
+  };
+
+  const closeCreateModal = () => setCreateVisible(false);
+
+  // Abrir / cerrar modal EDITAR usuario
+  const openEditModal = (user) => {
+    setEditUser({
+      id: user._id,
+      name: user.name || "",
+      email: user.email || "",
+      password: "",
+      confirmPassword: "",
+      role: user.role || "user",
+    });
+    setEditVisible(true);
+  };
+
+  const closeEditModal = () => setEditVisible(false);
+
+  /* ======== CREAR USUARIO ======== */
+  const submitCreateUser = async () => {
+    if (!newUser.name.trim()) {
+      showToast("error", "El nombre es obligatorio");
+      return;
+    }
+
+    if (!newUser.email.trim()) {
+      showToast("error", "El email es obligatorio");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newUser.email)) {
+      showToast("error", "El email no es válido");
+      return;
+    }
+
+    if (!newUser.password.trim()) {
+      showToast("error", "La contraseña es obligatoria");
+      return;
+    }
+
+    if (newUser.password.length < 6) {
+      showToast("error", "La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+
+    if (!newUser.confirmPassword.trim()) {
+      showToast("error", "Debes repetir la contraseña");
+      return;
+    }
+
+    if (newUser.password !== newUser.confirmPassword) {
+      showToast("error", "Las contraseñas no coinciden");
+      return;
+    }
+
+    try {
+      const session = await getSession();
+      const token = session?.token;
+
+      const res = await fetch(`${API_URL}/admin-create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: newUser.name,
+          email: newUser.email,
+          password: newUser.password,
+          role: newUser.role,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast("error", data.error || "Error al crear el usuario");
+        return;
+      }
+
+      setUsers((prev) => [...prev, data]);
+      closeCreateModal();
+      showToast("success", "✅ Usuario creado correctamente");
+    } catch (err) {
+      showToast("error", "❌ Error al crear el usuario");
+    }
+  };
+
+  /* ======== EDITAR USUARIO ======== */
+  const submitEditUser = async () => {
+    if (!editUser.name.trim()) {
+      showToast("error", "El nombre es obligatorio");
+      return;
+    }
+
+    if (!editUser.email.trim()) {
+      showToast("error", "El email es obligatorio");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editUser.email)) {
+      showToast("error", "El email no es válido");
+      return;
+    }
+
+    if (editUser.password || editUser.confirmPassword) {
+      if (!editUser.password.trim()) {
+        showToast("error", "La nueva contraseña no puede estar vacía");
+        return;
+      }
+
+      if (editUser.password.length < 6) {
+        showToast(
+          "error",
+          "La nueva contraseña debe tener al menos 6 caracteres"
+        );
+        return;
+      }
+
+      if (!editUser.confirmPassword.trim()) {
+        showToast("error", "Debes repetir la contraseña nueva");
+        return;
+      }
+
+      if (editUser.password !== editUser.confirmPassword) {
+        showToast("error", "Las contraseñas no coinciden");
+        return;
+      }
+    }
+
+    try {
+      const session = await getSession();
+      const token = session?.token;
+
+      const payload = {
+        name: editUser.name,
+        email: editUser.email,
+        role: editUser.role,
+      };
+
+      if (editUser.password) payload.password = editUser.password;
+
+      const res = await fetch(`${API_URL}/admin-update/${editUser.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast("error", data.error || "Error al actualizar el usuario");
+        return;
+      }
+
+      setUsers((prev) => prev.map((u) => (u._id === data._id ? data : u)));
+
+      closeEditModal();
+      showToast("success", "✅ Usuario actualizado correctamente");
+    } catch (err) {
+      showToast("error", "❌ Error al actualizar el usuario");
+    }
+  };
+
+  /* ======== RENDER TOPBAR Y MENÚ ======== */
   const renderAdminTopBar = () => (
     <View style={styles.topBar}>
-      {/* Perfil Admin */}
       <View style={styles.adminInfo}>
         <View style={styles.adminIconContainer}>
           <Image
@@ -167,19 +424,28 @@ export default function AdminUsers() {
       </View>
 
       <View style={styles.iconRow}>
-        <Pressable onPress={goToNotifications} style={styles.iconButton}>
+        <Pressable
+          onPress={goToNotifications}
+          style={[styles.iconButton, isWeb ? { cursor: "pointer" } : null]}
+        >
           <Image
             source={require("../assets/iconos/bell2.png")}
             style={styles.topIcon}
           />
         </Pressable>
-        <Pressable onPress={goToCalendar} style={styles.iconButton}>
+        <Pressable
+          onPress={goToCalendar}
+          style={[styles.iconButton, isWeb ? { cursor: "pointer" } : null]}
+        >
           <Image
             source={require("../assets/iconos/calendar-admin.png")}
             style={styles.topIcon}
           />
         </Pressable>
-        <Pressable onPress={toggleMenu}>
+        <Pressable
+          onPress={toggleMenu}
+          style={isWeb ? { cursor: "pointer" } : null}
+        >
           <Image
             source={
               menuVisible
@@ -194,7 +460,7 @@ export default function AdminUsers() {
   );
 
   const renderAdminMenu = () =>
-    Platform.OS === "web" &&
+    isWeb &&
     menuVisible && (
       <>
         <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -224,6 +490,7 @@ export default function AdminUsers() {
       </>
     );
 
+  /* ============== RENDER PRINCIPAL ============== */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
@@ -231,27 +498,68 @@ export default function AdminUsers() {
       {renderAdminMenu()}
 
       <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={{
-          flexGrow: 1,
+          paddingTop: 10,
+          paddingBottom: pagePaddingBottom,
+          paddingHorizontal: pagePaddingHorizontal,
+          backgroundColor: "#f5f6f7",
           alignItems: "center",
-          justifyContent: "flex-start",
-          paddingVertical: 40,
         }}
       >
-        <Text style={styles.title}>Usuarios</Text>
+        {/* Título + botón crear */}
+        <View style={[styles.titleRow, mainContainerWidthStyle]}>
+          <Text style={styles.title}>Usuarios</Text>
 
-        <View style={styles.userContainer}>
-          <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator>
+          <Pressable
+            onPress={openCreateModal}
+            style={[styles.createButton, isWeb ? { cursor: "pointer" } : null]}
+          >
+            <Text style={styles.createButtonText}>+ Crear usuario</Text>
+          </Pressable>
+        </View>
+
+        <View style={[styles.userContainer, mainContainerWidthStyle]}>
+          <ScrollView
+            style={{ maxHeight: listMaxHeight }}
+            showsVerticalScrollIndicator
+          >
             {users.length > 0 ? (
               users.map((u) => (
                 <View key={u._id} style={styles.userCard}>
-                  <Text style={styles.userName}>{u.name}</Text>
-                  <Pressable onPress={() => openConfirmModal(u._id)}>
-                    <Image
-                      source={require("../assets/iconos/papelera.png")}
-                      style={styles.trashIcon}
-                    />
-                  </Pressable>
+                  <View>
+                    <Text style={styles.userName}>{u.name}</Text>
+                    <Text style={styles.userEmail}>{u.email}</Text>
+                    <Text style={styles.userRole}>
+                      Rol: {u.role === "organizer" ? "Organizador" : "Usuario"}
+                    </Text>
+                  </View>
+
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Pressable
+                      onPress={() => openEditModal(u)}
+                      style={
+                        isWeb
+                          ? { marginRight: 14, cursor: "pointer" }
+                          : { marginRight: 14 }
+                      }
+                    >
+                      <Image
+                        source={require("../assets/iconos/editar.png")}
+                        style={styles.editIcon}
+                      />
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => openConfirmModal(u._id)}
+                      style={isWeb ? { cursor: "pointer" } : null}
+                    >
+                      <Image
+                        source={require("../assets/iconos/papelera.png")}
+                        style={styles.trashIcon}
+                      />
+                    </Pressable>
+                  </View>
                 </View>
               ))
             ) : (
@@ -261,6 +569,7 @@ export default function AdminUsers() {
         </View>
       </ScrollView>
 
+      {/* MODAL CONFIRMAR ELIMINAR */}
       {confirmVisible && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -286,6 +595,199 @@ export default function AdminUsers() {
         </View>
       )}
 
+      {/* MODAL CREAR USUARIO */}
+      {createVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalText}>Crear usuario</Text>
+
+            <TextInput
+              placeholder="Nombre"
+              placeholderTextColor="#999"
+              value={newUser.name}
+              onChangeText={(t) => setNewUser((p) => ({ ...p, name: t }))}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Email"
+              placeholderTextColor="#999"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={newUser.email}
+              onChangeText={(t) => setNewUser((p) => ({ ...p, email: t }))}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Contraseña"
+              placeholderTextColor="#999"
+              secureTextEntry
+              value={newUser.password}
+              onChangeText={(t) => setNewUser((p) => ({ ...p, password: t }))}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Repetir contraseña"
+              placeholderTextColor="#999"
+              secureTextEntry
+              value={newUser.confirmPassword}
+              onChangeText={(t) =>
+                setNewUser((p) => ({ ...p, confirmPassword: t }))
+              }
+              style={styles.input}
+            />
+
+            <Text style={styles.label}>Rol</Text>
+            <View style={styles.roleRow}>
+              <Pressable
+                onPress={() => setNewUser((p) => ({ ...p, role: "user" }))}
+                style={[
+                  styles.roleOption,
+                  newUser.role === "user" && styles.roleOptionSelected,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleOptionText,
+                    newUser.role === "user" && styles.roleOptionTextSelected,
+                  ]}
+                >
+                  Usuario
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setNewUser((p) => ({ ...p, role: "organizer" }))}
+                style={[
+                  styles.roleOption,
+                  newUser.role === "organizer" && styles.roleOptionSelected,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleOptionText,
+                    newUser.role === "organizer" &&
+                      styles.roleOptionTextSelected,
+                  ]}
+                >
+                  Organizador
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={[styles.modalButtons, { marginTop: 18 }]}>
+              <Pressable onPress={closeCreateModal} style={styles.cancelButton}>
+                <Text style={{ color: "#333", fontWeight: "bold" }}>
+                  Cancelar
+                </Text>
+              </Pressable>
+              <Pressable onPress={submitCreateUser} style={styles.saveButton}>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Crear</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* MODAL EDITAR USUARIO */}
+      {editVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalText}>Editar usuario</Text>
+
+            <TextInput
+              placeholder="Nombre"
+              placeholderTextColor="#999"
+              value={editUser.name}
+              onChangeText={(t) => setEditUser((p) => ({ ...p, name: t }))}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Email"
+              placeholderTextColor="#999"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={editUser.email}
+              onChangeText={(t) => setEditUser((p) => ({ ...p, email: t }))}
+              style={styles.input}
+            />
+
+            <Text style={styles.smallHint}>
+              Contraseña (déjala vacía si no quieres cambiarla)
+            </Text>
+            <TextInput
+              placeholder="Nueva contraseña (opcional)"
+              placeholderTextColor="#999"
+              secureTextEntry
+              value={editUser.password}
+              onChangeText={(t) => setEditUser((p) => ({ ...p, password: t }))}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Repetir nueva contraseña"
+              placeholderTextColor="#999"
+              secureTextEntry
+              value={editUser.confirmPassword}
+              onChangeText={(t) =>
+                setEditUser((p) => ({ ...p, confirmPassword: t }))
+              }
+              style={styles.input}
+            />
+
+            <Text style={styles.label}>Rol</Text>
+            <View style={styles.roleRow}>
+              <Pressable
+                onPress={() => setEditUser((p) => ({ ...p, role: "user" }))}
+                style={[
+                  styles.roleOption,
+                  editUser.role === "user" && styles.roleOptionSelected,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleOptionText,
+                    editUser.role === "user" && styles.roleOptionTextSelected,
+                  ]}
+                >
+                  Usuario
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() =>
+                  setEditUser((p) => ({ ...p, role: "organizer" }))
+                }
+                style={[
+                  styles.roleOption,
+                  editUser.role === "organizer" && styles.roleOptionSelected,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleOptionText,
+                    editUser.role === "organizer" &&
+                      styles.roleOptionTextSelected,
+                  ]}
+                >
+                  Organizador
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={[styles.modalButtons, { marginTop: 18 }]}>
+              <Pressable onPress={closeEditModal} style={styles.cancelButton}>
+                <Text style={{ color: "#333", fontWeight: "bold" }}>
+                  Cancelar
+                </Text>
+              </Pressable>
+              <Pressable onPress={submitEditUser} style={styles.saveButton}>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  Guardar
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* TOAST */}
       {toast.visible && (
         <Animated.View
           style={[
@@ -300,7 +802,8 @@ export default function AdminUsers() {
         </Animated.View>
       )}
 
-      {Platform.OS === "web" && (
+      {/* FOOTER solo en laptop/desktop web, igual que en otras pantallas */}
+      {isWeb && isLargeWeb && (
         <Footer
           onAboutPress={goToAboutUs}
           onPrivacyPress={goToPrivacy}
@@ -346,12 +849,16 @@ const styles = StyleSheet.create({
   iconButton: { marginRight: 20 },
   topIcon: { width: 22, height: 22, tintColor: "#0094A2" },
 
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
   userContainer: {
     backgroundColor: "#f5f5f5",
     borderRadius: 10,
     padding: 20,
-    width: "90%",
-    maxWidth: 1300,
     alignSelf: "center",
     boxShadow: "0 0 10px rgba(0,0,0,0.1)",
     marginTop: 20,
@@ -367,13 +874,32 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   userName: { color: "#fff", fontWeight: "bold", fontSize: 15 },
+  userEmail: { color: "#e0e0e0", fontSize: 13 },
+  userRole: { color: "#F3B23F", fontSize: 13, marginTop: 2 },
   trashIcon: { width: 22, height: 22, tintColor: "#fff" },
+  editIcon: { width: 22, height: 22, tintColor: "#fff" },
   noUsers: { color: "#666", textAlign: "center", marginTop: 20 },
 
   title: {
     fontSize: 22,
     fontWeight: "bold",
     color: "#014869",
+  },
+
+  createButton: {
+    backgroundColor: "#F3B23F",
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  createButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
   },
 
   sideMenu: {
@@ -411,7 +937,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 25,
     borderRadius: 15,
-    width: 320,
+    width: 340,
     alignItems: "center",
     shadowColor: "#000",
     shadowOpacity: 0.25,
@@ -441,10 +967,67 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 8,
   },
+  saveButton: {
+    backgroundColor: "#014869",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+
+  input: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 10,
+    fontSize: 14,
+    color: "#333",
+  },
+  label: {
+    alignSelf: "flex-start",
+    marginBottom: 4,
+    color: "#014869",
+    fontWeight: "600",
+  },
+  roleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 10,
+  },
+  roleOption: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 20,
+    paddingVertical: 8,
+    alignItems: "center",
+    marginHorizontal: 4,
+  },
+  roleOptionSelected: {
+    backgroundColor: "#014869",
+    borderColor: "#014869",
+  },
+  roleOptionText: {
+    color: "#014869",
+    fontWeight: "600",
+    fontSize: 13,
+  },
+  roleOptionTextSelected: {
+    color: "#fff",
+  },
+  smallHint: {
+    fontSize: 11,
+    color: "#777",
+    alignSelf: "flex-start",
+    marginBottom: 4,
+  },
 
   toast: {
     position: "absolute",
-    bottom: 100, 
+    bottom: 100,
     left: "5%",
     right: "5%",
     paddingVertical: 14,
@@ -454,12 +1037,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 5,
-  },
-  toastText: {
-    color: "#fff",
-    fontWeight: "700",
-    textAlign: "center",
-    fontSize: 15,
   },
   toastText: {
     color: "#fff",

@@ -10,6 +10,8 @@ import {
   Animated,
   Alert,
   Linking,
+  TextInput,
+  Dimensions,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -34,6 +36,30 @@ export default function UserEventDetail() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [shareVisible, setShareVisible] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [userComment, setUserComment] = useState(null);
+
+  /* ======================================================================
+        RESPONSIVE WEB BREAKPOINTS
+  ======================================================================= */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const resize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
+  const isDesktopWeb = isWeb && winWidth >= 1440;
+  const showFooter = isLaptopWeb || isDesktopWeb;
+
+  /* ====================================================================== */
 
   const getToken = async () => {
     try {
@@ -60,6 +86,7 @@ export default function UserEventDetail() {
         const sessionString = await AsyncStorage.getItem("USER_SESSION");
         session = sessionString ? JSON.parse(sessionString) : null;
       }
+
       if (session?.user?.name) setUserName(session.user.name);
       else if (session?.name) setUserName(session.name);
       else if (session?.user?.username) setUserName(session.user.username);
@@ -145,6 +172,48 @@ export default function UserEventDetail() {
     }
   };
 
+  const handleSendComment = async () => {
+    try {
+      const token = await getToken();
+      if (!token) {
+        Alert.alert("Error", "Debes iniciar sesión para comentar el evento");
+        return;
+      }
+
+      if (!rating || rating <= 0) {
+        Alert.alert("Error", "Debes valorar el evento antes de comentar.");
+        return;
+      }
+
+      if (!commentText.trim()) {
+        Alert.alert("Error", "El comentario no puede estar vacío.");
+        return;
+      }
+
+      const res = await fetch(`${COMMENTS_URL}/${eventId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          rating,
+          text: commentText.trim(),
+        }),
+      });
+
+      if (!res.ok) throw new Error("No se pudo enviar");
+
+      const data = await res.json();
+      setUserComment(data);
+      setCommentText("");
+      Alert.alert("✅", "Comentario enviado.");
+    } catch (err) {
+      console.error("Error al enviar comentario:", err);
+      Alert.alert("Error", "No se pudo enviar el comentario.");
+    }
+  };
+
   const renderStars = (ratingValue, interactive = false) => {
     const stars = [];
     const displayRating = interactive ? rating : ratingValue;
@@ -168,19 +237,29 @@ export default function UserEventDetail() {
         </Pressable>
       );
     }
-
     return <View style={{ flexDirection: "row" }}>{stars}</View>;
   };
 
   const shareWhatsApp = () => {
     if (!event) return;
-    const msg = `¡Mira este evento! ${event.title} - ${event.location}`;
+
+    const msg = `¡Mira este evento!
+Título: ${event.title}
+Lugar: ${event.location}
+Fecha: ${event.date}
+Hora: ${event.hour}`;
+
     const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
     Linking.openURL(url);
   };
+
   const shareTwitter = () => {
     if (!event) return;
-    const msg = `¡Mira este evento! ${event.title} - ${event.location}`;
+
+    const msg = `¡Mira este evento! 
+${event.title} - ${event.location} 
+📅 ${event.date} | ⏰ ${event.hour}`;
+
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       msg
     )}`;
@@ -244,6 +323,7 @@ export default function UserEventDetail() {
             style={{ width: 24, height: 24, tintColor: "#fff" }}
           />
         </View>
+
         <View>
           <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
             Usuario
@@ -541,9 +621,12 @@ export default function UserEventDetail() {
           style={{
             flex: 1,
             backgroundColor: "#f5f6f7",
-            padding: 25,
+            padding: 15,
+            marginBottom: isLaptopWeb || isDesktopWeb ? 150 : 0,
           }}
-          contentContainerStyle={{ paddingBottom: 40 }}
+          contentContainerStyle={{
+            paddingBottom: isLaptopWeb || isDesktopWeb ? 50 : 40,
+          }}
         >
           <View
             style={{
@@ -649,12 +732,16 @@ export default function UserEventDetail() {
                 </Pressable>
               </View>
 
-              <View style={{ marginTop: 30 }}>
+              <View
+                style={{
+                  marginTop: isTabletWeb ? 10 : 5,
+                }}
+              >
                 <Text
                   style={{
                     color: "#014869",
                     fontWeight: "bold",
-                    marginBottom: 10,
+                    marginBottom: 1,
                     fontSize: 15,
                   }}
                 >
@@ -662,6 +749,77 @@ export default function UserEventDetail() {
                 </Text>
 
                 {renderStars(rating, true)}
+
+                {/* COMENTARIO EN WEB */}
+                <View
+                  style={{
+                    marginTop: isTabletWeb ? 10 : 5,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#014869",
+                      fontWeight: "bold",
+                      marginBottom: 6,
+                      fontSize: 15,
+                    }}
+                  >
+                    Tu comentario
+                  </Text>
+
+                  <View
+                    style={{
+                      flexDirection: isLaptopWeb ? "row" : "column",
+                      alignItems: isLaptopWeb ? "flex-start" : "flex-end",
+                      width: "100%",
+                      gap: isLaptopWeb ? 10 : 0,
+                    }}
+                  >
+                    <TextInput
+                      value={commentText}
+                      onChangeText={setCommentText}
+                      placeholder="Escribe aquí tu opinión sobre el evento..."
+                      placeholderTextColor="#777"
+                      multiline
+                      style={{
+                        backgroundColor: "#fff",
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: "#ddd",
+                        paddingHorizontal: 10,
+                        paddingVertical: 8,
+                        minHeight: 70,
+                        textAlignVertical: "top",
+                        color: "#333",
+                        fontSize: 14,
+                        flex: isLaptopWeb ? 1 : 0,
+                        width: isLaptopWeb ? "88%" : "100%",
+                      }}
+                    />
+
+                    <Pressable
+                      onPress={handleSendComment}
+                      style={{
+                        backgroundColor: "#014869",
+                        borderRadius: 20,
+                        paddingVertical: 8,
+                        paddingHorizontal: 18,
+                        marginTop: isLaptopWeb ? 0 : 10,
+                        alignSelf: isLaptopWeb ? "center" : "flex-end",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#fff",
+                          fontWeight: "600",
+                          fontSize: 13,
+                        }}
+                      >
+                        Enviar comentario
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
               </View>
             </>
           ) : (
@@ -757,12 +915,67 @@ export default function UserEventDetail() {
                 </Text>
 
                 {renderStars(rating, true)}
+
+                {/* COMENTARIO MÓVIL */}
+                <View style={{ marginTop: 18 }}>
+                  <Text
+                    style={{
+                      color: "#014869",
+                      fontWeight: "bold",
+                      marginBottom: 6,
+                      fontSize: 15,
+                    }}
+                  >
+                    Tu comentario
+                  </Text>
+                  <TextInput
+                    value={commentText}
+                    onChangeText={setCommentText}
+                    placeholder="Escribe aquí tu opinión sobre el evento..."
+                    placeholderTextColor="#777"
+                    multiline
+                    style={{
+                      backgroundColor: "#fff",
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: "#ddd",
+                      paddingHorizontal: 10,
+                      paddingVertical: 8,
+                      minHeight: 70,
+                      textAlignVertical: "top",
+                      color: "#333",
+                      fontSize: 14,
+                    }}
+                  />
+                  <Pressable
+                    onPress={handleSendComment}
+                    style={{
+                      marginTop: 10,
+                      alignSelf: "flex-end",
+                      backgroundColor: "#014869",
+                      borderRadius: 20,
+                      paddingVertical: 6,
+                      paddingHorizontal: 16,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontWeight: "600",
+                        fontSize: 13,
+                      }}
+                    >
+                      Enviar comentario
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
             </>
           )}
         </ScrollView>
       )}
 
+      {/* === MODAL COMPARTIR === */}
       <Modal visible={shareVisible} transparent animationType="fade">
         <View
           style={{
@@ -834,12 +1047,17 @@ export default function UserEventDetail() {
         </View>
       </Modal>
 
-      {Platform.OS === "web" && (
-        <Footer
-          onAboutPress={goToAbout}
-          onPrivacyPress={goToPrivacy}
-          onConditionsPress={goToConditions}
-        />
+      {/* ==============================
+          FOOTER — SOLO LAPTOP + DESKTOP
+      =============================== */}
+      {isWeb && showFooter && (
+        <View style={{ position: "fixed", bottom: 0, left: 0, right: 0 }}>
+          <Footer
+            onAboutPress={goToAbout}
+            onPrivacyPress={goToPrivacy}
+            onConditionsPress={goToConditions}
+          />
+        </View>
       )}
     </View>
   );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   Pressable,
   StyleSheet,
+  useWindowDimensions,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -19,6 +20,17 @@ export default function PoliticaPrivacidad({ navigation }) {
   const [userName, setUserName] = useState("Usuario");
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
+
+  const { width, height } = useWindowDimensions();
+
+  // 🔹 Breakpoints como en Condiciones
+  const isMobile = width < 600;
+  const isTablet = width >= 600 && width < 900;
+  const isLaptop = width >= 900 && width < 1400;
+  const isDesktop = width >= 1400;
+
+  const dynamicPadding = isMobile ? 14 : isTablet ? 18 : 24;
+  const cardMinHeight = isMobile ? 260 : isTablet ? 320 : 350;
 
   useEffect(() => {
     const loadSession = async () => {
@@ -70,6 +82,7 @@ export default function PoliticaPrivacidad({ navigation }) {
       setMenuVisible(!menuVisible);
       return;
     }
+
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
@@ -86,35 +99,20 @@ export default function PoliticaPrivacidad({ navigation }) {
     }
   };
 
+  // -----------------------
+  // TOPBARS
+  // -----------------------
+
   const renderUserTopBar = () => (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 24,
-        paddingVertical: 14,
-        justifyContent: "space-between",
-        backgroundColor: "#fff",
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <View
-          style={{
-            position: "relative",
-            marginRight: 12,
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: "#014869",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+    <View style={[styles.topBar, { paddingHorizontal: dynamicPadding }]}>
+      <View style={styles.profileContainer}>
+        <View style={styles.profileCircleUser}>
           <Image
             source={require("../assets/iconos/user.png")}
             style={{ width: 24, height: 24, tintColor: "#fff" }}
           />
         </View>
+
         <View>
           <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
             Usuario
@@ -123,8 +121,8 @@ export default function PoliticaPrivacidad({ navigation }) {
         </View>
       </View>
 
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+      <View style={styles.iconRow}>
+        <Pressable onPress={goToNotifications} style={styles.iconButton}>
           <Image
             source={require("../assets/iconos/bell.png")}
             style={{ width: 22, height: 22, tintColor: "#014869" }}
@@ -132,7 +130,7 @@ export default function PoliticaPrivacidad({ navigation }) {
         </Pressable>
 
         {Platform.OS === "web" && (
-          <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+          <Pressable onPress={goToCalendar} style={styles.iconButton}>
             <Image
               source={require("../assets/iconos/calendar.png")}
               style={{ width: 22, height: 22, tintColor: "#014869" }}
@@ -155,7 +153,7 @@ export default function PoliticaPrivacidad({ navigation }) {
   );
 
   const renderAdminTopBar = () => (
-    <View style={styles.topBar}>
+    <View style={[styles.topBar, { paddingHorizontal: dynamicPadding }]}>
       <View style={styles.adminInfo}>
         <View style={styles.adminIconContainer}>
           <Image
@@ -167,6 +165,7 @@ export default function PoliticaPrivacidad({ navigation }) {
             style={styles.crownIcon}
           />
         </View>
+
         <View>
           <Text style={styles.adminTitle}>Admin.</Text>
           <Text style={styles.adminName}>{userName}</Text>
@@ -202,29 +201,9 @@ export default function PoliticaPrivacidad({ navigation }) {
 
   const renderOrganizerTopBar = () =>
     role === "organizer" && (
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          paddingHorizontal: 24,
-          paddingVertical: 14,
-          justifyContent: "space-between",
-          backgroundColor: "#fff",
-        }}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <View
-            style={{
-              position: "relative",
-              marginRight: 12,
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: "#F3B23F",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+      <View style={[styles.topBar, { paddingHorizontal: dynamicPadding }]}>
+        <View style={styles.profileContainer}>
+          <View style={styles.profileCircleOrganizer}>
             <Image
               source={require("../assets/iconos/user.png")}
               style={{ width: 24, height: 24, tintColor: "#fff" }}
@@ -250,8 +229,8 @@ export default function PoliticaPrivacidad({ navigation }) {
           </View>
         </View>
 
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
+        <View style={styles.iconRow}>
+          <Pressable onPress={goToNotifications} style={styles.iconButton}>
             <Image
               source={require("../assets/iconos/bell3.png")}
               style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
@@ -259,7 +238,7 @@ export default function PoliticaPrivacidad({ navigation }) {
           </Pressable>
 
           {Platform.OS === "web" && (
-            <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+            <Pressable onPress={goToCalendar} style={styles.iconButton}>
               <Image
                 source={require("../assets/iconos/calendar-organizador.png")}
                 style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
@@ -281,9 +260,14 @@ export default function PoliticaPrivacidad({ navigation }) {
       </View>
     );
 
+  // -----------------------
+  // MENÚS WEB
+  // -----------------------
+
   const renderAdminMenu = () =>
     Platform.OS === "web" &&
-    menuVisible && (
+    menuVisible &&
+    role === "admin" && (
       <>
         <TouchableWithoutFeedback onPress={toggleMenu}>
           <View style={styles.overlay} />
@@ -408,84 +392,64 @@ export default function PoliticaPrivacidad({ navigation }) {
       </Animated.View>
     );
 
-  return (
-    <View style={{ flex: 1, backgroundColor: "#fff", position: "relative" }}>
-      <Header hideAuthButtons />
+  // -----------------------
+  // CONTENIDO PRINCIPAL (RESPONSIVE COMO CONDICIONES)
+  // -----------------------
 
-      {role === "admin"
-        ? renderAdminTopBar()
-        : role === "organizer"
-        ? renderOrganizerTopBar()
-        : renderUserTopBar()}
-
-      {role === "admin"
-        ? renderAdminMenu()
-        : role === "organizer"
-        ? renderOrganizerMenuWeb()
-        : renderUserMenuWeb()}
-
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          padding: 24,
-          alignItems: "center",
-          backgroundColor: "#f9f9f9",
-          flexGrow: 1,
-          paddingBottom: 120,
-          marginTop: 60,
+  const renderMainContent = () => (
+    <>
+      <Text
+        style={{
+          fontSize: isMobile ? 20 : 22,
+          fontWeight: "bold",
+          color: "#014869",
+          textAlign: "center",
+          width: "100%",
+          marginBottom: 30,
         }}
       >
-        <Text
-          style={{
-            fontSize: 22,
-            fontWeight: "bold",
-            color: "#014869",
-            textAlign: "center",
-            marginBottom: 30,
-          }}
-        >
-          Política y Privacidad
-        </Text>
+        Política y Privacidad
+      </Text>
 
+      <View
+        style={{
+          flexDirection: isMobile ? "column" : "row",
+          justifyContent: "center",
+          alignItems: "stretch",
+          width: "100%",
+          maxWidth: 1100,
+          backgroundColor: "#f2f2f2",
+          borderRadius: 12,
+          padding: isMobile ? 12 : 20,
+          gap: isMobile ? 20 : 24,
+          alignSelf: "center",
+          height: isMobile ? height * 0.65 : "auto",
+          overflow: "visible",
+        }}
+      >
+        {/* CARD POLÍTICA */}
         <View
           style={{
-            flexDirection: Platform.OS === "web" ? "row" : "column",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: 20,
-            width: "100%",
-            maxWidth: 1000,
-            backgroundColor: "#f2f2f2",
-            borderRadius: 10,
-            padding: 20,
+            backgroundColor: "#fff",
+            borderRadius: 16,
+            padding: isMobile ? 16 : 20,
+            flex: 1,
+            minHeight: cardMinHeight,
+            maxHeight: isMobile ? height * 0.65 : "none",
+            shadowColor: "#000",
+            shadowOpacity: 0.1,
+            shadowRadius: 5,
+            elevation: 3,
+            overflow: "hidden",
           }}
         >
-          <View
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: 16,
-              padding: 20,
-              width: Platform.OS === "web" ? "45%" : "90%",
-              shadowColor: "#000",
-              shadowOpacity: 0.1,
-              shadowRadius: 5,
-              elevation: 3,
-            }}
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 10 }}
+            showsVerticalScrollIndicator={false}
           >
-            <Text
-              style={{
-                fontWeight: "bold",
-                fontSize: 18,
-                color: "#014869",
-                marginBottom: 10,
-                textAlign: "center",
-              }}
-            >
-              Política
-            </Text>
-            <Text
-              style={{ color: "#333", lineHeight: 20, textAlign: "justify" }}
-            >
+            <Text style={styles.cardTitle}>Política</Text>
+            <Text style={styles.cardText}>
               Cuervo Activa se compromete a garantizar un uso responsable de la
               aplicación y el respeto entre los usuarios. Todos los contenidos,
               eventos y publicaciones deben promover la convivencia y cumplir
@@ -497,34 +461,32 @@ export default function PoliticaPrivacidad({ navigation }) {
               para mejorar la experiencia o adaptarse a nuevas regulaciones,
               notificando los cambios a través de la misma.
             </Text>
-          </View>
+          </ScrollView>
+        </View>
 
-          <View
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: 16,
-              padding: 20,
-              width: Platform.OS === "web" ? "45%" : "90%",
-              shadowColor: "#000",
-              shadowOpacity: 0.1,
-              shadowRadius: 5,
-              elevation: 3,
-            }}
+        {/* CARD PRIVACIDAD */}
+        <View
+          style={{
+            backgroundColor: "#fff",
+            borderRadius: 16,
+            padding: isMobile ? 16 : 20,
+            flex: 1,
+            minHeight: cardMinHeight,
+            maxHeight: isMobile ? height * 0.65 : "none",
+            shadowColor: "#000",
+            shadowOpacity: 0.1,
+            shadowRadius: 5,
+            elevation: 3,
+            overflow: "hidden",
+          }}
+        >
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 10 }}
+            showsVerticalScrollIndicator={false}
           >
-            <Text
-              style={{
-                fontWeight: "bold",
-                fontSize: 18,
-                color: "#014869",
-                marginBottom: 10,
-                textAlign: "center",
-              }}
-            >
-              Privacidad
-            </Text>
-            <Text
-              style={{ color: "#333", lineHeight: 20, textAlign: "justify" }}
-            >
+            <Text style={styles.cardTitle}>Privacidad</Text>
+            <Text style={styles.cardText}>
               En Cuervo Activa, la protección de tus datos personales es una
               prioridad. Solo se recogen los datos estrictamente necesarios
               (nombre, correo electrónico, rol y participación en eventos) para
@@ -539,19 +501,64 @@ export default function PoliticaPrivacidad({ navigation }) {
               </Text>
               .
             </Text>
-          </View>
+          </ScrollView>
         </View>
+      </View>
+    </>
+  );
+
+  // -----------------------
+  // RETURN
+  // -----------------------
+
+  return (
+    <View
+      style={{
+        backgroundColor: "#fff",
+        minHeight: Platform.OS === "web" && isMobile ? "auto" : "100%",
+        flex: 1,
+      }}
+    >
+      <Header hideAuthButtons />
+
+      {/* TOP BAR */}
+      {role === "admin"
+        ? renderAdminTopBar()
+        : role === "organizer"
+        ? renderOrganizerTopBar()
+        : renderUserTopBar()}
+
+      {/* MENÚS WEB */}
+      {renderAdminMenu()}
+      {renderOrganizerMenuWeb()}
+      {renderUserMenuWeb()}
+
+      {/* SCROLL PRINCIPAL (MISMA IDEA QUE CONDICIONES) */}
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={true}
+        contentContainerStyle={{
+          padding: dynamicPadding,
+          alignItems: "center",
+          backgroundColor: "#f9f9f9",
+          flexGrow: 1,
+          marginTop: isMobile ? 0 : isTablet ? 40 : 60,
+          paddingBottom: isMobile ? 20 : isTablet ? 40 : 160,
+        }}
+      >
+        {renderMainContent()}
       </ScrollView>
 
-      {Platform.OS === "web" && (
+      {/* FOOTER SOLO EN WEB ESCRITORIO (NO MOBILE, NO TABLET) */}
+      {Platform.OS === "web" && !isMobile && !isTablet && (
         <View
           style={{
             position: "fixed",
             bottom: 0,
             left: 0,
             right: 0,
-            zIndex: 100,
             backgroundColor: "#fff",
+            zIndex: 100,
           }}
         >
           <Footer
@@ -569,7 +576,6 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 24,
     paddingVertical: 14,
     justifyContent: "space-between",
     backgroundColor: "#fff",
@@ -599,6 +605,7 @@ const styles = StyleSheet.create({
   iconRow: { flexDirection: "row", alignItems: "center" },
   iconButton: { marginRight: 20 },
   topIcon: { width: 22, height: 22, tintColor: "#0094A2" },
+
   sideMenu: {
     position: "absolute",
     top: 0,
@@ -617,5 +624,49 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     zIndex: 9,
+  },
+
+  profileContainer: { flexDirection: "row", alignItems: "center" },
+  profileCircleUser: {
+    position: "relative",
+    marginRight: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#014869",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileCircleOrganizer: {
+    position: "relative",
+    marginRight: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#F3B23F",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontWeight: "bold",
+    fontSize: 18,
+    color: "#014869",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  cardText: {
+    color: "#333",
+    lineHeight: 20,
+    textAlign: "justify",
   },
 });

@@ -9,10 +9,16 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Alert,
+  TextInput,
+  Dimensions,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
+import { getSession, saveSession } from "../services/sessionManager";
+
+const API_BASE =
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
 export default function AdminProfile() {
   const navigation = useNavigation();
@@ -20,10 +26,53 @@ export default function AdminProfile() {
   const [menuAnim] = useState(new Animated.Value(-250));
   const [adminData, setAdminData] = useState({ name: "Admin", email: "" });
 
+  const [editVisible, setEditVisible] = useState(false);
+  const [newName, setNewName] = useState("");
+
+  /* ======== RESPONSIVE BREAKPOINTS ======== */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const resize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+  const isMobileWeb = isWeb && winWidth < 768;
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
+  const isDesktopWeb = isWeb && winWidth >= 1440;
+  const isLargeWeb = isLaptopWeb || isDesktopWeb;
+
+  const pagePaddingHorizontal = isMobileWeb
+    ? 20
+    : isTabletWeb
+    ? 40
+    : isLaptopWeb
+    ? 55
+    : 80;
+
+  const pagePaddingBottom = isLargeWeb ? 100 : 40;
+
+  const profileContainerWidth = isMobileWeb
+    ? "92%"
+    : isTabletWeb
+    ? "85%"
+    : isLaptopWeb
+    ? "60%"
+    : "45%";
+
+  /* ======== LOAD USER ======== */
   useEffect(() => {
     const loadUser = () => {
       try {
-        const session = JSON.parse(localStorage.getItem("USER_SESSION"));
+        const session = JSON.parse(
+          Platform.OS === "web" ? localStorage.getItem("USER_SESSION") : null
+        );
         if (session?.name && session?.email) {
           setAdminData({ name: session.name, email: session.email });
         }
@@ -33,14 +82,20 @@ export default function AdminProfile() {
     };
 
     loadUser();
-    window.addEventListener("storage", loadUser);
-    return () => window.removeEventListener("storage", loadUser);
+
+    if (Platform.OS === "web") {
+      window.addEventListener("storage", loadUser);
+      return () => window.removeEventListener("storage", loadUser);
+    }
   }, []);
 
+  /* ======== LOGOUT ======== */
   const handleLogout = async () => {
     try {
-      localStorage.removeItem("USER_SESSION");
-      localStorage.removeItem("SEEN_INTRO");
+      if (Platform.OS === "web") {
+        localStorage.removeItem("USER_SESSION");
+        localStorage.removeItem("SEEN_INTRO");
+      }
       navigation.reset({
         index: 0,
         routes: [{ name: "Intro" }],
@@ -51,6 +106,54 @@ export default function AdminProfile() {
     }
   };
 
+  /* ======== EDIT PROFILE ======== */
+  const openEditModal = () => {
+    setNewName(adminData.name || "");
+    setEditVisible(true);
+  };
+
+  const saveProfileChanges = async () => {
+    try {
+      if (!newName.trim()) {
+        Alert.alert("Error", "El nombre no puede estar vacío.");
+        return;
+      }
+
+      const session = await getSession();
+
+      if (!session?.token) {
+        Alert.alert("Error", "Sesión no encontrada.");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/api/users/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({ name: newName.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        Alert.alert("Error", data.error || "No se pudo actualizar el perfil.");
+        return;
+      }
+
+      setAdminData((prev) => ({ ...prev, name: data.name }));
+      await saveSession({ ...session, name: data.name });
+
+      setEditVisible(false);
+      Alert.alert("Éxito", "Nombre actualizado correctamente.");
+    } catch (err) {
+      console.error("Error actualizando perfil:", err);
+      Alert.alert("Error", "No se pudo actualizar el perfil.");
+    }
+  };
+
+  /* ======== NAVIGATION ======== */
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -61,6 +164,7 @@ export default function AdminProfile() {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToUsers = () => navigation.navigate("AdminUsers");
 
+  /* ======== MENU ======== */
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -78,10 +182,12 @@ export default function AdminProfile() {
     }
   };
 
+  /* ======== RENDER ======== */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
+      {/* TOPBAR */}
       <View
         style={{
           flexDirection: "row",
@@ -121,6 +227,7 @@ export default function AdminProfile() {
               }}
             />
           </View>
+
           <View>
             <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
               Admin.
@@ -139,7 +246,7 @@ export default function AdminProfile() {
             onPress={goToNotifications}
             style={{
               marginRight: 20,
-              ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+              ...(isWeb ? { cursor: "pointer" } : {}),
             }}
           >
             <Image
@@ -152,7 +259,7 @@ export default function AdminProfile() {
             onPress={goToCalendar}
             style={{
               marginRight: 20,
-              ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+              ...(isWeb ? { cursor: "pointer" } : {}),
             }}
           >
             <Image
@@ -163,7 +270,7 @@ export default function AdminProfile() {
 
           <Pressable
             onPress={toggleMenu}
-            style={Platform.OS === "web" ? { cursor: "pointer" } : {}}
+            style={isWeb ? { cursor: "pointer" } : {}}
           >
             <Image
               source={
@@ -177,7 +284,8 @@ export default function AdminProfile() {
         </View>
       </View>
 
-      {Platform.OS === "web" && menuVisible && (
+      {/* MENU WEB */}
+      {isWeb && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
             <View
@@ -234,32 +342,32 @@ export default function AdminProfile() {
         </>
       )}
 
+      {/* CONTENT */}
       <ScrollView
         contentContainerStyle={{
-          flexGrow: 1,
+          paddingTop: 20,
+          paddingBottom: pagePaddingBottom,
+          paddingHorizontal: pagePaddingHorizontal,
+          backgroundColor: "#f5f6f7",
           alignItems: "center",
-          justifyContent: "flex-start",
-          paddingVertical: 65,
-          backgroundColor: "#fff",
         }}
       >
         <View
           style={{
             backgroundColor: "#f5f5f5",
             borderRadius: 8,
-            width: "90%",
-            maxWidth: 420,
+            width: profileContainerWidth,
             paddingVertical: 20,
             alignItems: "center",
             shadowColor: "#000",
-            shadowOpacity: 0.1,
+            shadowOpacity: 0.08,
             shadowRadius: 5,
-            marginTop: 30,
+            marginTop: 20,
           }}
         >
           <Text
             style={{
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: "bold",
               color: "#014869",
               marginBottom: 15,
@@ -268,6 +376,7 @@ export default function AdminProfile() {
             Perfil
           </Text>
 
+          {/* Avatar */}
           <View
             style={{
               position: "relative",
@@ -297,7 +406,7 @@ export default function AdminProfile() {
             />
           </View>
 
-          <View style={{ width: "80%" }}>
+          <View style={{ width: "85%" }}>
             <Text
               style={{ fontWeight: "bold", color: "#014869", marginBottom: 5 }}
             >
@@ -336,6 +445,24 @@ export default function AdminProfile() {
               {adminData.email}
             </Text>
 
+            {/* EDIT BUTTON */}
+            <Pressable
+              onPress={openEditModal}
+              style={{
+                backgroundColor: "#0094A2",
+                paddingVertical: 10,
+                paddingHorizontal: 25,
+                borderRadius: 30,
+                alignSelf: "center",
+                marginBottom: 10,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                Editar perfil
+              </Text>
+            </Pressable>
+
+            {/* LOGOUT */}
             <Pressable
               onPress={handleLogout}
               style={{
@@ -344,7 +471,7 @@ export default function AdminProfile() {
                 paddingHorizontal: 25,
                 borderRadius: 30,
                 alignSelf: "center",
-                marginTop: 10,
+                marginBottom: 10,
               }}
             >
               <Text style={{ color: "#fff", fontWeight: "bold" }}>
@@ -355,7 +482,92 @@ export default function AdminProfile() {
         </View>
       </ScrollView>
 
-      {Platform.OS === "web" && (
+      {/* MODAL EDIT */}
+      {editVisible && (
+        <View
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 999,
+          }}
+        >
+          <View
+            style={{
+              width: 320,
+              backgroundColor: "#fff",
+              padding: 20,
+              borderRadius: 10,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "bold",
+                color: "#014869",
+                marginBottom: 10,
+              }}
+            >
+              Editar perfil
+            </Text>
+
+            <Text style={{ marginBottom: 6, color: "#014869" }}>
+              Nuevo nombre:
+            </Text>
+
+            <TextInput
+              value={newName}
+              onChangeText={setNewName}
+              placeholder="Nombre"
+              placeholderTextColor="#999"
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 8,
+                paddingHorizontal: 10,
+                paddingVertical: 8,
+                marginBottom: 15,
+                color: "#333",
+              }}
+            />
+
+            <Pressable
+              onPress={saveProfileChanges}
+              style={{
+                backgroundColor: "#0094A2",
+                paddingVertical: 10,
+                borderRadius: 30,
+                alignItems: "center",
+                marginBottom: 8,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                Guardar cambios
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setEditVisible(false)}
+              style={{
+                paddingVertical: 10,
+                borderRadius: 30,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: "#014869", fontWeight: "bold" }}>
+                Cancelar
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      {isWeb && isLargeWeb && (
         <Footer
           onAboutPress={goToAboutUs}
           onPrivacyPress={goToPrivacy}

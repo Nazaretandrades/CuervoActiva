@@ -10,18 +10,14 @@ import {
   Animated,
 } from "react-native";
 
-
-export default function HeroBanner() {
-  const { width: screenWidth } = useWindowDimensions();
-  const [containerWidth, setContainerWidth] = useState(screenWidth);
-
+export default function HeroBanner({ height }) {
+  const { width } = useWindowDimensions();
+  const [containerWidth, setContainerWidth] = useState(width);
   const [currentIndex, setCurrentIndex] = useState(0);
-
   const flatListRef = useRef(null);
 
-  const fadeAnim = useRef(new Animated.Value(0)).current; 
-  const translateAnim = useRef(new Animated.Value(20)).current; 
-
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateAnim = useRef(new Animated.Value(20)).current;
 
   const slides = [
     require("../assets/romeria.jpg"),
@@ -31,19 +27,6 @@ export default function HeroBanner() {
     require("../assets/grand_prix.jpg"),
     require("../assets/ciclismo.jpg"),
   ];
-
-
-  const handleNext = () => {
-    const nextIndex = (currentIndex + 1) % slides.length;
-    flatListRef.current?.scrollToOffset({
-      offset: nextIndex * containerWidth,
-      animated: true,
-    });
-    setCurrentIndex(nextIndex);
-
-    if (Platform.OS !== "web") triggerAnimation();
-  };
-
 
   const triggerAnimation = () => {
     fadeAnim.setValue(0);
@@ -63,66 +46,114 @@ export default function HeroBanner() {
     ]).start();
   };
 
+  const handleNext = () => {
+    const nextIndex = (currentIndex + 1) % slides.length;
+    flatListRef.current?.scrollToOffset({
+      offset: nextIndex * containerWidth,
+      animated: true,
+    });
+    setCurrentIndex(nextIndex);
+
+    if (Platform.OS !== "web") triggerAnimation();
+  };
 
   useEffect(() => {
     if (Platform.OS !== "web") triggerAnimation();
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      handleNext();
-    }, 4000);
+    const interval = setInterval(() => handleNext(), 4000);
     return () => clearInterval(interval);
   }, [currentIndex]);
 
-
   const renderItem = ({ item }) => {
     if (Platform.OS === "web") {
+      // BREAKPOINTS
+      const isMobile = containerWidth < 600;
+      const isTablet = containerWidth >= 600 && containerWidth < 1024;
+
+      // ESPACIOS IGUALES ARRIBA/ABAJO (siempre simétricos)
+      const sliderHeight = isMobile
+        ? height * 0.55
+        : isTablet
+        ? height * 0.60
+        : height * 0.65;
+
+      const whiteSpace = (height - sliderHeight) / 2;
+
       return (
         <View
           style={{
             width: containerWidth,
-            height: 520,
-            justifyContent: "center",
-            alignItems: "center",
-            marginTop: 150,
-            position: "relative",
-            overflow: "hidden",
+            height: height,
+            backgroundColor: "#fff",
           }}
         >
-          <Image
-            source={item}
-            style={styles.blurredBackground}
-            blurRadius={20}
-            resizeMode="cover"
-          />
+          {/* ZONA BLANCA SUPERIOR */}
+          <View style={{ height: whiteSpace, backgroundColor: "#fff" }} />
 
-          <Image
-            source={item}
+          {/* SLIDER */}
+          <View
             style={{
-              width: "100%",
-              height: "100%",
-              resizeMode: "contain",
-              zIndex: 2,
-              borderRadius: 10,
+              width: containerWidth,
+              height: sliderHeight,
+              justifyContent: "center",
+              alignItems: "center",
+              position: "relative",
+              overflow: "hidden",
             }}
-          />
+          >
+            <Image
+              source={item}
+              style={styles.blurredBackground}
+              blurRadius={20}
+            />
 
-          <View style={styles.overlay} />
+            <Image
+              source={item}
+              style={{
+                width: "100%",
+                height: "100%",
+                resizeMode: "contain",
+                zIndex: 2,
+              }}
+            />
 
-          <View style={styles.content}>
-            <View style={{ maxWidth: "70%" }}>
-              <Text style={styles.title}>CUERVO ACTIVA</Text>
-              <Text style={styles.subtitle}>
-                Tu guía digital para vivir las tradiciones{"\n"}y la cultura de
-                nuestro pueblo.
-              </Text>
+            <View style={styles.overlay} />
+
+            <View style={styles.content}>
+              <View style={{ maxWidth: isMobile ? "90%" : "70%" }}>
+                <Text
+                  style={[
+                    styles.title,
+                    { fontSize: isMobile ? 30 : 42 },
+                  ]}
+                >
+                  CUERVO ACTIVA
+                </Text>
+                <Text
+                  style={[
+                    styles.subtitle,
+                    {
+                      fontSize: isMobile ? 14 : 16,
+                      lineHeight: isMobile ? 20 : 22,
+                    },
+                  ]}
+                >
+                  Tu guía digital para vivir las tradiciones{"\n"}y la cultura de
+                  nuestro pueblo.
+                </Text>
+              </View>
             </View>
           </View>
+
+          {/* ZONA BLANCA INFERIOR */}
+          <View style={{ height: whiteSpace, backgroundColor: "#fff" }} />
         </View>
       );
     }
 
+    // MOBILE NATIVE (NO SE TOCA)
     return (
       <View
         style={{
@@ -139,7 +170,6 @@ export default function HeroBanner() {
           source={item}
           style={styles.blurredBackground}
           blurRadius={15}
-          resizeMode="cover"
         />
 
         <Image
@@ -172,8 +202,6 @@ export default function HeroBanner() {
               fontWeight: "900",
               marginBottom: 8,
               textAlign: "center",
-              fontFamily:
-                Platform.OS === "web" ? "'Bebas Neue', sans-serif" : undefined,
               letterSpacing: 2,
             }}
           >
@@ -197,7 +225,6 @@ export default function HeroBanner() {
     );
   };
 
-
   return (
     <View
       style={{ width: "100%", overflow: "hidden" }}
@@ -214,19 +241,7 @@ export default function HeroBanner() {
         snapToAlignment="center"
         snapToInterval={containerWidth}
         showsHorizontalScrollIndicator={false}
-        scrollEnabled={false} 
-        getItemLayout={(_, index) => ({
-          length: containerWidth,
-          offset: containerWidth * index,
-          index,
-        })}
-        onMomentumScrollEnd={(event) => {
-          const index = Math.round(
-            event.nativeEvent.contentOffset.x / containerWidth
-          );
-          setCurrentIndex(index);
-          if (Platform.OS !== "web") triggerAnimation();
-        }}
+        scrollEnabled={false}
       />
     </View>
   );
@@ -257,15 +272,11 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#fff",
-    fontSize: 42,
     fontWeight: "900",
     marginBottom: 8,
     letterSpacing: 2,
-    fontFamily: Platform.OS === "web" ? "'Bebas Neue', sans-serif" : undefined,
   },
   subtitle: {
     color: "#fff",
-    fontSize: 16,
-    lineHeight: 22,
   },
 });

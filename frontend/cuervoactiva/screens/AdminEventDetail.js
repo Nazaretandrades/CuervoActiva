@@ -10,6 +10,7 @@ import {
   TouchableWithoutFeedback,
   Modal,
   Linking,
+  Dimensions,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -32,6 +33,50 @@ export default function AdminEventDetail({ route }) {
   const [shareVisible, setShareVisible] = useState(false);
   const navigation = useNavigation();
 
+  // ⭐ NUEVO → Modal para confirmar eliminar comentario
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState(null);
+
+  /* ================= RESPONSIVE BREAKPOINTS ================ */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const resize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+  const isMobileWeb = isWeb && winWidth < 768;
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
+  const isDesktopWeb = isWeb && winWidth >= 1440;
+  const isLargeWeb = isLaptopWeb || isDesktopWeb;
+
+  const pagePaddingHorizontal = isMobileWeb
+    ? 20
+    : isTabletWeb
+    ? 40
+    : isLaptopWeb
+    ? 55
+    : 80;
+
+  const pagePaddingBottom = isLargeWeb ? 80 : 30;
+
+  const eventContainerWidth = isMobileWeb
+    ? "100%"
+    : isTabletWeb
+    ? "100%"
+    : isLaptopWeb
+    ? "100%"
+    : "100%";
+
+  // ============================
+  //   CARGAR ADMIN
+  // ============================
   useEffect(() => {
     const loadAdmin = async () => {
       const session = await getSession();
@@ -40,12 +85,15 @@ export default function AdminEventDetail({ route }) {
     loadAdmin();
   }, []);
 
-  //  Cargar evento y valoraciones
+  // ============================
+  //   CARGAR EVENTO + COMENTARIOS
+  // ============================
   useEffect(() => {
     const loadEvent = async () => {
       try {
         const session = await getSession();
         const token = session?.token;
+
         const res = await fetch(`${API_URL}/${eventId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -65,6 +113,43 @@ export default function AdminEventDetail({ route }) {
     if (eventId) loadEvent();
   }, [eventId]);
 
+  // ⭐⭐⭐ NUEVO → FUNCIÓN PARA ELIMINAR COMENTARIO (sin alert)
+  const deleteComment = async (commentId) => {
+    try {
+      const session = await getSession();
+      const token = session?.token;
+
+      const res = await fetch(`${COMMENTS_URL}/${commentId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("No se pudo eliminar el comentario");
+
+      // Actualizar lista sin refrescar
+      setComments((prev) => prev.filter((c) => c._id !== commentId));
+    } catch (err) {
+      console.error("Error al eliminar comentario:", err);
+    }
+  };
+
+  // ⭐ NUEVO → Confirmar eliminación
+  const confirmDelete = async () => {
+    await deleteComment(commentToDelete);
+    setConfirmVisible(false);
+  };
+
+  // ⭐ NUEVO → Cancelar eliminación
+  const cancelDelete = () => {
+    setCommentToDelete(null);
+    setConfirmVisible(false);
+  };
+
+  // ============================
+  //   NAVEGACIÓN
+  // ============================
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -76,6 +161,11 @@ export default function AdminEventDetail({ route }) {
   const goToUsers = () => navigation.navigate("AdminUsers");
 
   const toggleMenu = () => {
+    if (!isWeb) {
+      setMenuVisible((prev) => !prev);
+      return;
+    }
+
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
@@ -113,14 +203,24 @@ export default function AdminEventDetail({ route }) {
 
   const shareWhatsApp = () => {
     if (!event) return;
-    const msg = `¡Mira este evento! ${event.title} - ${event.location}`;
+
+    const msg = `¡Mira este evento!
+Título: ${event.title}
+Lugar: ${event.location}
+Fecha: ${event.date}
+Hora: ${event.hour}`;
+
     const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
     Linking.openURL(url);
   };
 
   const shareTwitter = () => {
     if (!event) return;
-    const msg = `¡Mira este evento! ${event.title} - ${event.location}`;
+
+    const msg = `¡Mira este evento! 
+${event.title} - ${event.location} 
+📅 ${event.date} | ⏰ ${event.hour}`;
+
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       msg
     )}`;
@@ -131,7 +231,7 @@ export default function AdminEventDetail({ route }) {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/*  BARRA SUPERIOR  */}
+      {/* BARRA SUPERIOR */}
       <View
         style={{
           flexDirection: "row",
@@ -183,10 +283,22 @@ export default function AdminEventDetail({ route }) {
         {/* Iconos */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable
+            onPress={() => navigation.navigate("Admin")}
+            style={{
+              marginRight: 20,
+              ...(isWeb ? { cursor: "pointer" } : {}),
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/add-administrador.png")}
+              style={{ width: 26, height: 30, tintColor: "#0094A2" }}
+            />
+          </Pressable>
+          <Pressable
             onPress={goToNotifications}
             style={{
               marginRight: 20,
-              ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+              ...(isWeb ? { cursor: "pointer" } : {}),
             }}
           >
             <Image
@@ -199,7 +311,7 @@ export default function AdminEventDetail({ route }) {
             onPress={goToCalendar}
             style={{
               marginRight: 20,
-              ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+              ...(isWeb ? { cursor: "pointer" } : {}),
             }}
           >
             <Image
@@ -210,7 +322,7 @@ export default function AdminEventDetail({ route }) {
 
           <Pressable
             onPress={toggleMenu}
-            style={Platform.OS === "web" ? { cursor: "pointer" } : {}}
+            style={isWeb ? { cursor: "pointer" } : {}}
           >
             <Image
               source={
@@ -224,8 +336,8 @@ export default function AdminEventDetail({ route }) {
         </View>
       </View>
 
-      {/* === MENÚ LATERAL === */}
-      {Platform.OS === "web" && menuVisible && (
+      {/* MENÚ LATERAL WEB */}
+      {isWeb && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
             <View
@@ -282,191 +394,321 @@ export default function AdminEventDetail({ route }) {
         </>
       )}
 
-      {/* === DETALLE EVENTO === */}
+      {/* DETALLE EVENTO */}
       {event && (
-        <ScrollView
+        <View
           style={{
             flex: 1,
             backgroundColor: "#f5f6f7",
-            padding: 25,
-          }}
-          contentContainerStyle={{
-            paddingBottom: 40,
+            paddingHorizontal: pagePaddingHorizontal,
+            paddingTop: 20,
+            paddingBottom: pagePaddingBottom,
+            alignItems: "center",
           }}
         >
-          {/* Título */}
-          <View
+          <ScrollView
             style={{
-              backgroundColor: "#014869",
-              paddingVertical: 10,
-              paddingHorizontal: 15,
-              marginBottom: 20,
-              borderRadius: 3,
+              flex: 1,
+              width: eventContainerWidth,
+            }}
+            contentContainerStyle={{
+              paddingBottom: 40,
             }}
           >
-            <Text
-              style={{
-                color: "#fff",
-                fontWeight: "bold",
-                fontSize: 15,
-              }}
-            >
-              {event.title}
-            </Text>
-          </View>
-
-          {/* GRID 2 COLUMNAS – mismo estilo que organizador */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              gap: 20,
-            }}
-          >
-            {/* Imagen izquierda */}
-            <Image
-              source={{
-                uri:
-                  Platform.OS === "android"
-                    ? event.image_url.replace("localhost", "10.0.2.2")
-                    : event.image_url,
-              }}
-              style={{
-                width: "50%",
-                height: 250,
-                borderRadius: 8,
-              }}
-              resizeMode="cover"
-            />
-
-            {/* Descripción derecha */}
-            <View style={{ width: "48%" }}>
-              <Text
-                style={{
-                  color: "#014869",
-                  fontWeight: "bold",
-                  fontSize: 15,
-                  marginBottom: 8,
-                }}
-              >
-                Descripción
-              </Text>
-
-              <Text
-                style={{
-                  color: "#333",
-                  fontSize: 14,
-                  lineHeight: 20,
-                  textAlign: "justify",
-                }}
-              >
-                {event.description}
-              </Text>
-            </View>
-          </View>
-
-          {/* Estado + Compartir */}
-          <View
-            style={{
-              width: "100%",
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginTop: 30,
-              gap: 20,
-            }}
-          >
-            {/* Estado */}
+            {/* Título */}
             <View
               style={{
-                backgroundColor:
-                  new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
-                borderRadius: 25,
-                paddingVertical: 7,
-                paddingHorizontal: 18,
-                flexDirection: "row",
-                alignItems: "center",
+                backgroundColor: "#014869",
+                paddingVertical: 10,
+                paddingHorizontal: 15,
+                marginBottom: 20,
+                borderRadius: 3,
               }}
             >
               <Text
                 style={{
                   color: "#fff",
                   fontWeight: "bold",
-                  fontSize: 13,
+                  fontSize: 15,
                 }}
               >
-                {new Date(event.date) > new Date()
-                  ? "Habilitado"
-                  : "Deshabilitado"}
+                {event.title}
               </Text>
             </View>
 
-            {/* Compartir */}
-            <Pressable onPress={() => setShareVisible(true)}>
+            {/* 2 Columnas (responsive) */}
+            <View
+              style={{
+                flexDirection: isLargeWeb ? "row" : "column",
+                justifyContent: isLargeWeb ? "space-between" : "center",
+                alignItems: isLargeWeb ? "flex-start" : "center",
+                gap: 20,
+              }}
+            >
               <Image
-                source={require("../assets/iconos/compartir.png")}
-                style={{ width: 26, height: 26, tintColor: "#014869" }}
+                source={{
+                  uri:
+                    Platform.OS === "android"
+                      ? event.image_url.replace("localhost", "10.0.2.2")
+                      : event.image_url,
+                }}
+                style={{
+                  width: isLargeWeb ? "50%" : "100%",
+                  height: isLargeWeb ? 250 : 220,
+                  borderRadius: 8,
+                  marginBottom: isLargeWeb ? 0 : 15,
+                }}
+                resizeMode="cover"
               />
-            </Pressable>
-          </View>
 
-          {/* VALORACIONES (igual que organizador) */}
-          <View style={{ marginTop: 25 }}>
-            <Text
+              <View style={{ width: isLargeWeb ? "48%" : "100%" }}>
+                <Text
+                  style={{
+                    color: "#014869",
+                    fontWeight: "bold",
+                    fontSize: 15,
+                    marginBottom: 8,
+                  }}
+                >
+                  Descripción
+                </Text>
+
+                <Text
+                  style={{
+                    color: "#333",
+                    fontSize: 14,
+                    lineHeight: 20,
+                    textAlign: "justify",
+                  }}
+                >
+                  {event.description}
+                </Text>
+              </View>
+            </View>
+
+            {/* Estado + compartir */}
+            <View
               style={{
-                fontWeight: "bold",
-                color: "#014869",
-                marginBottom: 8,
-                fontSize: 14,
+                width: "100%",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: 30,
+                gap: 20,
               }}
             >
-              Valoraciones de usuarios
-            </Text>
+              <View
+                style={{
+                  backgroundColor:
+                    new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
+                  borderRadius: 25,
+                  paddingVertical: 7,
+                  paddingHorizontal: 18,
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontWeight: "bold",
+                    fontSize: 13,
+                  }}
+                >
+                  {new Date(event.date) > new Date()
+                    ? "Habilitado"
+                    : "Deshabilitado"}
+                </Text>
+              </View>
 
-            <ScrollView
-              style={{
-                maxHeight: 160,
-                backgroundColor: "#f9f9f9",
-                borderRadius: 8,
-                padding: 10,
-              }}
-            >
-              {comments.length > 0 ? (
-                comments.map((c, i) => (
-                  <View
-                    key={i}
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: 8,
-                      borderBottomWidth: 0.5,
-                      borderBottomColor: "#ddd",
-                      paddingBottom: 4,
-                    }}
-                  >
-                    <Text
+              <Pressable onPress={() => setShareVisible(true)}>
+                <Image
+                  source={require("../assets/iconos/compartir.png")}
+                  style={{ width: 26, height: 26, tintColor: "#014869" }}
+                />
+              </Pressable>
+            </View>
+
+            {/* ⭐⭐⭐ VALORACIONES + COMENTARIOS + BORRADO */}
+            <View style={{ marginTop: 25 }}>
+              <Text
+                style={{
+                  fontWeight: "bold",
+                  color: "#014869",
+                  marginBottom: isTabletWeb ? 1 : 0,
+                  fontSize: 14,
+                }}
+              >
+                Valoraciones de usuarios
+              </Text>
+
+              <ScrollView
+                style={{
+                  maxHeight: 130,
+                  backgroundColor: "#f9f9f9",
+                  borderRadius: 8,
+                  padding: 10,
+                }}
+              >
+                {comments.length > 0 ? (
+                  comments.map((c) => (
+                    <View
+                      key={c._id}
                       style={{
-                        color: "#014869",
-                        fontWeight: "600",
-                        flex: 1,
+                        backgroundColor: "#fff",
+                        padding: 10,
+                        borderRadius: 8,
+                        marginBottom: 12,
+                        borderWidth: 1,
+                        borderColor: "#ddd",
                       }}
                     >
-                      {c.user?.name || "Usuario"}
-                    </Text>
+                      {/* Usuario + estrellas */}
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "#014869",
+                            fontWeight: "600",
+                          }}
+                        >
+                          {c.user?.name || "Usuario"}
+                        </Text>
 
-                    {renderStars(c.rating)}
-                  </View>
-                ))
-              ) : (
-                <Text style={{ color: "#777", fontStyle: "italic" }}>
-                  Sin valoraciones aún.
+                        {renderStars(c.rating)}
+                      </View>
+
+                      {/* Texto del comentario */}
+                      {c.text && c.text.trim() !== "" && (
+                        <Text
+                          style={{
+                            marginTop: 6,
+                            color: "#333",
+                            fontSize: 13,
+                            lineHeight: 18,
+                            fontStyle: "italic",
+                          }}
+                        >
+                          "{c.text}"
+                        </Text>
+                      )}
+
+                      {/* ⭐ BOTÓN ELIMINAR (abre modal) ⭐ */}
+                      <Pressable
+                        onPress={() => {
+                          setCommentToDelete(c._id); // ⭐ NUEVO
+                          setConfirmVisible(true); // ⭐ NUEVO
+                        }}
+                        style={{
+                          marginTop: 10,
+                          alignSelf: "flex-end",
+                          backgroundColor: "#E63946",
+                          paddingVertical: 4,
+                          paddingHorizontal: 12,
+                          borderRadius: 6,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "#fff",
+                            fontWeight: "700",
+                            fontSize: 12,
+                          }}
+                        >
+                          Eliminar
+                        </Text>
+                      </Pressable>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={{ color: "#777", fontStyle: "italic" }}>
+                    Sin valoraciones aún.
+                  </Text>
+                )}
+              </ScrollView>
+            </View>
+          </ScrollView>
+        </View>
+      )}
+
+      {/* ⭐⭐⭐ MODAL DE CONFIRMACIÓN DE ELIMINAR ⭐⭐⭐ */}
+      {confirmVisible && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 999,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#fff",
+              width: 320,
+              borderRadius: 15,
+              padding: 22,
+              alignItems: "center",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 17,
+                fontWeight: "700",
+                color: "#014869",
+                marginBottom: 20,
+                textAlign: "center",
+              }}
+            >
+              ¿Eliminar este comentario?
+            </Text>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                width: "80%",
+              }}
+            >
+              <Pressable
+                onPress={cancelDelete}
+                style={{
+                  backgroundColor: "#ccc",
+                  paddingVertical: 8,
+                  paddingHorizontal: 20,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ fontWeight: "700", color: "#333" }}>
+                  Cancelar
                 </Text>
-              )}
-            </ScrollView>
+              </Pressable>
+
+              <Pressable
+                onPress={confirmDelete}
+                style={{
+                  backgroundColor: "#E63946",
+                  paddingVertical: 8,
+                  paddingHorizontal: 20,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ fontWeight: "700", color: "#fff" }}>
+                  Eliminar
+                </Text>
+              </Pressable>
+            </View>
           </View>
-        </ScrollView>
+        </View>
       )}
 
       {/* MODAL COMPARTIR */}
@@ -541,13 +783,24 @@ export default function AdminEventDetail({ route }) {
         </View>
       </Modal>
 
-      {/* FOOTER  */}
-      {Platform.OS === "web" && (
-        <Footer
-          onAboutPress={goToAboutUs}
-          onPrivacyPress={goToPrivacy}
-          onConditionsPress={goToConditions}
-        />
+      {/* FOOTER WEB RESPONSIVE */}
+      {isWeb && isLargeWeb && (
+        <View
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: "#fff",
+            zIndex: 100,
+          }}
+        >
+          <Footer
+            onAboutPress={goToAboutUs}
+            onPrivacyPress={goToPrivacy}
+            onConditionsPress={goToConditions}
+          />
+        </View>
       )}
     </View>
   );

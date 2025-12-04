@@ -1,58 +1,39 @@
-import React, { useEffect } from "react";
-import { View, ScrollView, Platform, SafeAreaView } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import HeroBanner from "../components/HeroBanner";
-import Footer from "../components/Footer";
 
 export default function Intro() {
   const navigation = useNavigation();
+  const [headerHeight, setHeaderHeight] = useState(0);
 
   useEffect(() => {
-    if (Platform.OS === "web") {
-      document.body.style.backgroundColor = "#ffffff";
-    }
+    if (Platform.OS === "web") document.body.style.margin = "0";
   }, []);
 
-  const handleSeenIntro = async (nextScreen) => {
-    try {
-      await AsyncStorage.setItem("SEEN_INTRO", "true");
-      navigation.navigate(nextScreen);
-    } catch (err) {
-      console.error("Error guardando SEEN_INTRO:", err);
-      navigation.navigate(nextScreen);
-    }
+  const handleSeenIntro = async (screen) => {
+    await AsyncStorage.setItem("SEEN_INTRO", "true");
+    navigation.navigate(screen);
   };
 
-  return (
-    <View className="flex-1 bg-[#ffffff] justify-between">
-      {Platform.OS === "web" ? (
-        <Header
-          onLogin={() => handleSeenIntro("Login")}
-          onRegister={() => handleSeenIntro("Register")}
-        />
-      ) : (
-        <SafeAreaView className="mt-12">
-          <Header
-            onLogin={() => handleSeenIntro("Login")}
-            onRegister={() => handleSeenIntro("Register")}
-          />
-        </SafeAreaView>
-      )}
+  const windowHeight =
+    typeof window !== "undefined" ? window.innerHeight : 800;
 
-      <View className="flex-1 bg-[#ffffff]">
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            justifyContent: "center",
-          }}
-          className="bg-[#ffffff]"
-        >
-          <View className="items-center justify-center w-full bg-[#ffffff]">
-            <HeroBanner onNext={() => handleSeenIntro("Login")} />
-          </View>
-        </ScrollView>
+  const heroHeight = windowHeight - headerHeight;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <Header
+        onLogin={() => handleSeenIntro("Login")}
+        onRegister={() => handleSeenIntro("Register")}
+        onHeaderHeight={(h) => setHeaderHeight(h)}
+      />
+
+      {/* HERO con altura exacta */}
+      <View style={{ height: heroHeight, width: "100%" }}>
+        <HeroBanner height={heroHeight} />
       </View>
     </View>
   );

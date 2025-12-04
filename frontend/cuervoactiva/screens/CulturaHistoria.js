@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Animated,
   Pressable,
   TouchableWithoutFeedback,
+  Dimensions,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -22,6 +23,63 @@ export default function CulturaHistoria() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [userName, setUserName] = useState("Usuario");
+
+  /* ---------- Responsive web (solo web) ---------- */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const handleResize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+
+  // 📌 BREAKPOINTS OPCIÓN A
+  const isMobileWeb = isWeb && winWidth < 768;
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
+  const isLargeWeb = isWeb && winWidth >= 1024;
+  const showFooter = isLaptopWeb || isLargeWeb;
+
+  // ⭐ Breakpoints móviles pequeños y grandes SOLO WEB
+  const isMobileSmall = isWeb && winWidth < 400;
+  const isMobileMedium = isWeb && winWidth >= 400 && winWidth < 500;
+  const isMobileLarge = isWeb && winWidth >= 500 && winWidth < 768;
+
+  // ⭐ Tamaño dinámico del párrafo SOLO móvil web
+  const paragraphFontSize = isMobileSmall
+    ? 14
+    : isMobileMedium
+    ? 15
+    : isMobileLarge
+    ? 16
+    : 16;
+
+  /* ============================
+     ⭐ ALTURA SCROLL EVENTOS
+     ============================ */
+  const eventScrollMaxHeight = isMobileWeb
+    ? 250
+    : isTabletWeb
+    ? 180
+    : isLaptopWeb
+    ? 220
+    : 280;
+
+  /* ============================
+     ⭐ ANCHO DEL CONTENEDOR
+     ============================ */
+  const eventContainerResponsiveStyle = !isWeb
+    ? {}
+    : isMobileWeb
+    ? { width: "100%", maxWidth: "100%" }
+    : isTabletWeb
+    ? { width: "90%", maxWidth: 1000 }
+    : { width: "60%", maxWidth: 1200 };
 
   const nav = useNavigation();
 
@@ -51,12 +109,14 @@ export default function CulturaHistoria() {
       : role === "organizer"
       ? nav.navigate("OrganizerProfile")
       : nav.navigate("UserProfile");
+
   const goToNotifications = () =>
     role === "admin"
       ? nav.navigate("AdminNotifications")
       : role === "organizer"
       ? nav.navigate("OrganizerNotifications")
       : nav.navigate("UserNotifications");
+
   const goToAboutUs = () => nav.navigate("SobreNosotros");
   const goToPrivacy = () => nav.navigate("PoliticaPrivacidad");
   const goToConditions = () => nav.navigate("Condiciones");
@@ -64,6 +124,7 @@ export default function CulturaHistoria() {
   const goToCulturaHistoria = () => nav.navigate("CulturaHistoria");
   const goToCalendar = () => nav.navigate("Calendar");
   const goToHomeUser = () => nav.navigate("User");
+  const goToAbout = () => navigation.navigate("SobreNosotros");
 
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
@@ -86,44 +147,26 @@ export default function CulturaHistoria() {
       }).start(() => setMenuVisible(false));
     }
   };
+  /* ============================
+     ⭐ TOPBARS POR ROL
+     ============================ */
 
   const renderUserTopBar = () => (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 24,
-        paddingVertical: 14,
-        justifyContent: "space-between",
-        backgroundColor: "#fff",
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <View
-          style={{
-            marginRight: 12,
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: "#014869",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+    <View style={styles.topBar}>
+      <View style={styles.topBarLeft}>
+        <View style={[styles.avatarCircle, { backgroundColor: "#014869" }]}>
           <Image
             source={require("../assets/iconos/user.png")}
             style={{ width: 24, height: 24, tintColor: "#fff" }}
           />
         </View>
         <View>
-          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
-            Usuario
-          </Text>
-          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+          <Text style={styles.topBarRole}>Usuario</Text>
+          <Text style={styles.topBarName}>{userName}</Text>
         </View>
       </View>
 
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <View style={styles.topBarRight}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
             source={require("../assets/iconos/bell.png")}
@@ -131,7 +174,7 @@ export default function CulturaHistoria() {
           />
         </Pressable>
 
-        {Platform.OS === "web" && (
+        {isWeb && (
           <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
             <Image
               source={require("../assets/iconos/calendar.png")}
@@ -155,28 +198,13 @@ export default function CulturaHistoria() {
   );
 
   const renderOrganizerTopBar = () => (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 24,
-        paddingVertical: 14,
-        justifyContent: "space-between",
-        backgroundColor: "#fff",
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+    <View style={styles.topBar}>
+      <View style={styles.topBarLeft}>
         <View
-          style={{
-            position: "relative",
-            marginRight: 12,
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: "#F3B23F",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          style={[
+            styles.avatarCircle,
+            { backgroundColor: "#F3B23F", position: "relative" },
+          ]}
         >
           <Image
             source={require("../assets/iconos/user.png")}
@@ -197,14 +225,12 @@ export default function CulturaHistoria() {
         </View>
 
         <View>
-          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
-            Organizador
-          </Text>
-          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+          <Text style={styles.topBarRole}>Organizador</Text>
+          <Text style={styles.topBarName}>{userName}</Text>
         </View>
       </View>
 
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <View style={styles.topBarRight}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
             source={require("../assets/iconos/bell3.png")}
@@ -212,7 +238,7 @@ export default function CulturaHistoria() {
           />
         </Pressable>
 
-        {Platform.OS === "web" && (
+        {isWeb && (
           <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
             <Image
               source={require("../assets/iconos/calendar-organizador.png")}
@@ -236,28 +262,13 @@ export default function CulturaHistoria() {
   );
 
   const renderAdminTopBar = () => (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 24,
-        paddingVertical: 14,
-        justifyContent: "space-between",
-        backgroundColor: "#fff",
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+    <View style={styles.topBar}>
+      <View style={styles.topBarLeft}>
         <View
-          style={{
-            position: "relative",
-            marginRight: 12,
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: "#0094A2",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          style={[
+            styles.avatarCircle,
+            { backgroundColor: "#0094A2", position: "relative" },
+          ]}
         >
           <Image
             source={require("../assets/iconos/user.png")}
@@ -276,19 +287,17 @@ export default function CulturaHistoria() {
           />
         </View>
         <View>
-          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
-            Admin.
-          </Text>
-          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+          <Text style={styles.topBarRole}>Admin.</Text>
+          <Text style={styles.topBarName}>{userName}</Text>
         </View>
       </View>
 
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <View style={styles.topBarRight}>
         <Pressable
           onPress={goToNotifications}
           style={{
             marginRight: 20,
-            ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+            ...(isWeb ? { cursor: "pointer" } : {}),
           }}
         >
           <Image
@@ -301,7 +310,7 @@ export default function CulturaHistoria() {
           onPress={goToCalendar}
           style={{
             marginRight: 20,
-            ...(Platform.OS === "web" ? { cursor: "pointer" } : {}),
+            ...(isWeb ? { cursor: "pointer" } : {}),
           }}
         >
           <Image
@@ -312,7 +321,7 @@ export default function CulturaHistoria() {
 
         <Pressable
           onPress={toggleMenu}
-          style={Platform.OS === "web" ? { cursor: "pointer" } : {}}
+          style={isWeb ? { cursor: "pointer" } : {}}
         >
           <Image
             source={
@@ -327,8 +336,11 @@ export default function CulturaHistoria() {
     </View>
   );
 
+  /* ============================
+     ⭐ MENÚ LATERAL WEB
+     ============================ */
   const renderWebMenu = () => {
-    if (!menuVisible || Platform.OS !== "web") return null;
+    if (!menuVisible || !isWeb) return null;
 
     let menuItems = [];
 
@@ -408,7 +420,9 @@ export default function CulturaHistoria() {
       </>
     );
   };
-
+  /* ============================
+     ⭐ RENDER
+     ============================ */
   return (
     <View style={styles.pageContainer}>
       <Header hideAuthButtons />
@@ -419,6 +433,7 @@ export default function CulturaHistoria() {
 
       {renderWebMenu()}
 
+      {/* Menú móvil nativo */}
       {Platform.OS !== "web" &&
         menuVisible &&
         (role === "organizer" ? (
@@ -427,18 +442,29 @@ export default function CulturaHistoria() {
           <UserMenu onClose={toggleMenu} />
         ) : null)}
 
+      {/* SCROLL PRINCIPAL */}
       <ScrollView
-        style={{ flex: 1 }}
         contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingVertical: 20,
-          flexGrow: 1,
+          paddingHorizontal: isMobileWeb ? 20 : 55,
+          paddingTop: 5,
+          paddingBottom: isLargeWeb ? 40 : 20,
         }}
         showsVerticalScrollIndicator
         nestedScrollEnabled
       >
         <Text style={styles.title}>Cultura e Historia</Text>
-        <Text style={styles.paragraph}>
+
+        {/* TEXTO AJUSTADO PARA MOVILES */}
+        <Text
+          style={[
+            styles.paragraph,
+            isMobileSmall
+              ? { fontSize: 13, lineHeight: 18 }
+              : isMobileLarge
+              ? { fontSize: 14, lineHeight: 20 }
+              : {},
+          ]}
+        >
           El Cuervo de Sevilla, situado en la comarca del Bajo Guadalquivir, fue
           parte de Lebrija hasta finales del siglo XX. Su independencia se
           alcanzó el 19 de diciembre de 1992 tras un movimiento popular que
@@ -452,11 +478,32 @@ export default function CulturaHistoria() {
         <View
           style={[
             styles.eventContainer,
-            Platform.OS !== "web" && styles.eventContainerMobile,
+            !isWeb && styles.eventContainerMobile,
+            eventContainerResponsiveStyle,
+            {
+              marginTop: isMobileSmall
+                ? -20
+                : isMobileLarge
+                ? -10
+                : isTabletWeb
+                ? 20
+                : isLaptopWeb
+                ? 20
+                : isLargeWeb
+                ? 20
+                : -10,
+            },
           ]}
         >
-          {Platform.OS === "web" ? (
-            <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator>
+          {isWeb ? (
+            <ScrollView
+              style={
+                eventScrollMaxHeight
+                  ? { maxHeight: eventScrollMaxHeight }
+                  : undefined
+              }
+              showsVerticalScrollIndicator
+            >
               {events.map((evt, i) => (
                 <View key={i}>
                   <View style={styles.eventCard}>
@@ -485,16 +532,21 @@ export default function CulturaHistoria() {
         </View>
       </ScrollView>
 
-      {Platform.OS === "web" && (
-        <Footer
-          onAboutPress={goToAboutUs}
-          onPrivacyPress={goToPrivacy}
-          onConditionsPress={goToConditions}
-        />
+      {/* FOOTER */}
+      {isWeb && showFooter && (
+        <View style={{ position: "fixed", bottom: 0, left: 0, right: 0 }}>
+          <Footer
+            onAboutPress={goToAbout}
+            onPrivacyPress={goToPrivacy}
+            onConditionsPress={goToConditions}
+          />
+        </View>
       )}
     </View>
   );
 }
+
+/* ========= 📌 LISTA COMPLETA DE EVENTOS ========= */
 
 const events = [
   {
@@ -527,15 +579,85 @@ const events = [
     description:
       "Las Fiestas Patronales en honor a la Virgen del Rosario son el broche de oro del calendario festivo de El Cuervo. Durante varios días, el municipio se llena de alegría, fe y tradición. Las calles se adornan con flores y banderines, y los vecinos participan en misas, procesiones y actos religiosos en los que la patrona recorre el pueblo entre aplausos y vítores. Junto a las actividades religiosas, el programa incluye conciertos, pasacalles, competiciones deportivas y actividades culturales para todas las edades. Es un tiempo de reencuentros, en el que muchos cuerveños que viven fuera regresan para celebrar junto a familiares y amigos. Las fiestas patronales son un reflejo del amor y la devoción del pueblo por su Virgen, símbolo de esperanza, unión y orgullo local.",
   },
+  {
+    title: "Cabalgata de Reyes Magos",
+    image: require("../assets/cabalgatas.jpg"),
+    description:
+      "Cada 5 de enero, El Cuervo celebra su tradicional Cabalgata de Reyes Magos, en la que Melchor, Gaspar y Baltasar recorren las calles del municipio lanzando caramelos y regalos a los niños. Carrozas decoradas por asociaciones locales, música, animación y un ambiente familiar convierten este desfile en uno de los días más especiales del año.",
+  },
+  {
+    title: "Encendido del Alumbrado y Mercadillo de Navidad",
+    image: require("../assets/alumbrado_navidad.jpg"),
+    description:
+      "El encendido del alumbrado navideño marca el inicio de la Navidad en El Cuervo. Se acompaña de un mercadillo con artesanía local, actividades infantiles, actuaciones musicales y visitas de personajes navideños. Es un evento esperado que reúne a familias y asociaciones del municipio.",
+  },
+  {
+    title: "Verano Cultural – Noches al Fresquito",
+    image: require("../assets/cine.jpg"),
+    description:
+      "Durante los meses de verano, el Ayuntamiento organiza el programa 'Verano Cultural', que incluye noches de cine al aire libre, conciertos, teatro, actividades infantiles y espectáculos. Estas veladas, celebradas en plazas y espacios abiertos, fomentan la convivencia y el ocio para todas las edades.",
+  },
+  {
+    title: "Concurso de Saetas",
+    image: require("../assets/saetas.jpg"),
+    description:
+      "En la época de Cuaresma, El Cuervo acoge el Concurso de Saetas, un certamen donde saeteros locales y de municipios cercanos interpretan este canto tradicional lleno de emoción y devoción. Es un evento cultural muy significativo que realza la importancia del flamenco religioso en la localidad.",
+  },
+  {
+    title: "Día de Andalucía",
+    image: require("../assets/andalucia.jpg"),
+    description:
+      "El 28 de febrero, El Cuervo celebra el Día de Andalucía con actos institucionales, actuaciones de música y danza, actividades escolares, degustaciones populares y convivencia ciudadana. Es una jornada festiva en la que se pone en valor la identidad andaluza y la participación comunitaria.",
+  },
 ];
+
+/* ========= 📌 ESTILOS ========= */
 
 const styles = StyleSheet.create({
   pageContainer: {
     flex: 1,
     backgroundColor: "#fff",
-    minHeight: "100vh",
-    justifyContent: "space-between",
   },
+
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
+  },
+
+  topBarLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  topBarRight: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  avatarCircle: {
+    marginRight: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  topBarRole: {
+    color: "#014869",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+
+  topBarName: {
+    color: "#6c757d",
+    fontSize: 13,
+  },
+
   title: {
     fontSize: 24,
     fontWeight: "bold",
@@ -543,6 +665,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 15,
   },
+
   paragraph: {
     fontSize: 16,
     color: "#333",
@@ -550,33 +673,38 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "justify",
   },
+
   eventContainer: {
     backgroundColor: "#f5f5f5",
     borderRadius: 8,
     padding: 20,
-    width: "200%",
+    width: "100%",
     maxWidth: 1500,
     alignSelf: "center",
     boxShadow: "0 0 10px rgba(0,0,0,0.1)",
     marginTop: 25,
   },
+
   eventContainerMobile: {
     width: "100%",
     maxWidth: "100%",
     padding: 16,
     boxShadow: undefined,
   },
+
   eventCard: {
     flexDirection: "row",
     backgroundColor: "#f5f5f5",
     paddingVertical: 10,
     alignItems: "flex-start",
   },
+
   eventCardMobile: {
     backgroundColor: "#f5f5f5",
     paddingVertical: 10,
     alignItems: "center",
   },
+
   eventImage: {
     width: 140,
     height: 100,
@@ -584,6 +712,7 @@ const styles = StyleSheet.create({
     marginRight: 18,
     resizeMode: "cover",
   },
+
   eventImageMobile: {
     width: "100%",
     height: 180,
@@ -591,19 +720,23 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     resizeMode: "cover",
   },
+
   eventTextContainer: { flex: 1 },
+
   eventTitle: {
     fontSize: 17,
     fontWeight: "bold",
     color: "#014869",
     marginBottom: 6,
   },
+
   eventText: {
     fontSize: 14,
     color: "#444",
     lineHeight: 20,
     textAlign: "justify",
   },
+
   separator: {
     height: 1,
     backgroundColor: "#ddd",

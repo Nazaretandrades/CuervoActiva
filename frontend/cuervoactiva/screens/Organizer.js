@@ -9,13 +9,17 @@ import {
   ScrollView,
   Animated,
   FlatList,
+  Dimensions,
+  Modal,
 } from "react-native";
+
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
+
 const API_URL =
   Platform.OS === "android"
     ? "http://10.0.2.2:5000/api/events"
@@ -45,6 +49,42 @@ export default function Organizer() {
   const [bannerColor, setBannerColor] = useState("#33ADB5");
   const bannerOpacity = useRef(new Animated.Value(0)).current;
   const navigation = useNavigation();
+
+  /* ---------- Responsive web (como Admin) ---------- */
+  const [winWidth, setWinWidth] = useState(
+    Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const handleResize = () => setWinWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isWeb = Platform.OS === "web";
+
+  const isMobileWeb = isWeb && winWidth < 768;
+  const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
+  const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
+  const isLargeWeb = isWeb && winWidth >= 1440;
+
+  const showFooterFixed = isLaptopWeb || isLargeWeb;
+
+  const searchBarWidth = isWeb
+    ? isMobileWeb
+      ? "100%"
+      : isTabletWeb
+      ? 420
+      : 700
+    : "45%";
+
+  const listMaxHeight = isMobileWeb ? 260 : isTabletWeb ? 400 : 500;
+
+  const showTwoColumns = !isWeb ? true : !isMobileWeb;
+
+  // Modal del formulario SOLO en web móvil
+  const [formModalVisible, setFormModalVisible] = useState(false);
 
   const showBanner = (msg, color = "#33ADB5") => {
     setBannerMessage(msg);
@@ -137,7 +177,29 @@ export default function Organizer() {
     }
   }, [search, events]);
 
-  const handleEdit = (ev) => setForm(ev);
+  const handleEdit = (ev) => {
+    setForm(ev);
+    if (isWeb && isMobileWeb) {
+      setFormModalVisible(true);
+    }
+  };
+
+  const openCreateModal = () => {
+    setForm({
+      _id: null,
+      title: "",
+      description: "",
+      date: "",
+      hour: "",
+      location: "",
+      category: "deporte",
+      image_url: "",
+    });
+    if (isWeb && isMobileWeb) {
+      setFormModalVisible(true);
+    }
+  };
+
   const goToEventDetail = (eventId) =>
     navigation.navigate("OrganizerEventDetail", { eventId });
   const goToNotifications = () => navigation.navigate("OrganizerNotifications");
@@ -153,117 +215,131 @@ export default function Organizer() {
     navigation.navigate("EditEvent", { eventData: event });
   };
 
-  const renderTopBar = () => (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 24,
-        paddingVertical: 14,
-        justifyContent: "space-between",
-        backgroundColor: "#fff",
-      }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+  const renderTopBar = () => {
+    const topBarStyle = {
+      flexDirection: isMobileWeb ? "column" : "row",
+      alignItems: isMobileWeb ? "flex-start" : "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 24,
+      paddingVertical: isMobileWeb ? 12 : 14,
+      gap: isMobileWeb ? 14 : 0,
+      backgroundColor: "#fff",
+    };
+
+    return (
+      <View style={topBarStyle}>
+        {/* IZQUIERDA: avatar + nombre */}
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View
+            style={{
+              position: "relative",
+              marginRight: 12,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: "#F3B23F",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Image
+              source={require("../assets/iconos/user.png")}
+              style={{ width: 24, height: 24, tintColor: "#fff" }}
+            />
+
+            <Image
+              source={require("../assets/iconos/lapiz.png")}
+              style={{
+                position: "absolute",
+                top: -6,
+                left: -6,
+                width: 20,
+                height: 20,
+                resizeMode: "contain",
+                transform: [{ rotate: "-20deg" }],
+              }}
+            />
+          </View>
+
+          <View>
+            <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
+              Organiz.
+            </Text>
+            <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
+          </View>
+        </View>
+
+        {/* CENTRO: BUSCADOR (se mueve en móvil) */}
         <View
           style={{
-            position: "relative",
-            marginRight: 12,
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: "#F3B23F",
+            flexDirection: "row",
             alignItems: "center",
-            justifyContent: "center",
+            borderWidth: 1,
+            borderColor: "#F3B23F",
+            borderRadius: 3,
+            paddingHorizontal: 10,
+            backgroundColor: "#fff",
+            width: searchBarWidth,
+            height: 36,
+            marginTop: isMobileWeb ? 6 : 0,
           }}
         >
-          <Image
-            source={require("../assets/iconos/user.png")}
-            style={{ width: 24, height: 24, tintColor: "#fff" }}
-          />
-          <Image
-            source={require("../assets/iconos/lapiz.png")}
+          <TextInput
+            placeholder="Buscar eventos..."
+            value={search}
+            onChangeText={setSearch}
+            placeholderTextColor="#6b6f72"
             style={{
-              position: "absolute",
-              top: -6,
-              left: -6,
-              width: 20,
-              height: 20,
-              resizeMode: "contain",
-              transform: [{ rotate: "-20deg" }],
+              flex: 1,
+              color: "#014869",
+              fontSize: 14,
             }}
           />
-        </View>
-        <View>
-          <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
-            Organiz.
-          </Text>
-          <Text style={{ color: "#6c757d", fontSize: 13 }}>{userName}</Text>
-        </View>
-      </View>
-
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          borderWidth: 1,
-          borderColor: "#F3B23F",
-          borderRadius: 3,
-          paddingHorizontal: 10,
-          backgroundColor: "#fff",
-          width: Platform.OS === "web" ? 700 : "45%",
-          height: 36,
-          marginHorizontal: 16,
-        }}
-      >
-        <TextInput
-          placeholder="Buscar eventos..."
-          value={search}
-          onChangeText={setSearch}
-          placeholderTextColor="#6b6f72"
-          style={{
-            flex: 1,
-            color: "#014869",
-            fontSize: 14,
-            paddingVertical: 0,
-          }}
-        />
-        <Image
-          source={require("../assets/iconos/search-organizador.png")}
-          style={{ width: 16, height: 16, tintColor: "#F3B23F" }}
-        />
-      </View>
-
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
           <Image
-            source={require("../assets/iconos/bell3.png")}
-            style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+            source={require("../assets/iconos/search-organizador.png")}
+            style={{ width: 16, height: 16, tintColor: "#F3B23F" }}
           />
-        </Pressable>
+        </View>
 
-        {Platform.OS === "web" && (
-          <Pressable onPress={goToCalendar} style={{ marginRight: 18 }}>
+        {/* DERECHA: ICONOS (se bajan en móvil web) */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginTop: isMobileWeb ? 2 : 0,
+            gap: 16,
+          }}
+        >
+          <Pressable onPress={goToNotifications}>
             <Image
-              source={require("../assets/iconos/calendar-organizador.png")}
+              source={require("../assets/iconos/bell3.png")}
               style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
             />
           </Pressable>
-        )}
 
-        <Pressable onPress={toggleMenu}>
-          <Image
-            source={
-              menuVisible
-                ? require("../assets/iconos/close-organizador.png")
-                : require("../assets/iconos/menu-organizador.png")
-            }
-            style={{ width: 24, height: 24, tintColor: "#F3B23F" }}
-          />
-        </Pressable>
+          {Platform.OS === "web" && (
+            <Pressable onPress={goToCalendar}>
+              <Image
+                source={require("../assets/iconos/calendar-organizador.png")}
+                style={{ width: 22, height: 22, tintColor: "#F3B23F" }}
+              />
+            </Pressable>
+          )}
+
+          <Pressable onPress={toggleMenu}>
+            <Image
+              source={
+                menuVisible
+                  ? require("../assets/iconos/close-organizador.png")
+                  : require("../assets/iconos/menu-organizador.png")
+              }
+              style={{ width: 24, height: 24, tintColor: "#F3B23F" }}
+            />
+          </Pressable>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
@@ -340,18 +416,48 @@ export default function Organizer() {
   };
 
   const handleSubmit = async () => {
-    const required = [
-      "title",
-      "description",
-      "date",
-      "hour",
-      "location",
-      "category",
-      "image_url",
-    ];
-    const missing = required.filter((f) => !form[f]?.trim());
-    if (missing.length > 0) {
-      showBanner("⚠️ Completa todos los campos antes de continuar", "#f1c40f");
+    if (!form.title.trim()) {
+      showBanner("El título es obligatorio", "#e67e22");
+      return;
+    }
+
+    if (!form.description.trim()) {
+      showBanner("La descripción es obligatoria", "#e67e22");
+      return;
+    }
+
+    if (!form.date.trim()) {
+      showBanner("La fecha es obligatoria", "#e67e22");
+      return;
+    }
+
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(form.date)) {
+      showBanner("La fecha debe tener formato DD/MM/YYYY", "#e67e22");
+      return;
+    }
+
+    if (!form.hour.trim()) {
+      showBanner("La hora es obligatoria", "#e67e22");
+      return;
+    }
+
+    if (!/^\d{2}:\d{2}$/.test(form.hour)) {
+      showBanner("La hora debe tener formato HH:MM", "#e67e22");
+      return;
+    }
+
+    if (!form.location.trim()) {
+      showBanner("La ubicación es obligatoria", "#e67e22");
+      return;
+    }
+
+    if (!form.category.trim()) {
+      showBanner("La categoría es obligatoria", "#e67e22");
+      return;
+    }
+
+    if (!form.image_url.trim()) {
+      showBanner("Debes añadir una imagen", "#e67e22");
       return;
     }
 
@@ -396,6 +502,9 @@ export default function Organizer() {
         category: "deporte",
         image_url: "",
       });
+      if (isWeb && isMobileWeb) {
+        setFormModalVisible(false);
+      }
     } catch {
       showBanner("❌ No se pudo guardar el evento", "#e74c3c");
     } finally {
@@ -403,6 +512,317 @@ export default function Organizer() {
     }
   };
 
+  // === FORMULARIO REUTILIZABLE (web) ===
+  const renderFormContent = () => (
+    <>
+      <Text
+        style={{
+          fontWeight: "bold",
+          marginBottom: 14,
+          fontSize: 18,
+          color: "#02486b",
+          textAlign: "left",
+        }}
+      ></Text>
+
+      {/* CAMPOS SUPERIORES */}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+        <View style={{ flex: 1, minWidth: showTwoColumns ? "45%" : "100%" }}>
+          <Text
+            style={{
+              fontWeight: "600",
+              marginBottom: 4,
+              color: "#014869",
+            }}
+          >
+            Título:
+          </Text>
+          <TextInput
+            value={form.title}
+            onChangeText={(t) => setForm({ ...form, title: t })}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              height: 36,
+              paddingHorizontal: 10,
+              marginBottom: 10,
+            }}
+          />
+
+          <Text
+            style={{
+              fontWeight: "600",
+              marginBottom: 4,
+              color: "#014869",
+            }}
+          >
+            Fecha (DD/MM/YYYY):
+          </Text>
+          <TextInput
+            value={form.date}
+            onChangeText={(t) => setForm({ ...form, date: t })}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              height: 36,
+              paddingHorizontal: 10,
+              marginBottom: 10,
+            }}
+          />
+
+          <Text
+            style={{
+              fontWeight: "600",
+              marginBottom: 4,
+              color: "#014869",
+            }}
+          >
+            Hora (HH:MM):
+          </Text>
+          <TextInput
+            value={form.hour}
+            onChangeText={(t) => setForm({ ...form, hour: t })}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              height: 36,
+              paddingHorizontal: 10,
+              marginBottom: 10,
+            }}
+          />
+        </View>
+
+        {/* DESCRIPCIÓN + LUGAR */}
+        <View style={{ flex: 1, minWidth: showTwoColumns ? "45%" : "100%" }}>
+          <Text
+            style={{
+              fontWeight: "600",
+              marginBottom: 4,
+              color: "#014869",
+            }}
+          >
+            Descripción:
+          </Text>
+          <TextInput
+            value={form.description}
+            onChangeText={(t) => setForm({ ...form, description: t })}
+            multiline
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              height: 80,
+              padding: 10,
+              marginBottom: 10,
+              textAlignVertical: "top",
+            }}
+          />
+
+          <Text
+            style={{
+              fontWeight: "600",
+              marginBottom: 4,
+              color: "#014869",
+            }}
+          >
+            Lugar:
+          </Text>
+          <TextInput
+            value={form.location}
+            onChangeText={(t) => setForm({ ...form, location: t })}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              height: 36,
+              paddingHorizontal: 10,
+              marginBottom: 10,
+            }}
+          />
+        </View>
+      </View>
+
+      {/* CATEGORÍA */}
+      <Text
+        style={{
+          fontWeight: "600",
+          marginBottom: 4,
+          color: "#014869",
+        }}
+      >
+        Categoría:
+      </Text>
+
+      <View style={{ zIndex: 9999 }}>
+        <DropDownPicker
+          open={open}
+          value={form.category}
+          items={[
+            { label: "Deporte", value: "deporte" },
+            { label: "Concurso y Taller", value: "concurso" },
+            { label: "Cultura e Historia", value: "cultura" },
+            { label: "Arte y Música", value: "arte" },
+          ]}
+          setOpen={setOpen}
+          setValue={(cb) =>
+            setForm((prev) => ({ ...prev, category: cb(prev.category) }))
+          }
+          style={{
+            backgroundColor: "#fff",
+            borderColor: "#ddd",
+            borderRadius: 20,
+            height: 40,
+            marginBottom: open ? 200 : 10,
+          }}
+          dropDownContainerStyle={{
+            borderColor: "#ddd",
+            zIndex: 9999,
+            elevation: 20,
+          }}
+        />
+      </View>
+
+      {/* IMAGEN */}
+      <Text
+        style={{
+          fontWeight: "600",
+          color: "#014869",
+        }}
+      >
+        Imagen del evento:
+      </Text>
+
+      <View
+        style={{
+          borderWidth: 1,
+          borderColor: "#ddd",
+          borderRadius: 20,
+          backgroundColor: "#fff",
+          height: 120,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingTop: 8,
+          marginBottom: 20,
+        }}
+      >
+        {form.image_url ? (
+          <Image
+            source={{ uri: form.image_url }}
+            style={{
+              width: 90,
+              height: 90,
+              borderRadius: 10,
+            }}
+          />
+        ) : (
+          <Text style={{ color: "#666" }}>Sin imagen seleccionada</Text>
+        )}
+
+        <Pressable onPress={pickImage}>
+          <Text style={{ color: "#014869", fontSize: 13 }}>
+            🖼️ Añadir imagen
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* BOTONES */}
+      <View
+        style={{
+          alignItems: "center",
+          flexDirection: "row",
+          justifyContent: "center",
+          gap: 12,
+          flexWrap: "wrap",
+          marginTop: isTabletWeb
+            ? -10
+            : isLaptopWeb
+            ? -10
+            : isLargeWeb
+            ? -5
+            : 10,
+        }}
+      >
+        {form._id && (
+          <Pressable
+            onPress={() =>
+              setForm({
+                _id: null,
+                title: "",
+                description: "",
+                date: "",
+                hour: "",
+                location: "",
+                category: "deporte",
+                image_url: "",
+              })
+            }
+            disabled={!!loading}
+            style={{
+              backgroundColor: "#ccc",
+              borderRadius: 25,
+              paddingVertical: 12,
+              paddingHorizontal: 24,
+              shadowColor: "#000",
+              shadowOpacity: 0.2,
+              shadowRadius: 3,
+              elevation: 3,
+            }}
+          >
+            <Text
+              style={{
+                color: "#333",
+                fontWeight: "600",
+                fontSize: 14,
+                paddingVertical: 2,
+                paddingHorizontal: 2,
+              }}
+            >
+              Cancelar edición
+            </Text>
+          </Pressable>
+        )}
+
+        <Pressable
+          onPress={handleSubmit}
+          disabled={!!loading}
+          style={{
+            backgroundColor: loading ? "#ccc" : "#F3B23F",
+            borderRadius: 25,
+            paddingVertical: 14,
+            paddingHorizontal: 40,
+            shadowColor: "#000",
+            shadowOpacity: 0.25,
+            shadowRadius: 4,
+            elevation: 5,
+          }}
+        >
+          <Text
+            style={{
+              color: "#fff",
+              fontWeight: "700",
+              fontSize: 16,
+            }}
+          >
+            {loading
+              ? "Guardando..."
+              : form._id
+              ? "Guardar cambios"
+              : "Crear evento"}
+          </Text>
+        </Pressable>
+      </View>
+    </>
+  );
+
+  // === RENDER MÓVIL NATIVO (NO TOCADO) ===
   if (Platform.OS !== "web") {
     return (
       <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -657,10 +1077,43 @@ export default function Organizer() {
             </View>
           </View>
         )}
+
+        {bannerMessage !== "" && (
+          <Animated.View
+            style={{
+              opacity: bannerOpacity,
+              position: "absolute",
+              bottom: 30,
+              left: "50%",
+              transform: [{ translateX: -150 }],
+              width: 300,
+              backgroundColor: bannerColor,
+              paddingVertical: 14,
+              alignItems: "center",
+              borderRadius: 25,
+              shadowColor: "#000",
+              shadowOpacity: 0.3,
+              shadowRadius: 5,
+              elevation: 10,
+              zIndex: 200,
+            }}
+          >
+            <Text
+              style={{
+                color: "#fff",
+                fontWeight: "700",
+                textAlign: "center",
+              }}
+            >
+              {bannerMessage}
+            </Text>
+          </Animated.View>
+        )}
       </View>
     );
   }
 
+  // === RENDER WEB RESPONSIVE (como Admin) ===
   return (
     <View
       style={{
@@ -672,8 +1125,23 @@ export default function Organizer() {
     >
       <Header hideAuthButtons />
       {renderTopBar()}
+
       {Platform.OS === "web" && menuVisible && (
         <>
+          {/* OVERLAY OSCURO PARA CERRAR AL HACER CLIC FUERA */}
+          <Pressable
+            onPress={toggleMenu}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              zIndex: 5,
+            }}
+          />
+
+          {/* MENÚ LATERAL */}
           <Animated.View
             style={{
               position: "fixed",
@@ -716,300 +1184,219 @@ export default function Organizer() {
           </Animated.View>
         </>
       )}
+
+      {/* CUERPO PRINCIPAL WEB RESPONSIVE */}
       <View
         style={{
           flex: 1,
-          flexDirection: "row",
-          justifyContent: "space-between",
-          paddingHorizontal: 24,
-          paddingTop: 20,
-          paddingBottom: 40,
+          padding: 16,
+          paddingTop: isLaptopWeb ? 40 : isLargeWeb ? 20 : 60,
+          backgroundColor: "#f5f6f7",
+          paddingBottom: showFooterFixed ? 110 : 40,
         }}
       >
         <View
           style={{
-            width: "25%",
-            borderRightWidth: 1,
-            borderRightColor: "#eee",
-            paddingRight: 16,
-            maxHeight: "70vh",
-          }}
-        >
-          <Text style={{ fontWeight: "bold", marginBottom: 8 }}>
-            Tus eventos
-          </Text>
-          <ScrollView
-            style={{
-              flexGrow: 0,
-              maxHeight: "100%",
-            }}
-            contentContainerStyle={{ paddingBottom: 20 }}
-            showsVerticalScrollIndicator={true}
-          >
-            {filteredEvents.length === 0 ? (
-              <Text style={{ color: "#777", fontStyle: "italic" }}>
-                No se encontraron eventos.
-              </Text>
-            ) : (
-              filteredEvents.map((ev) => (
-                <Pressable
-                  key={ev._id || ev.id}
-                  onPress={() => goToEventDetail(ev._id)}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#ddd",
-                    backgroundColor: "#fff",
-                    padding: 10,
-                    marginBottom: 8,
-                    borderRadius: 10,
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Text numberOfLines={1}>{ev.title}</Text>
-                  <Pressable
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleEdit(ev);
-                    }}
-                  >
-                    <Image
-                      source={require("../assets/iconos/editar.png")}
-                      style={{
-                        width: 20,
-                        height: 20,
-                        tintColor: "#F3B23F",
-                        transform: [{ rotate: "-15deg" }],
-                      }}
-                    />
-                  </Pressable>
-                </Pressable>
-              ))
-            )}
-          </ScrollView>
-        </View>
-
-        <ScrollView
-          style={{
             flex: 1,
-            paddingHorizontal: 16,
+            flexDirection: showTwoColumns ? "row" : "column",
+            justifyContent: "space-between",
           }}
-          contentContainerStyle={{ paddingBottom: 120 }}
         >
-          <Text style={{ fontWeight: "bold" }}>
-            {form._id ? "Editar evento" : "Crear evento"}
-          </Text>
-
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
-            <View style={{ flex: 1, minWidth: "45%" }}>
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                Título:
-              </Text>
-              <TextInput
-                value={form.title}
-                onChangeText={(t) => setForm({ ...form, title: t })}
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor: "#ddd",
-                  height: 36,
-                  paddingHorizontal: 10,
-                  marginBottom: 10,
-                }}
-              />
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                Fecha (DD/MM/YYYY):
-              </Text>
-              <TextInput
-                value={form.date}
-                onChangeText={(t) => setForm({ ...form, date: t })}
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor: "#ddd",
-                  height: 36,
-                  paddingHorizontal: 10,
-                  marginBottom: 10,
-                }}
-              />
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                Hora (HH:MM):
-              </Text>
-              <TextInput
-                value={form.hour}
-                onChangeText={(t) => setForm({ ...form, hour: t })}
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor: "#ddd",
-                  height: 36,
-                  paddingHorizontal: 10,
-                  marginBottom: 10,
-                }}
-              />
-            </View>
-
-            <View
-              style={{
-                flex: 1,
-                minWidth: "45%",
-                position: "relative",
-                zIndex: open ? 9999 : 1,
-              }}
-            >
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                Descripción:
-              </Text>
-              <TextInput
-                value={form.description}
-                onChangeText={(t) => setForm({ ...form, description: t })}
-                multiline
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor: "#ddd",
-                  height: 80,
-                  padding: 10,
-                  marginBottom: 10,
-                  textAlignVertical: "top",
-                }}
-              />
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>Lugar:</Text>
-              <TextInput
-                value={form.location}
-                onChangeText={(t) => setForm({ ...form, location: t })}
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor: "#ddd",
-                  height: 36,
-                  paddingHorizontal: 10,
-                  marginBottom: 10,
-                }}
-              />
-              <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-                Categoría:
-              </Text>
-              <DropDownPicker
-                open={open}
-                value={form.category}
-                items={[
-                  { label: "Deporte", value: "deporte" },
-                  { label: "Concurso y Taller", value: "concurso" },
-                  { label: "Cultura e Historia", value: "cultura" },
-                  { label: "Arte y Música", value: "arte" },
-                ]}
-                setOpen={setOpen}
-                setValue={(callback) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    category: callback(prev.category),
-                  }))
-                }
-                style={{
-                  backgroundColor: "#fff",
-                  borderColor: "#ddd",
-                  borderRadius: 20,
-                  height: 40,
-                  marginBottom: 10,
-                }}
-                dropDownContainerStyle={{
-                  borderColor: "#ddd",
-                  elevation: 20,
-                  position: "absolute",
-                }}
-              />
-            </View>
-          </View>
-
-          <Text style={{ fontWeight: "600", marginTop: 135 }}>
-            Imagen del evento:
-          </Text>
+          {/* LISTADO IZQUIERDA */}
           <View
             style={{
-              borderWidth: 1,
-              borderColor: "#ddd",
-              borderRadius: 20,
-              backgroundColor: "#fff",
-              height: 150,
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: 20,
+              width: showTwoColumns ? (isTabletWeb ? "35%" : "30%") : "100%",
+              paddingRight: showTwoColumns ? 16 : 0,
+              borderRightWidth: showTwoColumns ? 1 : 0,
+              borderRightColor: "#e0e0e0",
+              marginBottom: showTwoColumns ? 0 : 20,
+              marginTop: isLaptopWeb ? -20 : isLargeWeb ? -10 : 0,
             }}
           >
-            {form.image_url ? (
-              <Image
-                source={{
-                  uri:
-                    Platform.OS === "android"
-                      ? form.image_url.replace("localhost", "10.0.2.2")
-                      : form.image_url,
-                }}
-                style={{ width: 120, height: 120, borderRadius: 12 }}
-              />
-            ) : (
-              <Text style={{ color: "#666" }}>Sin imagen seleccionada</Text>
+            <Text style={{ fontWeight: "bold", marginBottom: 8 }}>
+              Tus eventos
+            </Text>
+            <ScrollView
+              style={{
+                maxHeight: listMaxHeight,
+              }}
+              contentContainerStyle={{ paddingBottom: isLaptopWeb ? 150 : 20 }}
+              showsVerticalScrollIndicator={true}
+            >
+              {filteredEvents.length === 0 ? (
+                <Text style={{ color: "#777", fontStyle: "italic" }}>
+                  No se encontraron eventos.
+                </Text>
+              ) : (
+                filteredEvents.map((ev) => (
+                  <Pressable
+                    key={ev._id || ev.id}
+                    onPress={() => goToEventDetail(ev._id)}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: "#ddd",
+                      backgroundColor: "#fff",
+                      padding: 10,
+                      marginBottom: 8,
+                      borderRadius: 10,
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text numberOfLines={1}>{ev.title}</Text>
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleEdit(ev);
+                      }}
+                    >
+                      <Image
+                        source={require("../assets/iconos/editar.png")}
+                        style={{
+                          width: 20,
+                          height: 20,
+                          tintColor: "#F3B23F",
+                          transform: [{ rotate: "-15deg" }],
+                        }}
+                      />
+                    </Pressable>
+                  </Pressable>
+                ))
+              )}
+            </ScrollView>
+
+            {/* BOTÓN CREAR EVENTO SOLO EN MÓVIL WEB */}
+            {isMobileWeb && (
+              <View style={{ marginTop: 16, alignItems: "center" }}>
+                <Pressable
+                  onPress={openCreateModal}
+                  style={{
+                    backgroundColor: "#F3B23F",
+                    borderRadius: 25,
+                    paddingVertical: 10,
+                    paddingHorizontal: 24,
+                    shadowColor: "#000",
+                    shadowOpacity: 0.25,
+                    shadowRadius: 4,
+                    elevation: 4,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontWeight: "700",
+                      fontSize: 15,
+                    }}
+                  >
+                    + Crear evento
+                  </Text>
+                </Pressable>
+              </View>
             )}
-            <Pressable onPress={pickImage} style={{ marginTop: 8 }}>
-              <Text style={{ color: "#014869" }}>🖼️ Añadir imagen</Text>
-            </Pressable>
           </View>
 
-          <View style={{ alignItems: "center", marginTop: 10 }}>
-            <Pressable
-              onPress={handleSubmit}
-              disabled={!!loading}
+          {/* FORMULARIO DERECHA SOLO NO-MÓVIL WEB */}
+          {!isMobileWeb && (
+            <ScrollView
               style={{
-                backgroundColor: loading ? "#ccc" : "#F3B23F",
-                borderRadius: 25,
-                paddingVertical: 14,
-                paddingHorizontal: 40,
-                shadowColor: "#000",
-                shadowOpacity: 0.25,
-                shadowRadius: 4,
-                elevation: 5,
+                flex: 1,
+                paddingHorizontal: showTwoColumns ? 16 : 0,
+                marginTop: isLaptopWeb ? -30 : isLargeWeb ? -10 : 0,
+              }}
+              contentContainerStyle={{ paddingBottom: isLaptopWeb ? 300 : 200 }}
+            >
+              {renderFormContent()}
+            </ScrollView>
+          )}
+        </View>
+      </View>
+
+      {/* MODAL FORMULARIO SOLO MÓVIL WEB */}
+      {isWeb && isMobileWeb && (
+        <Modal
+          transparent
+          visible={formModalVisible}
+          animationType="slide"
+          onRequestClose={() => {
+            setFormModalVisible(false);
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.4)",
+              justifyContent: "center",
+              alignItems: "center",
+              paddingHorizontal: 16,
+            }}
+          >
+            <View
+              style={{
+                width: "100%",
+                maxHeight: "85%",
+                backgroundColor: "#fff",
+                borderRadius: 16,
+                padding: 16,
               }}
             >
-              <Text
+              <View
                 style={{
-                  color: "#fff",
-                  fontWeight: "700",
-                  fontSize: 16,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 8,
                 }}
               >
-                {loading
-                  ? "Guardando..."
-                  : form._id
-                  ? "Guardar cambios"
-                  : "Crear evento"}
-              </Text>
-            </Pressable>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "700",
+                    color: "#02486b",
+                  }}
+                >
+                  {form._id ? "Editar evento" : "Crear evento"}
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    setFormModalVisible(false);
+                  }}
+                >
+                  <Text style={{ fontSize: 18, color: "#02486b" }}>✕</Text>
+                </Pressable>
+              </View>
+
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 20 }}
+              >
+                {renderFormContent()}
+              </ScrollView>
+            </View>
           </View>
-        </ScrollView>
-      </View>
+        </Modal>
+      )}
 
-      <View
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: "#fff",
-        }}
-      >
-        <Footer
-          onAboutPress={goToAbout}
-          onPrivacyPress={goToPrivacy}
-          onConditionsPress={goToConditions}
-        />
-      </View>
+      {/* FOOTER SOLO EN WEB LAPTOP/DESKTOP (FIJO) */}
+      {isWeb && showFooterFixed && (
+        <View
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: "#fff",
+          }}
+        >
+          <Footer
+            onAboutPress={goToAbout}
+            onPrivacyPress={goToPrivacy}
+            onConditionsPress={goToConditions}
+          />
+        </View>
+      )}
 
+      {/* BANNER WEB */}
       {bannerMessage !== "" && (
         <Animated.View
           style={{
