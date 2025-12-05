@@ -21,9 +21,7 @@ import OrganizerMenu from "./OrganizerMenu";
 import UserMenu from "./UserMenu";
 
 // Api según la plataforma
-const API_BASE =
-  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
-// Api para el contacto
+const API_BASE = "https://cuervoactiva.onrender.com";
 const API_URL = `${API_BASE}/api/contact`;
 // Claves de Email.js
 const EMAILJS_SERVICE_ID = "service_e2ogh6c"; // identifica el servicio de EmailJS

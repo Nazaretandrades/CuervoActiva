@@ -14,9 +14,18 @@ import {
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
-// Api según la plataforma
-const API_BASE =
-  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+// URL dinámica para backend (Render en producción, local en desarrollo)
+const BACKEND_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  (Platform.OS === "android"
+    ? "http://10.0.2.2:5000"
+    : Platform.OS === "web"
+    ? "http://localhost:5000"
+    : "http://192.168.18.19:5000"); 
+
+// Endpoint de notificaciones
+const API_BASE = BACKEND_URL;
+
 
 // Se declara el componente
 export default function AdminNotifications({ navigation }) {

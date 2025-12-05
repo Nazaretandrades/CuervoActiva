@@ -19,12 +19,15 @@ import Footer from "../components/Footer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoute, useNavigation } from "@react-navigation/native";
 
-// Api según la plataforma
-const API_BASE =
-  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
-// Api de los eventos
+// URL base según entorno
+const LOCAL_API =
+  Platform.OS === "android"
+    ? "http://10.0.2.2:5000"
+    : "http://localhost:5000";
+
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || LOCAL_API;
+
 const API_URL = `${API_BASE}/api/events`;
-// Api de los comentarios
 const COMMENTS_URL = `${API_BASE}/api/comments`;
 
 // Declaro el componente

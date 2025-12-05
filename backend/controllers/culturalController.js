@@ -1,3 +1,4 @@
+// Se importa el modelo de la sección cultural
 const CulturalSection = require("../models/culturalsection");
 
 // Listar todas las secciones culturales

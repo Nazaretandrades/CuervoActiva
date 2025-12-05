@@ -18,11 +18,14 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
 
-// Api según la plataforma
+// URL dinámica del backend (Render para producción / Local para desarrollo)
 const API_BASE =
-  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
-
-// Api que carga los eventos
+  process.env.EXPO_PUBLIC_API_URL ||
+  (Platform.OS === "android"
+    ? "http://10.0.2.2:5000"
+    : Platform.OS === "web"
+    ? "http://localhost:5000"
+    : "http://192.168.18.19:5000"); 
 const API_URL = `${API_BASE}/api/events`;
 
 // Asocio las categorías con un color (Mismo que en el del Home)

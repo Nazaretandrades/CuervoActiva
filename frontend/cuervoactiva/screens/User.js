@@ -18,14 +18,17 @@ import { useNavigation } from "@react-navigation/native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
-// Api según la plataforma
-const API_BASE =
-  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+// URL del backend según entorno y dispositivo
+const LOCAL_API =
+  Platform.OS === "android"
+    ? "http://10.0.2.2:5000"
+    : "http://localhost:5000";
 
-// Api de los eventos
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || LOCAL_API;
+
 const API_URL = `${API_BASE}/api/events`;
-// Api de los eventos favoritos
 const FAVORITES_URL = `${API_BASE}/api/favorites`;
+
 
 // Declaración del componente
 export default function User() {

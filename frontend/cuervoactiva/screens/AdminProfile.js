@@ -18,9 +18,15 @@ import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
 import { getSession, saveSession } from "../services/sessionManager";
 
-// Api según la plataforma
+// URL dinámica del backend (Render en producción / Local en desarrollo)
 const API_BASE =
-  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+  process.env.EXPO_PUBLIC_API_URL ||
+  (Platform.OS === "android"
+    ? "http://10.0.2.2:5000"
+    : Platform.OS === "web"
+    ? "http://localhost:5000"
+    : "http://192.168.18.19:5000"); 
+
 
 // Se declara el componente
 export default function AdminProfile() {

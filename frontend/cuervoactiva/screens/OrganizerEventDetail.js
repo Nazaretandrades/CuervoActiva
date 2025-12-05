@@ -19,13 +19,16 @@ import { getSession } from "../services/sessionManager";
 import { useNavigation } from "@react-navigation/native";
 import OrganizerMenu from "./OrganizerMenu";
 
-// Api según la plataforma
-const API_BASE =
+// URL base según entorno (dev o producción)
+const LOCAL_API =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
-// Api de los eventos
-const API_URL = `${API_BASE}/api/events`;
-// Api de los comentarios
-const COMMENTS_URL = `${API_BASE}/api/comments`;
+
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || LOCAL_API;
+
+// Endpoints
+const API_URL = `${BASE_URL}/api/events`;
+const COMMENTS_URL = `${BASE_URL}/api/comments`;
+
 
 // Declaro el componente
 export default function OrganizerEventDetail({ route }) {
