@@ -20,14 +20,21 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.nazaretandrades.cuervoactiva",
+
+      "notification": {
+        "icon": null
+      }
     },
     "web": {
       "favicon": "./assets/Cuervo.png"
     },
-
     "extra": {
-      "EXPO_PUBLIC_API_URL": "https://cuervoactiva.onrender.com"
+      "EXPO_PUBLIC_API_URL": "https://cuervoactiva.onrender.com",
+      "eas": {
+        "projectId": "25637879-e463-4a11-a568-8ab81e81e703"
+      }
     }
   }
 }
