@@ -20,11 +20,17 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { getSession } from "../services/sessionManager";
 import { useNavigation } from "@react-navigation/native";
 
-// API_URL dinámico según plataforma
-const API_URL =
-  Platform.OS === "android"
-    ? "http://10.0.2.2:5000/api/events"
-    : "http://localhost:5000/api/events";
+// URL dinámica del backend (local en desarrollo + Render en producción)
+const BACKEND_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  (Platform.OS === "android"
+    ? "http://10.0.2.2:5000"
+    : Platform.OS === "web"
+    ? "http://localhost:5000"
+    : "http://192.168.18.19:5000");
+
+// Endpoint final
+const API_URL = `${BACKEND_URL}/api/events`;
 
 // Se declara el componente
 export default function Admin() {

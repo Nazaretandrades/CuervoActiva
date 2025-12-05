@@ -21,11 +21,14 @@ import Footer from "../components/Footer";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 
-// APi según la plataforma
-const API_URL =
-  Platform.OS === "android"
-    ? "http://10.0.2.2:5000/api/events"
-    : "http://localhost:5000/api/events";
+// URL base según entorno
+const LOCAL_API =
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || LOCAL_API;
+
+// Endpoint de eventos
+const API_URL = `${BASE_URL}/api/events`;
 
 // Se declara el componente
 export default function Organizer() {

@@ -15,7 +15,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage"; // Guarda 
 import { Picker } from "@react-native-picker/picker"; // Selector de categorías
 import { useNavigation } from "@react-navigation/native"; // Permite navegar entre pantallas
 
-const API_URL = "http://10.0.2.2:5000/api/events"; // URL para acceder al backend desde el emulador Android
+// URL del backend: en producción usa Render, en desarrollo usa localhost/10.0.2.2
+const BACKEND_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  (Platform.OS === "android"
+    ? "http://10.0.2.2:5000"
+    : Platform.OS === "web"
+    ? "http://localhost:5000"
+    : "http://192.168.18.19:5000"); 
+
+const API_URL = `${BACKEND_URL}/api/events`;
 
 // Se declara el componente (Pantalla donde un organizador crea un evento)
 export default function AddEvent() {

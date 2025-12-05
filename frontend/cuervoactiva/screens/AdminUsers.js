@@ -18,10 +18,14 @@ import Footer from "../components/Footer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 
-// Api según la plataforma
+// URL dinámica del backend (Render en producción / Local en desarrollo)
 const API_BASE =
-  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
-// Api de los usuarios
+  process.env.EXPO_PUBLIC_API_URL ||
+  (Platform.OS === "android"
+    ? "http://10.0.2.2:5000"
+    : Platform.OS === "web"
+    ? "http://localhost:5000"
+    : "http://192.168.18.19:5000");
 const API_URL = `${API_BASE}/api/users`;
 
 // Se declara el componente

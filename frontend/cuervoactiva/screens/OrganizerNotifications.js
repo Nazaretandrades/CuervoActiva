@@ -14,9 +14,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
-// Api según la plataforma
-const API_BASE =
+// URL base según entorno (dev o producción)
+const LOCAL_API =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || LOCAL_API;
+
 
 // Declaración de componente
 export default function OrganizerNotifications({ navigation }) {

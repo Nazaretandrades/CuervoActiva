@@ -18,14 +18,19 @@ import Footer from "../components/Footer";
 import { getSession } from "../services/sessionManager";
 import { useNavigation } from "@react-navigation/native";
 
-// Api según la plataforma
-const API_BASE =
-  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+// URL del backend dinámica (Render en producción, local en desarrollo)
+const BACKEND_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  (Platform.OS === "android"
+    ? "http://10.0.2.2:5000"
+    : Platform.OS === "web"
+    ? "http://localhost:5000"
+    : "http://192.168.18.19:5000"); 
 
-// Api para los eventos
-const API_URL = `${API_BASE}/api/events`;
-// Api para los comentarios
-const COMMENTS_URL = `${API_BASE}/api/comments`;
+// Endpoints finales
+const API_URL = `${BACKEND_URL}/api/events`;
+const COMMENTS_URL = `${BACKEND_URL}/api/comments`;
+
 
 // Declaración del componente
 export default function AdminEventDetail({ route }) {
