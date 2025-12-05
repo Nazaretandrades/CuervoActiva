@@ -458,19 +458,19 @@ export default function Condiciones({ navigation }) {
                 }}
               >
                 {`El uso de la aplicación Cuervo Activa implica la aceptación plena
-                  de los presentes términos y condiciones. Los usuarios se
-                  comprometen a utilizar la plataforma de manera responsable, sin
-                  realizar acciones que perjudiquen su funcionamiento o la
-                  experiencia de otros usuarios.
+de los presentes términos y condiciones. Los usuarios se
+comprometen a utilizar la plataforma de manera responsable, sin
+realizar acciones que perjudiquen su funcionamiento o la
+experiencia de otros usuarios.
 
-                  Queda prohibido publicar contenido ofensivo, fraudulento, violento
-                  o que infrinja derechos de autor o privacidad. Cuervo Activa se
-                  reserva el derecho de eliminar cualquier contenido inapropiado y
-                  suspender cuentas que vulneren estas normas.
+Queda prohibido publicar contenido ofensivo, fraudulento, violento
+o que infrinja derechos de autor o privacidad. Cuervo Activa se
+reserva el derecho de eliminar cualquier contenido inapropiado y
+suspender cuentas que vulneren estas normas.
 
-                  El acceso a ciertos servicios puede requerir registro previo y la
-                  veracidad de la información proporcionada es responsabilidad del
-                  usuario.`}
+El acceso a ciertos servicios puede requerir registro previo y la
+veracidad de la información proporcionada es responsabilidad del
+usuario.`}
               </Text>
             </ScrollView>
           </View>
@@ -518,17 +518,17 @@ export default function Condiciones({ navigation }) {
                 }}
               >
                 {`Cuervo Activa no se hace responsable del mal uso de la aplicación
-                  ni de los daños derivados del incumplimiento de las normas por
-                  parte del usuario. Las actividades y eventos publicados son
-                  responsabilidad de sus respectivos organizadores.
+ni de los daños derivados del incumplimiento de las normas por
+parte del usuario. Las actividades y eventos publicados son
+responsabilidad de sus respectivos organizadores.
 
-                  El usuario acepta que su participación en actividades es
-                  voluntaria y que deberá revisar los detalles, condiciones y
-                  requisitos de cada evento antes de asistir.
+El usuario acepta que su participación en actividades es
+voluntaria y que deberá revisar los detalles, condiciones y
+requisitos de cada evento antes de asistir.
 
-                  La plataforma podrá suspender temporalmente el servicio por
-                  mantenimiento o mejoras, notificando a los usuarios cuando sea
-                  posible.`}
+La plataforma podrá suspender temporalmente el servicio por
+mantenimiento o mejoras, notificando a los usuarios cuando sea
+posible.`}
               </Text>
             </ScrollView>
           </View>
