@@ -1,3 +1,4 @@
+// Pantalla perfil del organizador
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -16,10 +17,13 @@ import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
+// Se declara el componente
 export default function OrganizerProfile() {
+  // Estados
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
@@ -27,18 +31,14 @@ export default function OrganizerProfile() {
     name: "Organizador",
     email: "",
   });
-
-  // ============================
-  // ⭐ ESTADOS DEL MODAL
-  // ============================
   const [editVisible, setEditVisible] = useState(false);
   const [newName, setNewName] = useState("");
 
-  /* ================= RESPONSIVE BREAKPOINTS (como AdminProfile) ================ */
+  /* Responsive */
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
-
+  // Función para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const resize = () => setWinWidth(window.innerWidth);
@@ -46,13 +46,13 @@ export default function OrganizerProfile() {
     return () => window.removeEventListener("resize", resize);
   }, []);
 
+  // Breakpoints
   const isWeb = Platform.OS === "web";
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isDesktopWeb = isWeb && winWidth >= 1440;
   const isLargeWeb = isLaptopWeb || isDesktopWeb;
-
   const pagePaddingHorizontal = isMobileWeb
     ? 20
     : isTabletWeb
@@ -60,9 +60,7 @@ export default function OrganizerProfile() {
     : isLaptopWeb
     ? 55
     : 80;
-
   const pagePaddingBottom = isLargeWeb ? 100 : 40;
-
   const profileContainerWidth = isMobileWeb
     ? "92%"
     : isTabletWeb
@@ -71,9 +69,7 @@ export default function OrganizerProfile() {
     ? "60%"
     : "45%";
 
-  // ============================
-  // CARGA DE SESIÓN
-  // ============================
+  // Cargar la sesión
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -97,9 +93,7 @@ export default function OrganizerProfile() {
     loadUser();
   }, []);
 
-  // ============================
-  // CERRAR SESIÓN
-  // ============================
+  // Cerrar sesión
   const handleLogout = async () => {
     try {
       if (Platform.OS === "web") {
@@ -113,24 +107,21 @@ export default function OrganizerProfile() {
     }
   };
 
-  // ============================
-  // ⭐ ABRIR MODAL
-  // ============================
+  // Abrir modal
   const openEditModal = () => {
     setNewName(organizerData.name);
     setEditVisible(true);
   };
 
-  // ============================
-  // ⭐ GUARDAR CAMBIOS
-  // ============================
+  // Guardar cambions
   const saveProfileChanges = async () => {
     try {
+      // Comprueba el nombre
       if (!newName.trim()) {
         Alert.alert("Error", "El nombre no puede estar vacío.");
         return;
       }
-
+      // Obtiene la sesión
       let session;
       if (Platform.OS === "web") {
         session = JSON.parse(localStorage.getItem("USER_SESSION"));
@@ -143,7 +134,7 @@ export default function OrganizerProfile() {
         Alert.alert("Error", "Sesión no encontrada.");
         return;
       }
-
+      // Hace el fetch
       const res = await fetch(`${API_BASE}/api/users/profile`, {
         method: "PUT",
         headers: {
@@ -154,14 +145,14 @@ export default function OrganizerProfile() {
       });
 
       const data = await res.json();
-
+      // Obtiene la respuesta
       if (!res.ok) {
         Alert.alert("Error", data.error || "No se pudo actualizar el perfil.");
         return;
       }
 
+      // Actualiza el perfil
       setOrganizerData((prev) => ({ ...prev, name: data.name }));
-
       const updatedSession = { ...session, name: data.name };
 
       if (Platform.OS === "web") {
@@ -172,7 +163,6 @@ export default function OrganizerProfile() {
           JSON.stringify(updatedSession)
         );
       }
-
       setEditVisible(false);
       Alert.alert("Éxito", "Nombre actualizado correctamente.");
     } catch (err) {
@@ -181,21 +171,17 @@ export default function OrganizerProfile() {
     }
   };
 
-  // ============================
-  // NAVEGACIÓN
-  // ============================
+  // Navegación
   const goToProfile = () => navigation.navigate("OrganizerProfile");
-  const goToNotifications = () =>
-    navigation.navigate("OrganizerNotifications");
+  const goToNotifications = () => navigation.navigate("OrganizerNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
   const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToContact = () => navigation.navigate("Contacto");
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
-  // ============================
-  // MENÚ
-  // ============================
+
+  // Menu
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -218,9 +204,7 @@ export default function OrganizerProfile() {
     }
   };
 
-  // ============================
-  // TOP BAR
-  // ============================
+  // Cabecera
   const renderTopBar = () => (
     <View
       style={{
@@ -303,12 +287,14 @@ export default function OrganizerProfile() {
     </View>
   );
 
+  // Return
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
+      {/* Cabecera */}
       {renderTopBar()}
 
-      {/* MENÚ WEB */}
+      {/* Menú web */}
       {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
@@ -352,7 +338,7 @@ export default function OrganizerProfile() {
         </Animated.View>
       )}
 
-      {/* MENÚ MÓVIL — INTACTO */}
+      {/* Menú móvil nativo */}
       {menuVisible && Platform.OS !== "web" && (
         <View
           style={{
@@ -366,7 +352,7 @@ export default function OrganizerProfile() {
             justifyContent: "space-between",
           }}
         >
-          {/* CABECERA MENÚ MÓVIL */}
+          {/* Cabecera menú móvil */}
           <View
             style={{
               flexDirection: "row",
@@ -498,17 +484,12 @@ export default function OrganizerProfile() {
         </View>
       )}
 
-      {/* ===================== */}
-      {/* CONTENIDO DEL PERFIL */}
-      {/* ===================== */}
+      {/* Contenido del perfil */}
       <ScrollView
         contentContainerStyle={{
           paddingTop: 20,
-
-          /* ⭐ AQUÍ RESTAURÉ TU MÓVIL TAL CUAL ⭐ */
           paddingBottom: Platform.OS === "web" ? pagePaddingBottom : 65,
           paddingHorizontal: Platform.OS === "web" ? pagePaddingHorizontal : 20,
-
           backgroundColor: "#f5f6f7",
           alignItems: "center",
         }}
@@ -516,11 +497,8 @@ export default function OrganizerProfile() {
         <View
           style={{
             backgroundColor: "#f5f5f5",
-
-            /* ⭐ AQUÍ RESTAURÉ TU MÓVIL ⭐ */
             width: Platform.OS === "web" ? profileContainerWidth : "90%",
             maxWidth: Platform.OS === "web" ? "100%" : 420,
-
             borderRadius: 8,
             paddingVertical: 20,
             alignItems: "center",
@@ -645,7 +623,7 @@ export default function OrganizerProfile() {
         </View>
       </ScrollView>
 
-      {/* MODAL EDITAR */}
+      {/* Modal editar */}
       {editVisible && (
         <View
           style={{
@@ -730,6 +708,7 @@ export default function OrganizerProfile() {
         </View>
       )}
 
+      {/**Footer */}
       {isWeb && isLargeWeb && (
         <Footer
           onAboutPress={goToAboutUs}

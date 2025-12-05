@@ -1,3 +1,4 @@
+// Pantalla Registro
 import React, { useState } from "react";
 import {
   View,
@@ -15,26 +16,25 @@ import { useNavigation } from "@react-navigation/native";
 import Header from "../components/HeaderIntro";
 import { registerUser } from "../services/auth";
 
+// Se declara el componente
 export default function Register() {
+  // Estados
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
-
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState("user");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
   const fadeAnim = useState(new Animated.Value(0))[0];
 
-  // BREAKPOINTS
+  // Breakpoints
   const isMobile = width < 600;
   const isTablet = width >= 600 && width < 992;
   const isLaptop = width >= 992 && width < 1400;
-  const isSmallMobile = width <= 360; // iPhone SE / Mobile S 320-360
-
+  const isSmallMobile = width <= 360;
   const formWidth = isMobile
     ? "90%"
     : isTablet
@@ -43,6 +43,7 @@ export default function Register() {
     ? "40%"
     : "30%";
 
+  // Mostrar toast
   const showToast = (type, msg) => {
     setToast({ visible: true, type, message: msg });
 
@@ -61,17 +62,22 @@ export default function Register() {
     }, 2000);
   };
 
+  // Función onSubmit
   async function onSubmit() {
+    // Se comprueba cada campo
     if (!email.trim()) return showToast("error", "El email es obligatorio.");
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       return showToast("error", "Introduce un email válido.");
 
     if (!name.trim()) return showToast("error", "El nombre es obligatorio.");
+
     if (name.trim().length < 3)
       return showToast("error", "El nombre debe tener al menos 3 caracteres.");
 
     if (!password.trim())
       return showToast("error", "La contraseña es obligatoria.");
+
     if (password.length < 6)
       return showToast(
         "error",
@@ -80,6 +86,8 @@ export default function Register() {
 
     try {
       setLoading(true);
+
+      // Se hace el registro y lo redirige al Login
       await registerUser({ name, email, password, role });
 
       showToast("success", "Registro completado.");
@@ -90,13 +98,12 @@ export default function Register() {
       setLoading(false);
     }
   }
-
-  // Valores compactos para móviles muy pequeños
   const fieldHeight = isSmallMobile ? 44 : 48;
   const fieldPaddingH = isSmallMobile ? 10 : 14;
   const iconSize = isSmallMobile ? 18 : 20;
   const pickerHeight = isSmallMobile ? 50 : 55;
 
+  // Return
   return (
     <View
       style={{
@@ -107,7 +114,7 @@ export default function Register() {
         overflow: "hidden",
       }}
     >
-      {/* BACKGROUND */}
+      {/* Fondo */}
       <Image
         source={require("../assets/fondo.png")}
         style={{
@@ -121,7 +128,7 @@ export default function Register() {
         }}
       />
 
-      {/* HEADER */}
+      {/* Header */}
       {Platform.OS === "web" ? (
         <Header
           onLogin={() => navigation.navigate("Login")}
@@ -136,7 +143,7 @@ export default function Register() {
         </View>
       )}
 
-      {/* CONTENIDO */}
+      {/* Contenido */}
       <View
         style={{
           flex: 1,
@@ -157,7 +164,7 @@ export default function Register() {
           Crear cuenta
         </Text>
 
-        {/* CARD */}
+        {/* Card */}
         <View
           style={{
             width: formWidth,
@@ -172,7 +179,7 @@ export default function Register() {
             elevation: 3,
           }}
         >
-          {/* EMAIL */}
+          {/* Email */}
           <View
             style={{
               flexDirection: "row",
@@ -205,7 +212,7 @@ export default function Register() {
               ellipsizeMode="clip"
               style={{
                 flex: 1,
-                minWidth: 0, // ⭐ evita desbordes en 320px
+                minWidth: 0,
                 fontSize: isSmallMobile ? 14 : 15,
                 color: "#014869",
                 padding: 0,
@@ -213,7 +220,7 @@ export default function Register() {
             />
           </View>
 
-          {/* USERNAME */}
+          {/* Nombre de usuario */}
           <View
             style={{
               flexDirection: "row",
@@ -246,7 +253,7 @@ export default function Register() {
               ellipsizeMode="clip"
               style={{
                 flex: 1,
-                minWidth: 0, // ⭐ importante para Mobile S
+                minWidth: 0,
                 fontSize: isSmallMobile ? 14 : 15,
                 color: "#014869",
                 padding: 0,
@@ -254,7 +261,7 @@ export default function Register() {
             />
           </View>
 
-          {/* ROL */}
+          {/* Rol */}
           <View
             style={{
               flexDirection: "row",
@@ -283,7 +290,7 @@ export default function Register() {
               dropdownIconColor="#014869"
               style={{
                 flex: 1,
-                minWidth: 0, // ⭐ el Picker también puede desbordar
+                minWidth: 0,
                 color: "#014869",
                 backgroundColor: "transparent",
                 fontSize: isSmallMobile ? 14 : 15,
@@ -294,7 +301,7 @@ export default function Register() {
             </Picker>
           </View>
 
-          {/* PASSWORD */}
+          {/* Contraseña */}
           <View
             style={{
               flexDirection: "row",
@@ -328,7 +335,7 @@ export default function Register() {
               ellipsizeMode="clip"
               style={{
                 flex: 1,
-                minWidth: 0, // ⭐ para que no empuje el icono
+                minWidth: 0,
                 fontSize: isSmallMobile ? 14 : 15,
                 color: "#014869",
                 padding: 0,
@@ -346,7 +353,7 @@ export default function Register() {
             </Pressable>
           </View>
 
-          {/* SUBMIT */}
+          {/* Subir - Botón */}
           <Pressable
             onPress={onSubmit}
             disabled={loading}
@@ -371,7 +378,7 @@ export default function Register() {
         </View>
       </View>
 
-      {/* TOAST */}
+      {/* Toast */}
       {toast.visible && (
         <Animated.View
           style={{
@@ -379,8 +386,7 @@ export default function Register() {
             bottom: 40,
             left: "8%",
             right: "8%",
-            backgroundColor:
-              toast.type === "success" ? "#4CAF50" : "#E74C3C",
+            backgroundColor: toast.type === "success" ? "#4CAF50" : "#E74C3C",
             paddingVertical: 14,
             paddingHorizontal: 18,
             borderRadius: 12,

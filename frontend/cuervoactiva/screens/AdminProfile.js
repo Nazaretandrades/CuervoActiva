@@ -1,3 +1,4 @@
+// Pantalla del perfil del administrador
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -17,37 +18,37 @@ import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
 import { getSession, saveSession } from "../services/sessionManager";
 
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
+// Se declara el componente
 export default function AdminProfile() {
+  // Estados
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [adminData, setAdminData] = useState({ name: "Admin", email: "" });
-
   const [editVisible, setEditVisible] = useState(false);
   const [newName, setNewName] = useState("");
 
-  /* ======== RESPONSIVE BREAKPOINTS ======== */
+  /* Breakpoints */
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
-
+  // Función para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const resize = () => setWinWidth(window.innerWidth);
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
   }, []);
-
   const isWeb = Platform.OS === "web";
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isDesktopWeb = isWeb && winWidth >= 1440;
   const isLargeWeb = isLaptopWeb || isDesktopWeb;
-
   const pagePaddingHorizontal = isMobileWeb
     ? 20
     : isTabletWeb
@@ -55,9 +56,7 @@ export default function AdminProfile() {
     : isLaptopWeb
     ? 55
     : 80;
-
   const pagePaddingBottom = isLargeWeb ? 100 : 40;
-
   const profileContainerWidth = isMobileWeb
     ? "92%"
     : isTabletWeb
@@ -66,7 +65,7 @@ export default function AdminProfile() {
     ? "60%"
     : "45%";
 
-  /* ======== LOAD USER ======== */
+  /* =Cargar Usuario */
   useEffect(() => {
     const loadUser = () => {
       try {
@@ -89,7 +88,7 @@ export default function AdminProfile() {
     }
   }, []);
 
-  /* ======== LOGOUT ======== */
+  /* Cerrar sesión */
   const handleLogout = async () => {
     try {
       if (Platform.OS === "web") {
@@ -106,26 +105,27 @@ export default function AdminProfile() {
     }
   };
 
-  /* ======== EDIT PROFILE ======== */
+  /* Editar el perfil */
   const openEditModal = () => {
     setNewName(adminData.name || "");
     setEditVisible(true);
   };
 
+  // Guardar los cambios del perfil
   const saveProfileChanges = async () => {
     try {
+      // Comprobar que el nombre no puede estar vacío
       if (!newName.trim()) {
         Alert.alert("Error", "El nombre no puede estar vacío.");
         return;
       }
-
+      // Obtengo la sesión
       const session = await getSession();
-
       if (!session?.token) {
         Alert.alert("Error", "Sesión no encontrada.");
         return;
       }
-
+      // Hago el fetch
       const res = await fetch(`${API_BASE}/api/users/profile`, {
         method: "PUT",
         headers: {
@@ -136,15 +136,14 @@ export default function AdminProfile() {
       });
 
       const data = await res.json();
-
+      // Obtengo la respuesta
       if (!res.ok) {
         Alert.alert("Error", data.error || "No se pudo actualizar el perfil.");
         return;
       }
-
+      // Actualizo el nombre de usuario y lo guardo
       setAdminData((prev) => ({ ...prev, name: data.name }));
       await saveSession({ ...session, name: data.name });
-
       setEditVisible(false);
       Alert.alert("Éxito", "Nombre actualizado correctamente.");
     } catch (err) {
@@ -153,7 +152,7 @@ export default function AdminProfile() {
     }
   };
 
-  /* ======== NAVIGATION ======== */
+  /* Navegación */
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -164,7 +163,7 @@ export default function AdminProfile() {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToUsers = () => navigation.navigate("AdminUsers");
 
-  /* ======== MENU ======== */
+  /* Menu */
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -182,12 +181,12 @@ export default function AdminProfile() {
     }
   };
 
-  /* ======== RENDER ======== */
+  /* UI */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* TOPBAR */}
+      {/* Cabecera */}
       <View
         style={{
           flexDirection: "row",
@@ -284,7 +283,7 @@ export default function AdminProfile() {
         </View>
       </View>
 
-      {/* MENU WEB */}
+      {/* Menu lateral web */}
       {isWeb && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -342,7 +341,7 @@ export default function AdminProfile() {
         </>
       )}
 
-      {/* CONTENT */}
+      {/* Contenido */}
       <ScrollView
         contentContainerStyle={{
           paddingTop: 20,
@@ -445,7 +444,7 @@ export default function AdminProfile() {
               {adminData.email}
             </Text>
 
-            {/* EDIT BUTTON */}
+            {/* Botón de editar */}
             <Pressable
               onPress={openEditModal}
               style={{
@@ -462,7 +461,7 @@ export default function AdminProfile() {
               </Text>
             </Pressable>
 
-            {/* LOGOUT */}
+            {/* Cerrar Sesión */}
             <Pressable
               onPress={handleLogout}
               style={{
@@ -482,7 +481,7 @@ export default function AdminProfile() {
         </View>
       </ScrollView>
 
-      {/* MODAL EDIT */}
+      {/* Modal de editar */}
       {editVisible && (
         <View
           style={{
@@ -566,7 +565,7 @@ export default function AdminProfile() {
           </View>
         </View>
       )}
-
+      {/**Footer responsive en web */}
       {isWeb && isLargeWeb && (
         <Footer
           onAboutPress={goToAboutUs}

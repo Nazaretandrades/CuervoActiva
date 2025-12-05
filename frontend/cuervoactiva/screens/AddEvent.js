@@ -1,3 +1,4 @@
+// Pantalla para crear evento en móvil nativo
 import React, { useState } from "react";
 import {
   View,
@@ -6,19 +7,22 @@ import {
   Pressable,
   Image,
   ScrollView,
-  KeyboardAvoidingView,
+  KeyboardAvoidingView, // Evita que el teclado tape los inputs
   Platform,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Picker } from "@react-native-picker/picker";
-import { useNavigation } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker"; // Permite seleccionar imágenes desde la galería del móvil
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Guarda y recupera la sesión del usuario en móvil
+import { Picker } from "@react-native-picker/picker"; // Selector de categorías
+import { useNavigation } from "@react-navigation/native"; // Permite navegar entre pantallas
 
-const API_URL = "http://10.0.2.2:5000/api/events";
+const API_URL = "http://10.0.2.2:5000/api/events"; // URL para acceder al backend desde el emulador Android
 
+// Se declara el componente (Pantalla donde un organizador crea un evento)
 export default function AddEvent() {
+  //Permite usar navigation.goBack() o navegar a otras pantallas
   const navigation = useNavigation();
 
+  // Estado del formulario
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -29,25 +33,33 @@ export default function AddEvent() {
     image_url: "",
   });
 
+  // Controla si el botón debe mostrar "Guardando..."
   const [loading, setLoading] = useState(false);
 
+  // Función para obtener el token
   const getSessionToken = async () => {
     try {
+      // Lee la sesión guardada 
       const sessionString = await AsyncStorage.getItem("USER_SESSION");
+      // Extrae el token JWT
       const session = sessionString ? JSON.parse(sessionString) : null;
+      // Lo retorna para autorizar peticiones protegidas
       return session?.token || null;
     } catch {
       return null;
     }
   };
 
+  // Función para seleccionar imágenes
   const pickImage = async () => {
+    // 1. Pedir permisos
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permission.status !== "granted") {
       alert("⚠️ Se necesita acceso a tus fotos");
       return;
     }
 
+    // 2. Abre la galería
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -55,14 +67,17 @@ export default function AddEvent() {
       quality: 0.8,
     });
 
+    // 3. Si el usuario eligió imagen
     if (!result.canceled) {
       const uri = result.assets[0].uri;
+      // 4. Obtener token
       const token = await getSessionToken();
       if (!token) {
         alert("❌ No se encontró sesión activa");
         return;
       }
 
+      // 5. Subir imagen al backend
       const formData = new FormData();
       formData.append("image", {
         uri,
@@ -70,23 +85,26 @@ export default function AddEvent() {
         name: "imagen.jpg",
       });
 
+      // 6. Petición fetch
       const res = await fetch(`${API_URL}/upload`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
+      // 7. Guardar URL recibida
       const data = await res.json();
       setForm({ ...form, image_url: data.image_url });
     }
   };
 
+  // Función de enviar
   const handleSubmit = async () => {
+    // Se valida los campos
     if (!form.title.trim()) {
       alert("⚠️ El título es obligatorio");
       return;
     }
-
     if (!form.description.trim()) {
       alert("⚠️ La descripción es obligatoria");
       return;
@@ -127,8 +145,10 @@ export default function AddEvent() {
       return;
     }
 
+    // Enviar al backend
     setLoading(true);
 
+    // Obtener token
     try {
       const token = await getSessionToken();
       if (!token) {
@@ -136,6 +156,7 @@ export default function AddEvent() {
         return;
       }
 
+      // Petición POST al backend
       const res = await fetch(API_URL, {
         method: "POST",
         headers: {
@@ -145,6 +166,7 @@ export default function AddEvent() {
         body: JSON.stringify(form),
       });
 
+      // Respuesta
       if (!res.ok) {
         throw new Error("Error al crear evento");
       }
@@ -154,15 +176,18 @@ export default function AddEvent() {
     } catch (err) {
       alert("❌ No se pudo crear el evento");
     } finally {
+      // Reset loading
       setLoading(false);
     }
   };
 
+  // UI
   return (
-    <KeyboardAvoidingView
+    <KeyboardAvoidingView // vista especial que mueve o ajusta la pantalla cuando aparece el teclado
       style={{ flex: 1, backgroundColor: "#F8F8F8" }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
+      {/**Encabezado */}
       <View
         style={{
           flexDirection: "row",
@@ -191,6 +216,7 @@ export default function AddEvent() {
         </Text>
       </View>
 
+      {/**Formulario en ScrollView */}
       <ScrollView
         style={{ paddingHorizontal: 25, marginTop: 20 }}
         contentContainerStyle={{ paddingBottom: 150 }}
@@ -334,6 +360,7 @@ export default function AddEvent() {
             height: 60,
           }}
         >
+          {/**Selector de categorías */}
           <Picker
             selectedValue={form.category}
             onValueChange={(value) => setForm({ ...form, category: value })}
@@ -400,6 +427,7 @@ export default function AddEvent() {
             marginTop: 10,
           }}
         >
+          {/**Subida de imagen */}
           {form.image_url ? (
             <Image
               source={{ uri: form.image_url }}
@@ -423,6 +451,7 @@ export default function AddEvent() {
           )}
         </View>
 
+        {/**Botón para crear el evento */}
         <View style={{ alignItems: "center", marginTop: 30 }}>
           <Pressable
             onPress={handleSubmit}

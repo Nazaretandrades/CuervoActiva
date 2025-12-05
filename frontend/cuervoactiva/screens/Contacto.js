@@ -1,3 +1,4 @@
+// Pantalla del contacto
 import React, { useEffect, useState, useRef } from "react";
 import {
   View,
@@ -19,16 +20,19 @@ import { useNavigation } from "@react-navigation/native";
 import OrganizerMenu from "./OrganizerMenu";
 import UserMenu from "./UserMenu";
 
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
-
+// Api para el contacto
 const API_URL = `${API_BASE}/api/contact`;
+// Claves de Email.js
+const EMAILJS_SERVICE_ID = "service_e2ogh6c"; // identifica el servicio de EmailJS
+const EMAILJS_TEMPLATE_ID = "template_uisdxgb"; // la plantilla del email que creé
+const EMAILJS_PUBLIC_KEY = "tWyqaMDt1ylAxxUb1"; // la clave de cliente pública
 
-const EMAILJS_SERVICE_ID = "service_e2ogh6c";
-const EMAILJS_TEMPLATE_ID = "template_uisdxgb";
-const EMAILJS_PUBLIC_KEY = "tWyqaMDt1ylAxxUb1";
-
+// Declaro el componente
 export default function Contacto() {
+  //Estados
   const [form, setForm] = useState({
     name: "",
     lastname: "",
@@ -42,10 +46,10 @@ export default function Contacto() {
   const [menuAnim] = useState(new Animated.Value(-250));
   const [sending, setSending] = useState(false);
   const nav = useNavigation();
-
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  // Mostrar el toast
   const showToast = (type, message) => {
     setToast({ visible: true, type, message });
     Animated.timing(fadeAnim, {
@@ -63,6 +67,7 @@ export default function Contacto() {
     }, 3000);
   };
 
+  // Cargar la sesión
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -84,11 +89,11 @@ export default function Contacto() {
     loadSession();
   }, []);
 
+  // Validar el formulario
   const validateForm = () => {
     const { name, lastname, email, phone, message } = form;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^[0-9]{6,15}$/;
-
     if (!name.trim())
       return showToast("error", "Por favor, escribe tu nombre.");
     if (!lastname.trim())
@@ -102,10 +107,14 @@ export default function Contacto() {
     return true;
   };
 
+  // Función para mandar el formulario
   const handleSend = async () => {
+    // Llamo a la función de validar los campos
     if (!validateForm()) return;
+    // Estado de “enviando…”
     setSending(true);
     try {
+      // Web
       if (Platform.OS === "web") {
         EmailJS.init(EMAILJS_PUBLIC_KEY);
         await EmailJS.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
@@ -113,7 +122,8 @@ export default function Contacto() {
           role,
         });
         showToast("success", "✅ Tu mensaje se ha enviado correctamente.");
-      } else {
+      } // Móvil
+      else {
         const res = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -132,6 +142,7 @@ export default function Contacto() {
     }
   };
 
+  // Menu
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -153,6 +164,7 @@ export default function Contacto() {
     }
   };
 
+  // Navegaciones
   const goToProfile = () =>
     role === "admin"
       ? nav.navigate("AdminProfile")
@@ -174,6 +186,7 @@ export default function Contacto() {
   const goToFavorites = () => nav.navigate("UserFavorites");
   const goToContact = () => nav.navigate("Contacto");
 
+  // Cabecera del Usuario
   const renderUserTopBar = () => (
     <View
       style={{
@@ -241,7 +254,7 @@ export default function Contacto() {
       </View>
     </View>
   );
-
+  // Cabecera del Administrador
   const renderAdminTopBar = () => (
     <View style={styles.topBar}>
       <View style={styles.adminInfo}>
@@ -288,6 +301,7 @@ export default function Contacto() {
     </View>
   );
 
+  // Cabecera del Organizador
   const renderOrganizerTopBar = () =>
     role === "organizer" && (
       <View
@@ -369,6 +383,7 @@ export default function Contacto() {
       </View>
     );
 
+  // Menu Administrador
   const renderAdminMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
@@ -400,6 +415,7 @@ export default function Contacto() {
       </>
     );
 
+  // Menu Organizador web
   const renderOrganizerMenuWeb = () =>
     role === "organizer" &&
     Platform.OS === "web" &&
@@ -446,6 +462,7 @@ export default function Contacto() {
       </Animated.View>
     );
 
+  // Menu Usuario web
   const renderUserMenuWeb = () =>
     role === "user" &&
     Platform.OS === "web" &&
@@ -493,21 +510,25 @@ export default function Contacto() {
       </Animated.View>
     );
 
+  // UI
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
+      {/**Cabecera según el rol */}
       {role === "admin"
         ? renderAdminTopBar()
         : role === "organizer"
         ? renderOrganizerTopBar()
         : renderUserTopBar()}
 
+      {/**Menu según el rol */}
       {role === "admin"
         ? renderAdminMenu()
         : role === "organizer"
         ? renderOrganizerMenuWeb()
         : renderUserMenuWeb()}
 
+      {/**Menu móvil según el rol */}
       {Platform.OS !== "web" &&
         menuVisible &&
         (role === "organizer" ? (
@@ -516,6 +537,7 @@ export default function Contacto() {
           <UserMenu onClose={toggleMenu} />
         ))}
 
+      {/**Contenido principal */}
       <ScrollView
         contentContainerStyle={{
           padding: 24,
@@ -524,11 +546,14 @@ export default function Contacto() {
           flexGrow: 1,
         }}
       >
+        {/**Titulo */}
         <Text style={styles.title}>Contacto</Text>
 
+        {/**Formulario */}
         <View style={styles.formContainer}>
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
+              {/**Nombre */}
               <Text style={styles.label}>Nombre:</Text>
               <TextInput
                 value={form.name}
@@ -537,6 +562,7 @@ export default function Contacto() {
               />
             </View>
             <View style={{ flex: 1 }}>
+              {/**Apellidos */}
               <Text style={styles.label}>Apellidos:</Text>
               <TextInput
                 value={form.lastname}
@@ -546,6 +572,7 @@ export default function Contacto() {
             </View>
           </View>
 
+          {/**Email */}
           <Text style={styles.label}>Email:</Text>
           <TextInput
             value={form.email}
@@ -554,7 +581,7 @@ export default function Contacto() {
             autoCapitalize="none"
             style={styles.input}
           />
-
+          {/**Teléfono */}
           <Text style={styles.label}>Teléfono:</Text>
           <TextInput
             value={form.phone}
@@ -562,7 +589,7 @@ export default function Contacto() {
             keyboardType="phone-pad"
             style={styles.input}
           />
-
+          {/**Mensaje */}
           <Text style={styles.label}>Mensaje:</Text>
           <TextInput
             value={form.message}
@@ -571,6 +598,7 @@ export default function Contacto() {
             style={styles.textarea}
           />
 
+          {/**Botón de enviar */}
           <View style={{ alignItems: "center", marginTop: 20 }}>
             <Pressable
               onPress={handleSend}
@@ -584,7 +612,7 @@ export default function Contacto() {
           </View>
         </View>
       </ScrollView>
-
+      {/**Toast */}
       {toast.visible && (
         <Animated.View
           style={{
@@ -616,6 +644,7 @@ export default function Contacto() {
         </Animated.View>
       )}
 
+      {/**Footer */}
       {Platform.OS === "web" && (
         <Footer
           onAboutPress={goToAbout}
@@ -627,6 +656,7 @@ export default function Contacto() {
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",

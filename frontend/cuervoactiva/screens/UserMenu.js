@@ -1,4 +1,4 @@
-import React from "react";
+// Menu del usuario en móvil nativo
 import {
   View,
   Text,
@@ -9,9 +9,10 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
+// Declaro el componente
 export default function UserMenu({ onClose }) {
   const navigation = useNavigation();
-
+  // Navegaciones
   const goToAbout = () => {
     onClose();
     navigation.navigate("SobreNosotros");
@@ -41,6 +42,7 @@ export default function UserMenu({ onClose }) {
     navigation.navigate("User");
   };
 
+  // Render
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -141,6 +143,7 @@ export default function UserMenu({ onClose }) {
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,

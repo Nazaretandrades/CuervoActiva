@@ -1,9 +1,11 @@
+// Archivo que gestiona cómo se guarda, lee y elimina la sesión del usuario, tanto en web como en móvil 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 
+// Nombre bajo el cual se guardará la información en el dispositivo o navegador
 const STORAGE_KEY = "USER_SESSION";
 
-// Guardar sesión
+// Guardar sesión en web y en móvil nativo
 export const saveSession = async (data) => {
   try {
     if (Platform.OS === "web") {

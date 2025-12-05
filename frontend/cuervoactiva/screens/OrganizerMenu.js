@@ -1,4 +1,4 @@
-import React from "react";
+// Menu del organizador móvil nativo
 import {
   View,
   Text,
@@ -9,9 +9,10 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
+// Declaro el componente
 export default function OrganizerMenu({ onClose }) {
+  //Navegaciones
   const navigation = useNavigation();
-
   const goToAbout = () => {
     onClose?.();
     navigation.navigate("SobreNosotros");
@@ -37,19 +38,23 @@ export default function OrganizerMenu({ onClose }) {
     navigation.navigate("Organizer");
   };
 
+  // Return
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        {/**Botón de ir para atrás */}
         <Pressable onPress={onClose}>
           <Image
             source={require("../assets/iconos/back-organizador.png")}
             style={styles.backIcon}
           />
         </Pressable>
+        {/**Título */}
         <Text style={styles.headerTitle}>Menú</Text>
         <View style={{ width: 24 }} />
       </View>
 
+      {/**Opciones */}
       <View style={styles.menuOptions}>
         <Pressable style={styles.option} onPress={goToAbout}>
           <View style={styles.optionLeft}>
@@ -122,6 +127,7 @@ export default function OrganizerMenu({ onClose }) {
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,

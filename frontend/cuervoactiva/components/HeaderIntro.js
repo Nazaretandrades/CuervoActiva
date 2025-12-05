@@ -1,3 +1,4 @@
+// Componente Header
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -8,36 +9,47 @@ import {
   useWindowDimensions,
   StatusBar,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context"; // Asegura que el contenido no se solape con zonas inseguras en iOS/Android.
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Para guardar y cargar la sesión del usuario en móvil
+import { useNavigation } from "@react-navigation/native"; // Para obtener la navegación dentro del componente
 
+// Se declara el componente 
 export default function Header({
   onLogin,
   onRegister,
   hideAuthButtons = false,
   onHeaderHeight,
 }) {
+
+  // Obtiene el objeto de navegación
   const navigation = useNavigation();
+  // Determina si estás en móvil usando el ancho de pantalla
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
 
+  // Guarda el color del borde inferior según el rol
   const [roleColor, setRoleColor] = useState("#02486b");
 
+  // UseEffect para cargar el rol desde la sesión
   useEffect(() => {
+
+    // Carga la sesión según el sistema
     const loadRole = async () => {
       let session;
 
+      // En web
       if (Platform.OS === "web")
         session = JSON.parse(localStorage.getItem("USER_SESSION"));
       else {
+        // En móvil
         const s = await AsyncStorage.getItem("USER_SESSION");
         session = s ? JSON.parse(s) : null;
       }
-
+      // Extrae el rol que permite compatibilidad con diferentes formatos de sesión
       const role =
         session?.user?.role || session?.role || session?.userType || "user";
 
+        // Cambia el color dinámicamente
       if (role === "admin") setRoleColor("#0094A2");
       else if (role === "organizer" || role === "organizador")
         setRoleColor("#F3B23F");
@@ -47,6 +59,7 @@ export default function Header({
     loadRole();
   }, []);
 
+  // Función para navegar dependiendo del rol. Carga la sesión de nuevo.
   const handleLogoPress = async () => {
     try {
       let session;
@@ -58,6 +71,7 @@ export default function Header({
         session = sessionString ? JSON.parse(sessionString) : null;
       }
 
+      // Si no hay sesión -> navegar a Intro
       if (!session || !session.token) {
         navigation.navigate("Intro");
         return;
@@ -66,6 +80,7 @@ export default function Header({
       const role =
         session.user?.role || session.role || session.userType || "user";
 
+      // Si está logueado ->  navegar según rol:
       if (role === "admin") navigation.navigate("Admin");
       else if (role === "organizer" || role === "organizador")
         navigation.navigate("Organizer");
@@ -75,6 +90,7 @@ export default function Header({
     }
   };
 
+  // Estilos
   const styles = {
     container: {
       backgroundColor: "#02486b",
@@ -117,9 +133,7 @@ export default function Header({
     },
   };
 
-  // ---------------------
-  //     ANDROID / iOS
-  // ---------------------
+  // En movil nativo
   if (Platform.OS === "android") {
     return (
       <View style={{ backgroundColor: "#fff" }}>
@@ -205,9 +219,7 @@ export default function Header({
     );
   }
 
-  // ---------------------
-  //         WEB
-  // ---------------------
+  // En web
   return (
     <>
       <View
@@ -219,7 +231,6 @@ export default function Header({
             <Image source={require("../assets/logo.png")} style={styles.logo} />
           </View>
 
-          {/* TITULO CON MARGEN RESPONSIVE */}
           {!isMobile && (
             <Text
               style={[

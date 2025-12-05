@@ -1,3 +1,4 @@
+// Pantalla notificaciones de los usuarios
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -13,10 +14,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
+// Declarar el componente
 export default function UserNotifications({ navigation }) {
+  // Estados
   const [userName, setUserName] = useState("Usuario");
   const [notifications, setNotifications] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -27,11 +31,12 @@ export default function UserNotifications({ navigation }) {
     type: "info",
   });
 
-  /* ================= RESPONSIVE BREAKPOINTS ================ */
+  /* Responsive */
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
 
+  // Función para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const resize = () => setWinWidth(window.innerWidth);
@@ -39,13 +44,13 @@ export default function UserNotifications({ navigation }) {
     return () => window.removeEventListener("resize", resize);
   }, []);
 
+  // Breakpoints
   const isWeb = Platform.OS === "web";
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isDesktopWeb = isWeb && winWidth >= 1440;
   const isLargeWeb = isLaptopWeb || isDesktopWeb;
-
   const pagePaddingHorizontal = isMobileWeb
     ? 20
     : isTabletWeb
@@ -53,9 +58,7 @@ export default function UserNotifications({ navigation }) {
     : isLaptopWeb
     ? 55
     : 80;
-
   const pagePaddingBottom = isLargeWeb ? 80 : 20;
-
   const notificationsContainerWidth = isMobileWeb
     ? "100%"
     : isTabletWeb
@@ -64,14 +67,14 @@ export default function UserNotifications({ navigation }) {
     ? "85%"
     : "70%";
 
-  /* ================= TOAST ================= */
+  /* Toast*/
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
     setTimeout(() => {
       setToast({ visible: false, message: "", type: "info" });
     }, 2500);
   };
-  /* ================= LOAD USER ================= */
+  /* Cargar Usuario */
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -89,7 +92,7 @@ export default function UserNotifications({ navigation }) {
     loadUser();
   }, []);
 
-  /* ================= LOAD NOTIFICATIONS ================= */
+  /* Cargar notificaciones */
   useEffect(() => {
     const loadNotifications = async () => {
       try {
@@ -117,7 +120,7 @@ export default function UserNotifications({ navigation }) {
     loadNotifications();
   }, []);
 
-  /* ================= MARK AS READ ================= */
+  /* Marcar como leído */
   const markAsRead = async (id) => {
     try {
       const session =
@@ -142,7 +145,7 @@ export default function UserNotifications({ navigation }) {
     }
   };
 
-  /* ================= NAVIGATION ================= */
+  /* Navegaciones */
   const goToProfile = () => navigation.navigate("UserProfile");
   const goToNotifications = () => navigation.navigate("UserNotifications");
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
@@ -153,10 +156,9 @@ export default function UserNotifications({ navigation }) {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToHome = () => navigation.navigate("User");
 
-  /* ================= MENU ================= */
+  /* Menú */
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
-      // === ⭐ MODO MÓVIL NATIVO: IGUAL QUE TU SEGUNDO CÓDIGO ===
       setMenuVisible((prev) => !prev);
       return;
     }
@@ -177,7 +179,7 @@ export default function UserNotifications({ navigation }) {
     }
   };
 
-  /* ================= TOP BAR ================= */
+  /* Cabecera */
   const renderTopBar = () => (
     <View
       style={{
@@ -245,13 +247,13 @@ export default function UserNotifications({ navigation }) {
       </View>
     </View>
   );
-  /* ================= RENDER ================= */
+  /* Render */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", position: "relative" }}>
       <Header hideAuthButtons />
       {renderTopBar()}
 
-      {/* ===== WEB MENU ===== */}
+      {/* Menú web */}
       {isWeb && menuVisible && (
         <Animated.View
           style={{
@@ -299,7 +301,7 @@ export default function UserNotifications({ navigation }) {
         </Animated.View>
       )}
 
-      {/* ===== CONTENT RESPONSIVE ===== */}
+      {/* Contenido */}
       <View
         style={{
           flex: 1,
@@ -370,7 +372,7 @@ export default function UserNotifications({ navigation }) {
         </ScrollView>
       </View>
 
-      {/* ===== MOBILE MENU (NATIVO EXACTO) ===== */}
+      {/* Menú móvil nativo */}
       {menuVisible && !isWeb && (
         <View
           style={{
@@ -385,7 +387,7 @@ export default function UserNotifications({ navigation }) {
             paddingTop: 50,
           }}
         >
-          {/* HEADER MÓVIL */}
+          {/* Móvil Header */}
           <View
             style={{
               flexDirection: "row",
@@ -413,7 +415,7 @@ export default function UserNotifications({ navigation }) {
             </Text>
           </View>
 
-          {/* OPCIONES MÓVIL */}
+          {/* Opciones móvil */}
           <View style={{ flex: 1 }}>
             {[
               {
@@ -483,7 +485,7 @@ export default function UserNotifications({ navigation }) {
             ))}
           </View>
 
-          {/* FOOTER MÓVIL */}
+          {/* Bottom móvil */}
           <View
             style={{
               position: "absolute",
@@ -523,7 +525,7 @@ export default function UserNotifications({ navigation }) {
         </View>
       )}
 
-      {/* ===== FOOTER WEB SOLO EN PANTALLAS GRANDES ===== */}
+      {/* Footer */}
       {isWeb && isLargeWeb && (
         <View
           style={{
@@ -543,7 +545,7 @@ export default function UserNotifications({ navigation }) {
         </View>
       )}
 
-      {/* ===== TOAST ===== */}
+      {/* Toast */}
       {toast.visible && (
         <Animated.View
           style={{

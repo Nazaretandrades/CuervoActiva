@@ -75,15 +75,27 @@ export default function Login() {
 
       const role = data.user?.role || data.role;
 
+      // ADMIN
       if (role === "admin") {
-        if (Platform.OS === "web")
+        if (Platform.OS === "web") {
+          showToast("success", "Inicio exitoso");
           navigation.reset({ index: 0, routes: [{ name: "Admin" }] });
-        else showToast("error", "Solo disponible en Web");
-      } else if (role === "organizer")
-        navigation.reset({ index: 0, routes: [{ name: "Organizer" }] });
-      else navigation.reset({ index: 0, routes: [{ name: "User" }] });
+        } else {
+          showToast("error", "Solo disponible en Web");
+        }
+        return; 
+      }
 
+      // ORGANIZER
+      if (role === "organizer") {
+        showToast("success", "Inicio exitoso");
+        navigation.reset({ index: 0, routes: [{ name: "Organizer" }] });
+        return;
+      }
+
+      // USER NORMAL
       showToast("success", "Inicio exitoso");
+      navigation.reset({ index: 0, routes: [{ name: "User" }] });
     } catch (e) {
       showToast("error", e.message || "Error inesperado");
     } finally {
@@ -290,8 +302,7 @@ export default function Login() {
             bottom: 40,
             left: "8%",
             right: "8%",
-            backgroundColor:
-              toast.type === "success" ? "#4CAF50" : "#E74C3C",
+            backgroundColor: toast.type === "success" ? "#4CAF50" : "#E74C3C",
             paddingVertical: 14,
             paddingHorizontal: 18,
             borderRadius: 12,

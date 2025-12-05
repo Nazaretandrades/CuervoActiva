@@ -1,7 +1,9 @@
+// Archivo para registrar e iniciar sesión
 import { Platform } from "react-native";
-
+// Puerto donde corre el backend en Express.js
 const PORT = 5000;
 
+// Api según la plataforma
 const API_URL =
   Platform.OS === "android"
     ? `http://10.0.2.2:${PORT}`
@@ -9,6 +11,7 @@ const API_URL =
     ? `http://localhost:${PORT}`
     : `http://192.168.18.19:${PORT}`;
 
+// BASE_URL con variable de entorno (para producción)
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || API_URL;
 
 //FUNCIÓN: Registrar un nuevo usuario

@@ -1,3 +1,4 @@
+// Pantalla detalle evento usuario
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -18,17 +19,20 @@ import Footer from "../components/Footer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoute, useNavigation } from "@react-navigation/native";
 
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
-
+// Api de los eventos
 const API_URL = `${API_BASE}/api/events`;
+// Api de los comentarios
 const COMMENTS_URL = `${API_BASE}/api/comments`;
 
+// Declaro el componente
 export default function UserEventDetail() {
+  // Estados
   const route = useRoute();
   const navigation = useNavigation();
   const { eventId } = route.params || {};
-
   const [event, setEvent] = useState(null);
   const [rating, setRating] = useState(0);
   const [hasRated, setHasRated] = useState(false);
@@ -39,13 +43,12 @@ export default function UserEventDetail() {
   const [commentText, setCommentText] = useState("");
   const [userComment, setUserComment] = useState(null);
 
-  /* ======================================================================
-        RESPONSIVE WEB BREAKPOINTS
-  ======================================================================= */
+  // Responsive
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
 
+  // Función para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const resize = () => setWinWidth(window.innerWidth);
@@ -53,14 +56,14 @@ export default function UserEventDetail() {
     return () => window.removeEventListener("resize", resize);
   }, []);
 
+  // Breakpoints
   const isWeb = Platform.OS === "web";
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isDesktopWeb = isWeb && winWidth >= 1440;
   const showFooter = isLaptopWeb || isDesktopWeb;
 
-  /* ====================================================================== */
-
+  // Obtener el token
   const getToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -77,6 +80,7 @@ export default function UserEventDetail() {
     }
   };
 
+  // Obtener la info del usuario
   const getUserInfo = async () => {
     try {
       let session;
@@ -103,6 +107,7 @@ export default function UserEventDetail() {
     }
   };
 
+  // Cargar los ratings
   const loadRatings = async () => {
     try {
       const token = await getToken();
@@ -125,6 +130,7 @@ export default function UserEventDetail() {
     }
   };
 
+  // Cargar el evento según su ID
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -144,6 +150,7 @@ export default function UserEventDetail() {
     if (eventId) loadData();
   }, [eventId]);
 
+  // Valorar el evento
   const handleRate = async (value) => {
     try {
       const token = await getToken();
@@ -151,7 +158,6 @@ export default function UserEventDetail() {
         Alert.alert("Error", "Debes iniciar sesión para valorar el evento");
         return;
       }
-
       setRating(value);
       const res = await fetch(`${COMMENTS_URL}/${eventId}`, {
         method: "POST",
@@ -172,6 +178,7 @@ export default function UserEventDetail() {
     }
   };
 
+  // Mandar comentario
   const handleSendComment = async () => {
     try {
       const token = await getToken();
@@ -214,6 +221,7 @@ export default function UserEventDetail() {
     }
   };
 
+  // Render de las estrellas, con un for hasta 5 estrellas y se va sumando
   const renderStars = (ratingValue, interactive = false) => {
     const stars = [];
     const displayRating = interactive ? rating : ratingValue;
@@ -240,25 +248,27 @@ export default function UserEventDetail() {
     return <View style={{ flexDirection: "row" }}>{stars}</View>;
   };
 
+  // Compartir por WhatsApp
   const shareWhatsApp = () => {
     if (!event) return;
 
     const msg = `¡Mira este evento!
-Título: ${event.title}
-Lugar: ${event.location}
-Fecha: ${event.date}
-Hora: ${event.hour}`;
+                Título: ${event.title}
+                Lugar: ${event.location}
+                Fecha: ${event.date}
+                Hora: ${event.hour}`;
 
     const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
     Linking.openURL(url);
   };
 
+  // Compartir por Twitter (X)
   const shareTwitter = () => {
     if (!event) return;
 
     const msg = `¡Mira este evento! 
-${event.title} - ${event.location} 
-📅 ${event.date} | ⏰ ${event.hour}`;
+                ${event.title} - ${event.location} 
+                📅 ${event.date} | ⏰ ${event.hour}`;
 
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       msg
@@ -266,6 +276,7 @@ ${event.title} - ${event.location}
     Linking.openURL(url);
   };
 
+  // Navegaciones
   const goToProfile = () => navigation.navigate("UserProfile");
   const goToNotifications = () => navigation.navigate("UserNotifications");
   const goToCalendar = () => navigation.navigate("Calendar");
@@ -277,6 +288,7 @@ ${event.title} - ${event.location}
   const goToContact = () => navigation.navigate("Contacto");
   const goToHome = () => navigation.navigate("User");
 
+  // Pulsar el menú
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -294,6 +306,7 @@ ${event.title} - ${event.location}
     }
   };
 
+  // Cabecera
   const renderTopBarWeb = () => (
     <View
       style={{
@@ -361,6 +374,7 @@ ${event.title} - ${event.location}
     </View>
   );
 
+  // Cabecera móvil
   const renderTopBarMobile = () => (
     <View
       style={{
@@ -422,6 +436,7 @@ ${event.title} - ${event.location}
     </View>
   );
 
+  // Menú Web
   const renderWebMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
@@ -468,6 +483,7 @@ ${event.title} - ${event.location}
       </Animated.View>
     );
 
+  // Menú móvil nativo
   const renderMobileMenu = () =>
     Platform.OS !== "web" &&
     menuVisible && (
@@ -609,13 +625,17 @@ ${event.title} - ${event.location}
       </View>
     );
 
+  // Return
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
+      {/**Cabecera según la plataforma */}
       {Platform.OS === "web" ? renderTopBarWeb() : renderTopBarMobile()}
+      {/**Menus */}
       {renderWebMenu()}
       {renderMobileMenu()}
 
+      {/**Contenido */}
       {event && (
         <ScrollView
           style={{
@@ -750,7 +770,7 @@ ${event.title} - ${event.location}
 
                 {renderStars(rating, true)}
 
-                {/* COMENTARIO EN WEB */}
+                {/* Comentario en web */}
                 <View
                   style={{
                     marginTop: isTabletWeb ? 10 : 5,
@@ -916,7 +936,7 @@ ${event.title} - ${event.location}
 
                 {renderStars(rating, true)}
 
-                {/* COMENTARIO MÓVIL */}
+                {/* Comentario en móvil */}
                 <View style={{ marginTop: 18 }}>
                   <Text
                     style={{
@@ -975,7 +995,7 @@ ${event.title} - ${event.location}
         </ScrollView>
       )}
 
-      {/* === MODAL COMPARTIR === */}
+      {/*Modal compartir  */}
       <Modal visible={shareVisible} transparent animationType="fade">
         <View
           style={{
@@ -1047,9 +1067,7 @@ ${event.title} - ${event.location}
         </View>
       </Modal>
 
-      {/* ==============================
-          FOOTER — SOLO LAPTOP + DESKTOP
-      =============================== */}
+      {/* Footer responsive */}
       {isWeb && showFooter && (
         <View style={{ position: "fixed", bottom: 0, left: 0, right: 0 }}>
           <Footer

@@ -1,3 +1,4 @@
+// Pantalla detalle evento Administrador
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -17,13 +18,18 @@ import Footer from "../components/Footer";
 import { getSession } from "../services/sessionManager";
 import { useNavigation } from "@react-navigation/native";
 
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
+// Api para los eventos
 const API_URL = `${API_BASE}/api/events`;
+// Api para los comentarios
 const COMMENTS_URL = `${API_BASE}/api/comments`;
 
+// Declaración del componente
 export default function AdminEventDetail({ route }) {
+  // Estados
   const { eventId } = route?.params || {};
   const [event, setEvent] = useState(null);
   const [comments, setComments] = useState([]);
@@ -32,16 +38,14 @@ export default function AdminEventDetail({ route }) {
   const [menuAnim] = useState(new Animated.Value(-250));
   const [shareVisible, setShareVisible] = useState(false);
   const navigation = useNavigation();
-
-  // ⭐ NUEVO → Modal para confirmar eliminar comentario
+  // Modal para confirmar eliminar comentario
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
-
-  /* ================= RESPONSIVE BREAKPOINTS ================ */
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
 
+  // UseEffect para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const resize = () => setWinWidth(window.innerWidth);
@@ -49,13 +53,13 @@ export default function AdminEventDetail({ route }) {
     return () => window.removeEventListener("resize", resize);
   }, []);
 
+  // Breakpoints
   const isWeb = Platform.OS === "web";
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isDesktopWeb = isWeb && winWidth >= 1440;
   const isLargeWeb = isLaptopWeb || isDesktopWeb;
-
   const pagePaddingHorizontal = isMobileWeb
     ? 20
     : isTabletWeb
@@ -63,9 +67,7 @@ export default function AdminEventDetail({ route }) {
     : isLaptopWeb
     ? 55
     : 80;
-
   const pagePaddingBottom = isLargeWeb ? 80 : 30;
-
   const eventContainerWidth = isMobileWeb
     ? "100%"
     : isTabletWeb
@@ -74,9 +76,7 @@ export default function AdminEventDetail({ route }) {
     ? "100%"
     : "100%";
 
-  // ============================
-  //   CARGAR ADMIN
-  // ============================
+  // Cargar administrador
   useEffect(() => {
     const loadAdmin = async () => {
       const session = await getSession();
@@ -85,9 +85,7 @@ export default function AdminEventDetail({ route }) {
     loadAdmin();
   }, []);
 
-  // ============================
-  //   CARGAR EVENTO + COMENTARIOS
-  // ============================
+  // Cargar eventos + comentarios
   useEffect(() => {
     const loadEvent = async () => {
       try {
@@ -113,7 +111,7 @@ export default function AdminEventDetail({ route }) {
     if (eventId) loadEvent();
   }, [eventId]);
 
-  // ⭐⭐⭐ NUEVO → FUNCIÓN PARA ELIMINAR COMENTARIO (sin alert)
+  // Función para eliminar comentario
   const deleteComment = async (commentId) => {
     try {
       const session = await getSession();
@@ -135,21 +133,19 @@ export default function AdminEventDetail({ route }) {
     }
   };
 
-  // ⭐ NUEVO → Confirmar eliminación
+  // Confirmar eliminación
   const confirmDelete = async () => {
     await deleteComment(commentToDelete);
     setConfirmVisible(false);
   };
 
-  // ⭐ NUEVO → Cancelar eliminación
+  // Cancelar eliminación
   const cancelDelete = () => {
     setCommentToDelete(null);
     setConfirmVisible(false);
   };
 
-  // ============================
-  //   NAVEGACIÓN
-  // ============================
+  // Navegación
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -160,12 +156,12 @@ export default function AdminEventDetail({ route }) {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToUsers = () => navigation.navigate("AdminUsers");
 
+  // Menú desplegable
   const toggleMenu = () => {
     if (!isWeb) {
       setMenuVisible((prev) => !prev);
       return;
     }
-
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
@@ -182,6 +178,7 @@ export default function AdminEventDetail({ route }) {
     }
   };
 
+  // Cargar las estrellas de la valoración
   const renderStars = (rating) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -201,25 +198,27 @@ export default function AdminEventDetail({ route }) {
     return <View style={{ flexDirection: "row" }}>{stars}</View>;
   };
 
+  // Función para compartir por WhatsApp
   const shareWhatsApp = () => {
     if (!event) return;
 
     const msg = `¡Mira este evento!
-Título: ${event.title}
-Lugar: ${event.location}
-Fecha: ${event.date}
-Hora: ${event.hour}`;
+                Título: ${event.title}
+                Lugar: ${event.location}
+                Fecha: ${event.date}
+                Hora: ${event.hour}`;
 
     const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
     Linking.openURL(url);
   };
 
+  // Función para compartir por Twitter (X)
   const shareTwitter = () => {
     if (!event) return;
 
     const msg = `¡Mira este evento! 
-${event.title} - ${event.location} 
-📅 ${event.date} | ⏰ ${event.hour}`;
+                ${event.title} - ${event.location} 
+                📅 ${event.date} | ⏰ ${event.hour}`;
 
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       msg
@@ -227,11 +226,12 @@ ${event.title} - ${event.location}
     Linking.openURL(url);
   };
 
+  // UI
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* BARRA SUPERIOR */}
+      {/* Cabecera */}
       <View
         style={{
           flexDirection: "row",
@@ -336,7 +336,7 @@ ${event.title} - ${event.location}
         </View>
       </View>
 
-      {/* MENÚ LATERAL WEB */}
+      {/* Menú lateral web */}
       {isWeb && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -394,7 +394,7 @@ ${event.title} - ${event.location}
         </>
       )}
 
-      {/* DETALLE EVENTO */}
+      {/* Detalle evento */}
       {event && (
         <View
           style={{
@@ -528,8 +528,7 @@ ${event.title} - ${event.location}
                 />
               </Pressable>
             </View>
-
-            {/* ⭐⭐⭐ VALORACIONES + COMENTARIOS + BORRADO */}
+            {/**Valoraciones + comentarios + borrado */}
             <View style={{ marginTop: 25 }}>
               <Text
                 style={{
@@ -598,11 +597,11 @@ ${event.title} - ${event.location}
                         </Text>
                       )}
 
-                      {/* ⭐ BOTÓN ELIMINAR (abre modal) ⭐ */}
+                      {/* Botón eliminar (abre el modal) */}
                       <Pressable
                         onPress={() => {
-                          setCommentToDelete(c._id); // ⭐ NUEVO
-                          setConfirmVisible(true); // ⭐ NUEVO
+                          setCommentToDelete(c._id);
+                          setConfirmVisible(true);
                         }}
                         style={{
                           marginTop: 10,
@@ -636,7 +635,7 @@ ${event.title} - ${event.location}
         </View>
       )}
 
-      {/* ⭐⭐⭐ MODAL DE CONFIRMACIÓN DE ELIMINAR ⭐⭐⭐ */}
+      {/* Modal de confirmación de eliminar */}
       {confirmVisible && (
         <View
           style={{
@@ -711,7 +710,7 @@ ${event.title} - ${event.location}
         </View>
       )}
 
-      {/* MODAL COMPARTIR */}
+      {/* Modal Compartir */}
       <Modal visible={shareVisible} transparent animationType="fade">
         <View
           style={{
@@ -783,7 +782,7 @@ ${event.title} - ${event.location}
         </View>
       </Modal>
 
-      {/* FOOTER WEB RESPONSIVE */}
+      {/* Footer web responsive */}
       {isWeb && isLargeWeb && (
         <View
           style={{

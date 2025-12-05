@@ -1,3 +1,4 @@
+// Pantalla de Cultura e Historia
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -18,17 +19,18 @@ import { useNavigation } from "@react-navigation/native";
 import OrganizerMenu from "./OrganizerMenu";
 import UserMenu from "./UserMenu";
 
+// Declaración del componente
 export default function CulturaHistoria() {
+  // Estados
   const [role, setRole] = useState("user");
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [userName, setUserName] = useState("Usuario");
-
-  /* ---------- Responsive web (solo web) ---------- */
+  // Responsive web
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
-
+  // Función para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const handleResize = () => setWinWidth(window.innerWidth);
@@ -38,19 +40,17 @@ export default function CulturaHistoria() {
 
   const isWeb = Platform.OS === "web";
 
-  // 📌 BREAKPOINTS OPCIÓN A
+  // Breakpoints
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isLargeWeb = isWeb && winWidth >= 1024;
   const showFooter = isLaptopWeb || isLargeWeb;
-
-  // ⭐ Breakpoints móviles pequeños y grandes SOLO WEB
+  //  Breakpoints móviles pequeños y grandes SOLO WEB
   const isMobileSmall = isWeb && winWidth < 400;
   const isMobileMedium = isWeb && winWidth >= 400 && winWidth < 500;
   const isMobileLarge = isWeb && winWidth >= 500 && winWidth < 768;
-
-  // ⭐ Tamaño dinámico del párrafo SOLO móvil web
+  // Tamaño dinámico del párrafo SOLO móvil web
   const paragraphFontSize = isMobileSmall
     ? 14
     : isMobileMedium
@@ -59,9 +59,7 @@ export default function CulturaHistoria() {
     ? 16
     : 16;
 
-  /* ============================
-     ⭐ ALTURA SCROLL EVENTOS
-     ============================ */
+  // ALtura scroll eventos
   const eventScrollMaxHeight = isMobileWeb
     ? 250
     : isTabletWeb
@@ -70,9 +68,7 @@ export default function CulturaHistoria() {
     ? 220
     : 280;
 
-  /* ============================
-     ⭐ ANCHO DEL CONTENEDOR
-     ============================ */
+  // Ancho del contenedor
   const eventContainerResponsiveStyle = !isWeb
     ? {}
     : isMobileWeb
@@ -81,8 +77,9 @@ export default function CulturaHistoria() {
     ? { width: "90%", maxWidth: 1000 }
     : { width: "60%", maxWidth: 1200 };
 
+  // Navegación
   const nav = useNavigation();
-
+  // Cargar usuario
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -103,20 +100,19 @@ export default function CulturaHistoria() {
     loadSession();
   }, []);
 
+  // Navegaciones
   const goToProfile = () =>
     role === "admin"
       ? nav.navigate("AdminProfile")
       : role === "organizer"
       ? nav.navigate("OrganizerProfile")
       : nav.navigate("UserProfile");
-
   const goToNotifications = () =>
     role === "admin"
       ? nav.navigate("AdminNotifications")
       : role === "organizer"
       ? nav.navigate("OrganizerNotifications")
       : nav.navigate("UserNotifications");
-
   const goToAboutUs = () => nav.navigate("SobreNosotros");
   const goToPrivacy = () => nav.navigate("PoliticaPrivacidad");
   const goToConditions = () => nav.navigate("Condiciones");
@@ -126,6 +122,7 @@ export default function CulturaHistoria() {
   const goToHomeUser = () => nav.navigate("User");
   const goToAbout = () => navigation.navigate("SobreNosotros");
 
+  // Menu
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -147,10 +144,8 @@ export default function CulturaHistoria() {
       }).start(() => setMenuVisible(false));
     }
   };
-  /* ============================
-     ⭐ TOPBARS POR ROL
-     ============================ */
 
+  // Cabecera del usuario
   const renderUserTopBar = () => (
     <View style={styles.topBar}>
       <View style={styles.topBarLeft}>
@@ -197,6 +192,7 @@ export default function CulturaHistoria() {
     </View>
   );
 
+  // Cabecera del organizador
   const renderOrganizerTopBar = () => (
     <View style={styles.topBar}>
       <View style={styles.topBarLeft}>
@@ -261,6 +257,7 @@ export default function CulturaHistoria() {
     </View>
   );
 
+  // Cabecera del administrador
   const renderAdminTopBar = () => (
     <View style={styles.topBar}>
       <View style={styles.topBarLeft}>
@@ -336,9 +333,7 @@ export default function CulturaHistoria() {
     </View>
   );
 
-  /* ============================
-     ⭐ MENÚ LATERAL WEB
-     ============================ */
+  // Menu lateral web y por rol
   const renderWebMenu = () => {
     if (!menuVisible || !isWeb) return null;
 
@@ -420,17 +415,18 @@ export default function CulturaHistoria() {
       </>
     );
   };
-  /* ============================
-     ⭐ RENDER
-     ============================ */
+
+  // UI
   return (
     <View style={styles.pageContainer}>
       <Header hideAuthButtons />
 
+      {/**Cabecera según el rol */}
       {role === "user" && renderUserTopBar()}
       {role === "organizer" && renderOrganizerTopBar()}
       {role === "admin" && renderAdminTopBar()}
 
+      {/* Menú web */}
       {renderWebMenu()}
 
       {/* Menú móvil nativo */}
@@ -442,7 +438,7 @@ export default function CulturaHistoria() {
           <UserMenu onClose={toggleMenu} />
         ) : null)}
 
-      {/* SCROLL PRINCIPAL */}
+      {/* Scroll principal */}
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: isMobileWeb ? 20 : 55,
@@ -454,7 +450,7 @@ export default function CulturaHistoria() {
       >
         <Text style={styles.title}>Cultura e Historia</Text>
 
-        {/* TEXTO AJUSTADO PARA MOVILES */}
+        {/* Texto ajustado para móviles */}
         <Text
           style={[
             styles.paragraph,
@@ -532,7 +528,7 @@ export default function CulturaHistoria() {
         </View>
       </ScrollView>
 
-      {/* FOOTER */}
+      {/* Footer */}
       {isWeb && showFooter && (
         <View style={{ position: "fixed", bottom: 0, left: 0, right: 0 }}>
           <Footer
@@ -546,7 +542,7 @@ export default function CulturaHistoria() {
   );
 }
 
-/* ========= 📌 LISTA COMPLETA DE EVENTOS ========= */
+/*Lista de los eventos */
 
 const events = [
   {
@@ -611,8 +607,7 @@ const events = [
   },
 ];
 
-/* ========= 📌 ESTILOS ========= */
-
+/* Estilos */
 const styles = StyleSheet.create({
   pageContainer: {
     flex: 1,

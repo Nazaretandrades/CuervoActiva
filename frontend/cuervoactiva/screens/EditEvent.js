@@ -1,3 +1,5 @@
+
+// Pantalla para editar evento en móvil nativo
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -12,20 +14,23 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
 
+// Api según la plataforma
 const API_URL =
   Platform.OS === "android"
     ? "http://10.0.2.2:5000/api/events"
     : "http://localhost:5000/api/events";
 
+// Se declara el componente
 export default function EditEvent() {
+  // Estados
   const navigation = useNavigation();
   const route = useRoute();
   const { eventData } = route.params || {};
-
   const [form, setForm] = useState(eventData || {});
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Obtengo la sesión
   const getSessionToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -41,7 +46,9 @@ export default function EditEvent() {
     }
   };
 
+  // Función para el botón de editar
   const handleSubmit = async () => {
+    // Se comprueba los campos requeridos
     const required = [
       "title",
       "description",
@@ -58,12 +65,13 @@ export default function EditEvent() {
 
     setLoading(true);
     try {
+      // Obtengo la sesión y el token
       const token = await getSessionToken();
       if (!token) {
         alert("❌ Sesión no encontrada");
         return;
       }
-
+      // Hago el fetch
       const res = await fetch(`${API_URL}/${form._id}`, {
         method: "PUT",
         headers: {
@@ -73,6 +81,7 @@ export default function EditEvent() {
         body: JSON.stringify(form),
       });
 
+      // Obtengo la respuesta
       if (!res.ok) throw new Error("Error al actualizar evento");
       alert("✅ Evento actualizado con éxito");
       navigation.goBack();
@@ -83,6 +92,7 @@ export default function EditEvent() {
     }
   };
 
+  // UI
   return (
     <View style={{ flex: 1, backgroundColor: "#F8F8F8" }}>
       <View
@@ -95,6 +105,7 @@ export default function EditEvent() {
           backgroundColor: "#F8F8F8",
         }}
       >
+        {/**Botón para ir para detrás */}
         <Pressable onPress={() => navigation.goBack()}>
           <Image
             source={require("../assets/iconos/back-organizador.png")}
@@ -117,7 +128,7 @@ export default function EditEvent() {
         style={{ paddingHorizontal: 25, marginTop: 150 }}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-        {/* TÍTULO */}
+        {/* Título */}
         <Text style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}>
           Título del Evento:
         </Text>
@@ -150,6 +161,7 @@ export default function EditEvent() {
           />
         </View>
 
+        {/* Descripción */}
         <Text style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}>
           Descripción:
         </Text>
@@ -171,6 +183,7 @@ export default function EditEvent() {
 
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <View style={{ width: "48%" }}>
+            {/* Fecha */}
             <Text
               style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}
             >
@@ -207,6 +220,7 @@ export default function EditEvent() {
           </View>
 
           <View style={{ width: "48%" }}>
+            {/* Lugar */}
             <Text
               style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}
             >
@@ -244,6 +258,7 @@ export default function EditEvent() {
 
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <View style={{ width: "48%" }}>
+            {/* Hora */}
             <Text
               style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}
             >
@@ -280,6 +295,7 @@ export default function EditEvent() {
           </View>
 
           <View style={{ width: "48%", zIndex: open ? 9999 : 1 }}>
+            {/* Categoría */}
             <Text
               style={{ fontWeight: "600", marginBottom: 6, color: "#014869" }}
             >
@@ -314,7 +330,8 @@ export default function EditEvent() {
             />
           </View>
         </View>
-
+        
+        {/* Botón de Guardar */}
         <View style={{ alignItems: "center", marginTop: 30 }}>
           <Pressable
             onPress={handleSubmit}

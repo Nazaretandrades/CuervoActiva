@@ -1,3 +1,4 @@
+// Pantalla de notificaciones del Administrador
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -13,10 +14,13 @@ import {
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
+// Se declara el componente
 export default function AdminNotifications({ navigation }) {
+  // Estados
   const [adminName, setAdminName] = useState("Admin");
   const [notifications, setNotifications] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -27,25 +31,23 @@ export default function AdminNotifications({ navigation }) {
     type: "info",
   });
 
-  /* ================= RESPONSIVE BREAKPOINTS (IGUAL QUE USERNOTIFICATIONS) ================ */
+  /* Breakpoints */
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
-
+  // Función para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const resize = () => setWinWidth(window.innerWidth);
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
   }, []);
-
   const isWeb = Platform.OS === "web";
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isDesktopWeb = isWeb && winWidth >= 1440;
   const isLargeWeb = isLaptopWeb || isDesktopWeb;
-
   const pagePaddingHorizontal = isMobileWeb
     ? 20
     : isTabletWeb
@@ -53,9 +55,7 @@ export default function AdminNotifications({ navigation }) {
     : isLaptopWeb
     ? 55
     : 80;
-
   const pagePaddingBottom = isLargeWeb ? 80 : 20;
-
   const notificationsContainerWidth = isMobileWeb
     ? "100%"
     : isTabletWeb
@@ -64,7 +64,7 @@ export default function AdminNotifications({ navigation }) {
     ? "85%"
     : "70%";
 
-  /* ================= TOAST ================= */
+  /* Función para mostrar el toast */
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
     setTimeout(
@@ -73,7 +73,7 @@ export default function AdminNotifications({ navigation }) {
     );
   };
 
-  /* ========== LOAD ADMIN ========== */
+  /* Cargar administrador */
   useEffect(() => {
     try {
       const session = JSON.parse(localStorage.getItem("USER_SESSION"));
@@ -84,7 +84,7 @@ export default function AdminNotifications({ navigation }) {
     }
   }, []);
 
-  /* ========== LOAD NOTIFICATIONS ========== */
+  /* Cargar notificaciones */
   useEffect(() => {
     const loadNotifications = async () => {
       try {
@@ -108,7 +108,7 @@ export default function AdminNotifications({ navigation }) {
     loadNotifications();
   }, []);
 
-  /* ========== MARK AS READ ========== */
+  /* Marcar como leído las notificaciones */
   const markAsRead = async (id) => {
     try {
       const session = JSON.parse(localStorage.getItem("USER_SESSION"));
@@ -129,7 +129,7 @@ export default function AdminNotifications({ navigation }) {
     }
   };
 
-  /* ========== NAVIGATION ========== */
+  /* Navegación */
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -140,13 +140,12 @@ export default function AdminNotifications({ navigation }) {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToUsers = () => navigation.navigate("AdminUsers");
 
-  /* ========== MENU ========== */
+  /* Menú */
   const toggleMenu = () => {
     if (!isWeb) {
       setMenuVisible(!menuVisible);
       return;
     }
-
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
@@ -163,14 +162,12 @@ export default function AdminNotifications({ navigation }) {
     }
   };
 
-  /* =====================================
-      RENDER
-  ====================================== */
+  // UI
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", position: "relative" }}>
       <Header hideAuthButtons />
 
-      {/* TOPBAR (MISMO DISEÑO TUYO) */}
+      {/* Cabecera) */}
       <View
         style={{
           flexDirection: "row",
@@ -244,7 +241,7 @@ export default function AdminNotifications({ navigation }) {
         </View>
       </View>
 
-      {/* MENU WEB RESPONSIVE COMO USERNOTIFICATIONS */}
+      {/* Menú lateral web */}
       {isWeb && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -304,7 +301,7 @@ export default function AdminNotifications({ navigation }) {
         </>
       )}
 
-      {/* CONTENT – MISMO RESPONSIVE QUE USERNOTIFICATIONS */}
+      {/* Contenido */}
       <View
         style={{
           flex: 1,
@@ -374,7 +371,7 @@ export default function AdminNotifications({ navigation }) {
         </ScrollView>
       </View>
 
-      {/* FOOTER SOLO EN PANTALLAS GRANDES (IGUAL QUE USERNOTIFICATIONS) */}
+      {/* Footer responsive en web */}
       {isWeb && isLargeWeb && (
         <View
           style={{
@@ -394,7 +391,7 @@ export default function AdminNotifications({ navigation }) {
         </View>
       )}
 
-      {/* TOAST */}
+      {/* Toast */}
       {toast.visible && (
         <Animated.View
           style={{

@@ -1,3 +1,4 @@
+// Pantalla política y privacidad
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -15,23 +16,24 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// Se declara el componente
 export default function PoliticaPrivacidad({ navigation }) {
+  // Estados
   const [role, setRole] = useState("user");
   const [userName, setUserName] = useState("Usuario");
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
-
   const { width, height } = useWindowDimensions();
 
-  // 🔹 Breakpoints como en Condiciones
+  // Breakpoints
   const isMobile = width < 600;
   const isTablet = width >= 600 && width < 900;
   const isLaptop = width >= 900 && width < 1400;
   const isDesktop = width >= 1400;
-
   const dynamicPadding = isMobile ? 14 : isTablet ? 18 : 24;
   const cardMinHeight = isMobile ? 260 : isTablet ? 320 : 350;
 
+  // Carga la sesión
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -55,20 +57,19 @@ export default function PoliticaPrivacidad({ navigation }) {
     loadSession();
   }, []);
 
+  // Navegaciones
   const goToProfile = () =>
     role === "admin"
       ? navigation.navigate("AdminProfile")
       : role === "organizer"
       ? navigation.navigate("OrganizerProfile")
       : navigation.navigate("UserProfile");
-
   const goToNotifications = () =>
     role === "admin"
       ? navigation.navigate("AdminNotifications")
       : role === "organizer"
       ? navigation.navigate("OrganizerNotifications")
       : navigation.navigate("UserNotifications");
-
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToUsers = () => navigation.navigate("AdminUsers");
@@ -77,6 +78,7 @@ export default function PoliticaPrivacidad({ navigation }) {
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToAbout = () => navigation.navigate("SobreNosotros");
 
+  // Menú
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -99,10 +101,7 @@ export default function PoliticaPrivacidad({ navigation }) {
     }
   };
 
-  // -----------------------
-  // TOPBARS
-  // -----------------------
-
+  // Cabecera del usuario
   const renderUserTopBar = () => (
     <View style={[styles.topBar, { paddingHorizontal: dynamicPadding }]}>
       <View style={styles.profileContainer}>
@@ -152,6 +151,7 @@ export default function PoliticaPrivacidad({ navigation }) {
     </View>
   );
 
+  // Cabecera del administrador
   const renderAdminTopBar = () => (
     <View style={[styles.topBar, { paddingHorizontal: dynamicPadding }]}>
       <View style={styles.adminInfo}>
@@ -199,6 +199,7 @@ export default function PoliticaPrivacidad({ navigation }) {
     </View>
   );
 
+  // Cabecera del organizador
   const renderOrganizerTopBar = () =>
     role === "organizer" && (
       <View style={[styles.topBar, { paddingHorizontal: dynamicPadding }]}>
@@ -260,10 +261,7 @@ export default function PoliticaPrivacidad({ navigation }) {
       </View>
     );
 
-  // -----------------------
-  // MENÚS WEB
-  // -----------------------
-
+  // Menu web administrador
   const renderAdminMenu = () =>
     Platform.OS === "web" &&
     menuVisible &&
@@ -296,6 +294,7 @@ export default function PoliticaPrivacidad({ navigation }) {
       </>
     );
 
+  // Menu web organizador
   const renderOrganizerMenuWeb = () =>
     role === "organizer" &&
     Platform.OS === "web" &&
@@ -342,6 +341,7 @@ export default function PoliticaPrivacidad({ navigation }) {
       </Animated.View>
     );
 
+  // Menu web usuario
   const renderUserMenuWeb = () =>
     role === "user" &&
     Platform.OS === "web" &&
@@ -392,10 +392,7 @@ export default function PoliticaPrivacidad({ navigation }) {
       </Animated.View>
     );
 
-  // -----------------------
-  // CONTENIDO PRINCIPAL (RESPONSIVE COMO CONDICIONES)
-  // -----------------------
-
+  // Contenido principal
   const renderMainContent = () => (
     <>
       <Text
@@ -427,7 +424,7 @@ export default function PoliticaPrivacidad({ navigation }) {
           overflow: "visible",
         }}
       >
-        {/* CARD POLÍTICA */}
+        {/* Card Política */}
         <View
           style={{
             backgroundColor: "#fff",
@@ -464,7 +461,7 @@ export default function PoliticaPrivacidad({ navigation }) {
           </ScrollView>
         </View>
 
-        {/* CARD PRIVACIDAD */}
+        {/* Card Privacidad */}
         <View
           style={{
             backgroundColor: "#fff",
@@ -507,10 +504,7 @@ export default function PoliticaPrivacidad({ navigation }) {
     </>
   );
 
-  // -----------------------
-  // RETURN
-  // -----------------------
-
+  // Return
   return (
     <View
       style={{
@@ -521,19 +515,19 @@ export default function PoliticaPrivacidad({ navigation }) {
     >
       <Header hideAuthButtons />
 
-      {/* TOP BAR */}
+      {/* Cabevera según el rol */}
       {role === "admin"
         ? renderAdminTopBar()
         : role === "organizer"
         ? renderOrganizerTopBar()
         : renderUserTopBar()}
 
-      {/* MENÚS WEB */}
+      {/* Menús web */}
       {renderAdminMenu()}
       {renderOrganizerMenuWeb()}
       {renderUserMenuWeb()}
 
-      {/* SCROLL PRINCIPAL (MISMA IDEA QUE CONDICIONES) */}
+      {/* Scroll principal */}
       <ScrollView
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={true}
@@ -549,7 +543,7 @@ export default function PoliticaPrivacidad({ navigation }) {
         {renderMainContent()}
       </ScrollView>
 
-      {/* FOOTER SOLO EN WEB ESCRITORIO (NO MOBILE, NO TABLET) */}
+      {/* Footer */}
       {Platform.OS === "web" && !isMobile && !isTablet && (
         <View
           style={{
@@ -572,6 +566,7 @@ export default function PoliticaPrivacidad({ navigation }) {
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
