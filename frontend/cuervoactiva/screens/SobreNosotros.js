@@ -1,3 +1,4 @@
+// Pantalla de Sobre Nosotros
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -18,22 +19,24 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import OrganizerMenu from "./OrganizerMenu";
 import UserMenu from "./UserMenu";
 
+// Se declara el componente
 export default function SobreNosotros({ navigation }) {
+  // Estados
   const [role, setRole] = useState("user");
   const [userName, setUserName] = useState("Usuario");
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  // 🔹 Breakpoints / dimensiones (igual estilo que en Condiciones)
+  // Breakpoints
   const { width, height } = useWindowDimensions();
   const isMobile = width < 600;
   const isTablet = width >= 600 && width < 900;
   const isLaptop = width >= 900 && width < 1400;
   const isDesktop = width >= 1400;
-
   const dynamicPadding = isMobile ? 14 : isTablet ? 18 : 24;
   const cardMinHeight = isMobile ? 260 : isTablet ? 320 : 350;
 
+  // Cargar la sesión
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -58,6 +61,7 @@ export default function SobreNosotros({ navigation }) {
     loadSession();
   }, []);
 
+  // Navegación
   const goToProfile = () =>
     role === "admin"
       ? navigation.navigate("AdminProfile")
@@ -79,13 +83,12 @@ export default function SobreNosotros({ navigation }) {
   const goToAbout = () => navigation.navigate("SobreNosotros");
   const goToUsers = () => navigation.navigate("AdminUsers");
 
+  // Menú
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
       return;
     }
-
-    // 🔥 FIX WEB: useNativeDriver debe ser false
     if (menuVisible) {
       Animated.timing(menuAnim, {
         toValue: -250,
@@ -102,6 +105,7 @@ export default function SobreNosotros({ navigation }) {
     }
   };
 
+  // Cabecera según el rol
   const renderTopBar = () => {
     const tint =
       role === "organizer"
@@ -109,6 +113,7 @@ export default function SobreNosotros({ navigation }) {
         : role === "admin"
         ? "#0094A2"
         : "#014869";
+
     const avatarBg = tint;
 
     const bellIcon =
@@ -226,6 +231,7 @@ export default function SobreNosotros({ navigation }) {
     );
   };
 
+  // Menu según el rol
   const renderMenu = () => {
     if (!menuVisible || Platform.OS !== "web") return null;
 
@@ -279,17 +285,19 @@ export default function SobreNosotros({ navigation }) {
   };
 
   const content = `Cuervo Activa es una aplicación multiplataforma creada para fomentar la participación ciudadana y la difusión cultural en el municipio de El Cuervo de Sevilla.
-Su objetivo principal es ofrecer un espacio digital donde los vecinos puedan descubrir, promover y participar en los distintos eventos, actividades y celebraciones locales de una forma sencilla, rápida y accesible.
+                  Su objetivo principal es ofrecer un espacio digital donde los vecinos puedan descubrir, promover y participar en los distintos eventos, actividades y celebraciones locales de una forma sencilla, rápida y accesible.
 
-La aplicación permite que tanto los organizadores como el propio Ayuntamiento gestionen eventos de carácter deportivo, cultural, social o educativo, centralizando toda la información en una única herramienta.
-Por su parte, los usuarios pueden consultar el calendario de actividades, añadir eventos a sus favoritos, recibir notificaciones y mantenerse al día sobre todo lo que ocurre en su localidad.
+                  La aplicación permite que tanto los organizadores como el propio Ayuntamiento gestionen eventos de carácter deportivo, cultural, social o educativo, centralizando toda la información en una única herramienta.
+                  Por su parte, los usuarios pueden consultar el calendario de actividades, añadir eventos a sus favoritos, recibir notificaciones y mantenerse al día sobre todo lo que ocurre en su localidad.
 
-Cuervo Activa busca modernizar la comunicación entre la administración y la ciudadanía, impulsando la vida social y el sentido de comunidad mediante la tecnología.`;
+                  Cuervo Activa busca modernizar la comunicación entre la administración y la ciudadanía, impulsando la vida social y el sentido de comunidad mediante la tecnología.`;
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
+      {/**Cabecera */}
       {renderTopBar()}
+      {/**Menú */}
       {renderMenu()}
 
       {Platform.OS !== "web" &&
@@ -300,7 +308,7 @@ Cuervo Activa busca modernizar la comunicación entre la administración y la ci
           <UserMenu onClose={toggleMenu} />
         ))}
 
-      {/* 🔥 AJUSTE DE BACKGROUND SUBIDO EN LAPTOP Y ESCRITORIO */}
+      {/**Fondo */}
       <ImageBackground
         source={require("../assets/logo.png")}
         resizeMode="contain"
@@ -313,10 +321,11 @@ Cuervo Activa busca modernizar la comunicación entre la administración y la ci
         style={{
           flex: 1,
           marginTop: isLaptop ? -40 : isDesktop ? -60 : 0,
-          zIndex: 0, // <-- AÑADIR
-          position: "relative", // <-- AÑADIR
+          zIndex: 0,
+          position: "relative",
         }}
       >
+        {/**Contenido */}
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{
@@ -380,6 +389,7 @@ Cuervo Activa busca modernizar la comunicación entre la administración y la ci
         </ScrollView>
       </ImageBackground>
 
+      {/**Footer */}
       {Platform.OS === "web" && width >= 1024 && (
         <View
           style={{
@@ -402,6 +412,7 @@ Cuervo Activa busca modernizar la comunicación entre la administración y la ci
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",

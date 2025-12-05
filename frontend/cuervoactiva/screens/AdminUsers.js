@@ -1,3 +1,4 @@
+// Pantalla de usuarios en administrador
 import React, { useEffect, useState, useRef } from "react";
 import {
   View,
@@ -17,29 +18,28 @@ import Footer from "../components/Footer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
-
+// Api de los usuarios
 const API_URL = `${API_BASE}/api/users`;
 
+// Se declara el componente
 export default function AdminUsers() {
+  // Estados
   const navigation = useNavigation();
   const [users, setUsers] = useState([]);
   const [adminName, setAdminName] = useState("Admin");
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
-
   const [toast, setToast] = useState({ visible: false, type: "", message: "" });
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
   // Modal eliminar usuario
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
-
   // Modales crear / editar usuario
   const [createVisible, setCreateVisible] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
-
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
@@ -47,7 +47,6 @@ export default function AdminUsers() {
     confirmPassword: "",
     role: "user",
   });
-
   const [editUser, setEditUser] = useState({
     id: "",
     name: "",
@@ -57,26 +56,23 @@ export default function AdminUsers() {
     role: "user",
   });
 
-  /* ======== RESPONSIVE BREAKPOINTS (como AdminNotifications) ======== */
+  /* Breakpoints */
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
-
+  // Funcióbn para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const resize = () => setWinWidth(window.innerWidth);
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
   }, []);
-
   const isWeb = Platform.OS === "web";
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1000 && winWidth < 1440;
   const isDesktopWeb = isWeb && winWidth >= 1440;
   const isLargeWeb = isLaptopWeb || isDesktopWeb;
-
-  // Paddings laterales del scroll principal
   const pagePaddingHorizontal = isMobileWeb
     ? 20
     : isTabletWeb
@@ -84,11 +80,7 @@ export default function AdminUsers() {
     : isLaptopWeb
     ? 55
     : 80;
-
-  // Padding inferior para dejar aire al footer + toast
   const pagePaddingBottom = isMobileWeb ? 180 : isLargeWeb ? 10 : 40;
-
-  // Ancho responsive del bloque (título + lista usuarios)
   const mainContainerWidthStyle = isMobileWeb
     ? { width: "100%", maxWidth: "100%" }
     : isTabletWeb
@@ -96,8 +88,6 @@ export default function AdminUsers() {
     : isLaptopWeb
     ? { width: "80%", maxWidth: 1100  }
     : { width: "80%", maxWidth: 1100 };
-
-  // Altura máxima de la lista (ligeramente distinta según tamaño)
   const listMaxHeight = isMobileWeb
     ? 380
     : isTabletWeb
@@ -106,7 +96,7 @@ export default function AdminUsers() {
     ? 450
     : 350;
 
-  /* ======== TOAST ======== */
+  /* Toast */
   const showToast = (type, message) => {
     setToast({ visible: true, type, message });
     Animated.timing(fadeAnim, {
@@ -124,17 +114,18 @@ export default function AdminUsers() {
     }, 3000);
   };
 
+  // Abrir modal de confirmación
   const openConfirmModal = (userId) => {
     setUserToDelete(userId);
     setConfirmVisible(true);
   };
-
+  // Cerrar modal de confirmación
   const closeConfirmModal = () => {
     setUserToDelete(null);
     setConfirmVisible(false);
   };
 
-  /* ======== SESIÓN ======== */
+  /* Obtener la sesión */
   const getSession = async () => {
     try {
       if (Platform.OS === "web") {
@@ -148,6 +139,7 @@ export default function AdminUsers() {
     }
   };
 
+  // Cargar usuarios
   const loadUsers = async () => {
     try {
       const session = await getSession();
@@ -168,12 +160,11 @@ export default function AdminUsers() {
       showToast("error", "⚠️ No se pudieron cargar los usuarios");
     }
   };
-
   useEffect(() => {
     loadUsers();
   }, []);
 
-  /* ======== NAVIGATION ======== */
+  /* Navegación */
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -183,7 +174,7 @@ export default function AdminUsers() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
 
-  /* ======== ELIMINAR USUARIO ======== */
+  /* Eliminar Usuario */
   const handleDelete = async () => {
     if (!userToDelete) return;
     try {
@@ -205,7 +196,7 @@ export default function AdminUsers() {
     }
   };
 
-  /* ======== MENÚ ======== */
+  /* Menu lateral web */
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -234,7 +225,6 @@ export default function AdminUsers() {
     });
     setCreateVisible(true);
   };
-
   const closeCreateModal = () => setCreateVisible(false);
 
   // Abrir / cerrar modal EDITAR usuario
@@ -249,51 +239,46 @@ export default function AdminUsers() {
     });
     setEditVisible(true);
   };
-
   const closeEditModal = () => setEditVisible(false);
 
-  /* ======== CREAR USUARIO ======== */
+  /* Crear usuario */
   const submitCreateUser = async () => {
+    // Se comprueba los campos
     if (!newUser.name.trim()) {
       showToast("error", "El nombre es obligatorio");
       return;
     }
-
     if (!newUser.email.trim()) {
       showToast("error", "El email es obligatorio");
       return;
     }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newUser.email)) {
       showToast("error", "El email no es válido");
       return;
     }
-
     if (!newUser.password.trim()) {
       showToast("error", "La contraseña es obligatoria");
       return;
     }
-
     if (newUser.password.length < 6) {
       showToast("error", "La contraseña debe tener al menos 6 caracteres");
       return;
     }
-
     if (!newUser.confirmPassword.trim()) {
       showToast("error", "Debes repetir la contraseña");
       return;
     }
-
     if (newUser.password !== newUser.confirmPassword) {
       showToast("error", "Las contraseñas no coinciden");
       return;
     }
 
     try {
+      // Se obtiene la sesión y el token
       const session = await getSession();
       const token = session?.token;
-
+      // Se hace el fetch
       const res = await fetch(`${API_URL}/admin-create`, {
         method: "POST",
         headers: {
@@ -309,12 +294,12 @@ export default function AdminUsers() {
       });
 
       const data = await res.json();
-
+      // Obtiene la respuesta
       if (!res.ok) {
         showToast("error", data.error || "Error al crear el usuario");
         return;
       }
-
+      // Creo el usuario
       setUsers((prev) => [...prev, data]);
       closeCreateModal();
       showToast("success", "✅ Usuario creado correctamente");
@@ -323,30 +308,27 @@ export default function AdminUsers() {
     }
   };
 
-  /* ======== EDITAR USUARIO ======== */
+  /* Editar Usuario */
   const submitEditUser = async () => {
+    // Compruebo los campos
     if (!editUser.name.trim()) {
       showToast("error", "El nombre es obligatorio");
       return;
     }
-
     if (!editUser.email.trim()) {
       showToast("error", "El email es obligatorio");
       return;
     }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(editUser.email)) {
       showToast("error", "El email no es válido");
       return;
     }
-
     if (editUser.password || editUser.confirmPassword) {
       if (!editUser.password.trim()) {
         showToast("error", "La nueva contraseña no puede estar vacía");
         return;
       }
-
       if (editUser.password.length < 6) {
         showToast(
           "error",
@@ -354,12 +336,10 @@ export default function AdminUsers() {
         );
         return;
       }
-
       if (!editUser.confirmPassword.trim()) {
         showToast("error", "Debes repetir la contraseña nueva");
         return;
       }
-
       if (editUser.password !== editUser.confirmPassword) {
         showToast("error", "Las contraseñas no coinciden");
         return;
@@ -367,6 +347,7 @@ export default function AdminUsers() {
     }
 
     try {
+      // Obtengo la sesión y el token
       const session = await getSession();
       const token = session?.token;
 
@@ -375,9 +356,8 @@ export default function AdminUsers() {
         email: editUser.email,
         role: editUser.role,
       };
-
       if (editUser.password) payload.password = editUser.password;
-
+      // Hago el fetch
       const res = await fetch(`${API_URL}/admin-update/${editUser.id}`, {
         method: "PUT",
         headers: {
@@ -388,14 +368,13 @@ export default function AdminUsers() {
       });
 
       const data = await res.json();
-
+      // Obtengo la respuesta
       if (!res.ok) {
         showToast("error", data.error || "Error al actualizar el usuario");
         return;
       }
-
+      // Actualizo el usuario
       setUsers((prev) => prev.map((u) => (u._id === data._id ? data : u)));
-
       closeEditModal();
       showToast("success", "✅ Usuario actualizado correctamente");
     } catch (err) {
@@ -403,7 +382,7 @@ export default function AdminUsers() {
     }
   };
 
-  /* ======== RENDER TOPBAR Y MENÚ ======== */
+  /* Render de la cabecera del admin */
   const renderAdminTopBar = () => (
     <View style={styles.topBar}>
       <View style={styles.adminInfo}>
@@ -459,6 +438,7 @@ export default function AdminUsers() {
     </View>
   );
 
+  // Render del menu del administrador
   const renderAdminMenu = () =>
     isWeb &&
     menuVisible && (
@@ -490,13 +470,14 @@ export default function AdminUsers() {
       </>
     );
 
-  /* ============== RENDER PRINCIPAL ============== */
+  /* UI */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
       {renderAdminTopBar()}
       {renderAdminMenu()}
 
+      {/**Contenido principal */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -519,6 +500,7 @@ export default function AdminUsers() {
           </Pressable>
         </View>
 
+        {/**Lista de todos los usuarios */}
         <View style={[styles.userContainer, mainContainerWidthStyle]}>
           <ScrollView
             style={{ maxHeight: listMaxHeight }}
@@ -569,7 +551,7 @@ export default function AdminUsers() {
         </View>
       </ScrollView>
 
-      {/* MODAL CONFIRMAR ELIMINAR */}
+      {/* Modal confirmar eliminar */}
       {confirmVisible && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -595,7 +577,7 @@ export default function AdminUsers() {
         </View>
       )}
 
-      {/* MODAL CREAR USUARIO */}
+      {/* Modal crear usuario */}
       {createVisible && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -687,7 +669,7 @@ export default function AdminUsers() {
         </View>
       )}
 
-      {/* MODAL EDITAR USUARIO */}
+      {/* Modal editar usuario */}
       {editVisible && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -787,7 +769,7 @@ export default function AdminUsers() {
         </View>
       )}
 
-      {/* TOAST */}
+      {/* Toast */}
       {toast.visible && (
         <Animated.View
           style={[
@@ -802,7 +784,7 @@ export default function AdminUsers() {
         </Animated.View>
       )}
 
-      {/* FOOTER solo en laptop/desktop web, igual que en otras pantallas */}
+      {/* FOOTER solo en laptop/desktop web */}
       {isWeb && isLargeWeb && (
         <Footer
           onAboutPress={goToAboutUs}
@@ -814,6 +796,7 @@ export default function AdminUsers() {
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",

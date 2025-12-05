@@ -1,3 +1,4 @@
+// Pantalla del perfil del usuario
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -16,23 +17,26 @@ import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
+// Declaro el componente
 export default function UserProfile() {
+  // Estados
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [userData, setUserData] = useState({ name: "Usuario", email: "" });
-
   const [editVisible, setEditVisible] = useState(false);
   const [newName, setNewName] = useState("");
 
-  /* ================= RESPONSIVE BREAKPOINTS (como AdminProfile) ================ */
+  /* Responsive */
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
 
+  // Función para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const resize = () => setWinWidth(window.innerWidth);
@@ -40,13 +44,13 @@ export default function UserProfile() {
     return () => window.removeEventListener("resize", resize);
   }, []);
 
+  // Breakpoints
   const isWeb = Platform.OS === "web";
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isDesktopWeb = isWeb && winWidth >= 1440;
   const isLargeWeb = isLaptopWeb || isDesktopWeb;
-
   const pagePaddingHorizontal = isMobileWeb
     ? 20
     : isTabletWeb
@@ -54,9 +58,7 @@ export default function UserProfile() {
     : isLaptopWeb
     ? 55
     : 80;
-
   const pagePaddingBottom = isLargeWeb ? 100 : 40;
-
   const profileContainerWidth = isMobileWeb
     ? "92%"
     : isTabletWeb
@@ -65,7 +67,7 @@ export default function UserProfile() {
     ? "60%"
     : "45%";
 
-  /* ================= LOAD SESSION ================= */
+  /* Cargar la sesión */
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -88,7 +90,7 @@ export default function UserProfile() {
     loadUser();
   }, []);
 
-  /* ================= LOGOUT ================= */
+  /* Cerrar sesión */
   const handleLogout = async () => {
     try {
       if (Platform.OS === "web") {
@@ -102,12 +104,13 @@ export default function UserProfile() {
     }
   };
 
-  /* ================= EDIT MODAL ================= */
+  /* Edit modal */
   const openEditModal = () => {
     setNewName(userData.name);
     setEditVisible(true);
   };
 
+  // Guardar los cambios del perfil
   const saveProfileChanges = async () => {
     try {
       if (!newName.trim()) {
@@ -148,7 +151,10 @@ export default function UserProfile() {
       if (Platform.OS === "web") {
         localStorage.setItem("USER_SESSION", JSON.stringify(updatedSession));
       } else {
-        await AsyncStorage.setItem("USER_SESSION", JSON.stringify(updatedSession));
+        await AsyncStorage.setItem(
+          "USER_SESSION",
+          JSON.stringify(updatedSession)
+        );
       }
 
       setEditVisible(false);
@@ -159,7 +165,7 @@ export default function UserProfile() {
     }
   };
 
-  /* ================= NAVIGATION ================= */
+  /* Navegaciones */
   const goToProfile = () => navigation.navigate("UserProfile");
   const goToNotifications = () => navigation.navigate("UserNotifications");
   const goToFavorites = () => navigation.navigate("UserFavorites");
@@ -171,7 +177,7 @@ export default function UserProfile() {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToHome = () => navigation.navigate("User");
 
-  /* ================= MENU ================= */
+  /* Menú */
   const toggleMenu = () => {
     if (!isWeb) {
       setMenuVisible(!menuVisible);
@@ -194,7 +200,7 @@ export default function UserProfile() {
     }
   };
 
-  /* ================= TOP BAR ================= */
+  /* Cabecera */
   const renderTopBar = () => (
     <View
       style={{
@@ -265,13 +271,14 @@ export default function UserProfile() {
     </View>
   );
 
-  /* ================= RENDER ================= */
+  /* Render */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
+      {/* Cabecera */}
       {renderTopBar()}
 
-      {/* ===================== MENÚ WEB ===================== */}
+      {/* Menú web */}
       {isWeb && menuVisible && (
         <Animated.View
           style={{
@@ -316,7 +323,7 @@ export default function UserProfile() {
         </Animated.View>
       )}
 
-      {/* ===================== MENÚ MÓVIL (TU DISEÑO ORIGINAL) ===================== */}
+      {/* Menú móvil */}
       {menuVisible && !isWeb && (
         <View
           style={{
@@ -331,7 +338,7 @@ export default function UserProfile() {
             paddingTop: 50,
           }}
         >
-          {/* CABECERA */}
+          {/* Cabecera */}
           <View
             style={{
               flexDirection: "row",
@@ -359,7 +366,7 @@ export default function UserProfile() {
             </Text>
           </View>
 
-          {/* OPCIONES */}
+          {/* Opciones */}
           <View style={{ flex: 1 }}>
             {[
               {
@@ -424,7 +431,7 @@ export default function UserProfile() {
             ))}
           </View>
 
-          {/* FOOTER DEL MENÚ MÓVIL */}
+          {/* Bottom del menú móvil */}
           <View
             style={{
               position: "absolute",
@@ -462,7 +469,7 @@ export default function UserProfile() {
         </View>
       )}
 
-      {/* ===================== PERFIL ===================== */}
+      {/* Perfil */}
       <ScrollView
         contentContainerStyle={{
           paddingTop: 20,
@@ -587,7 +594,7 @@ export default function UserProfile() {
         </View>
       </ScrollView>
 
-      {/* ===================== MODAL EDITAR PERFIL ===================== */}
+      {/* Modal editar perfil */}
       {editVisible && (
         <View
           style={{
@@ -672,6 +679,7 @@ export default function UserProfile() {
         </View>
       )}
 
+      {/**Footer */}
       {isWeb && isLargeWeb && (
         <Footer
           onAboutPress={goToAboutUs}

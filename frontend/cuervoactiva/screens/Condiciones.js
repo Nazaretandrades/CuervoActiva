@@ -1,3 +1,4 @@
+// Pantalla de las condiciones
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -14,23 +15,23 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// Se declara el componente
 export default function Condiciones({ navigation }) {
   const { width, height } = useWindowDimensions();
-
   // Breakpoints
   const isMobile = width < 600;
   const isTablet = width >= 600 && width < 900;
   const isLaptop = width >= 900 && width < 1400;
   const isDesktop = width >= 1400;
-
   const dynamicPadding = isMobile ? 14 : isTablet ? 18 : 24;
   const cardMinHeight = isMobile ? 260 : isTablet ? 320 : 350;
-
+  // Estados
   const [role, setRole] = useState("user");
   const [userName, setUserName] = useState("Usuario");
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
+  // Carga la sesión
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -54,25 +55,25 @@ export default function Condiciones({ navigation }) {
     loadSession();
   }, []);
 
+  // Navegaciones según el rol
   const goToProfile = () =>
     role === "admin"
       ? navigation.navigate("AdminProfile")
       : role === "organizer"
       ? navigation.navigate("OrganizerProfile")
       : navigation.navigate("UserProfile");
-
   const goToNotifications = () =>
     role === "admin"
       ? navigation.navigate("AdminNotifications")
       : role === "organizer"
       ? navigation.navigate("OrganizerNotifications")
       : navigation.navigate("UserNotifications");
-
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
   const goToConditions = () => navigation.navigate("Condiciones");
   const goToAbout = () => navigation.navigate("SobreNosotros");
 
+  // Menu
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible(!menuVisible);
@@ -94,16 +95,13 @@ export default function Condiciones({ navigation }) {
     }
   };
 
-  // TEXT SETTINGS
+  // Tamaño de los textos
   const textSizeTitle = isMobile ? 12 : 14;
   const textSizeName = isMobile ? 12 : 13;
   const iconSize = isMobile ? 20 : 22;
   const menuIconSize = isMobile ? 22 : 24;
 
-  // -----------------------
-  // TOPBARS
-  // -----------------------
-
+  // Cabecera Usuario
   const renderUserTopBar = () => (
     <View style={[styles.topBar, { paddingHorizontal: dynamicPadding }]}>
       <View style={styles.profileContainer}>
@@ -169,6 +167,7 @@ export default function Condiciones({ navigation }) {
     </View>
   );
 
+  // Cabecera Administrador
   const renderAdminTopBar = () => (
     <View style={[styles.topBar, { paddingHorizontal: dynamicPadding }]}>
       <View style={styles.adminInfo}>
@@ -226,6 +225,7 @@ export default function Condiciones({ navigation }) {
     </View>
   );
 
+  // Cabecera Organizador
   const renderOrganizerTopBar = () =>
     role === "organizer" && (
       <View style={[styles.topBar, { paddingHorizontal: dynamicPadding }]}>
@@ -303,20 +303,19 @@ export default function Condiciones({ navigation }) {
       </View>
     );
 
-  // -----------------------
-  // RETURN
-  // -----------------------
+  // UI
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
+      {/**Cabecera según el rol */}
       {role === "admin"
         ? renderAdminTopBar()
         : role === "organizer"
         ? renderOrganizerTopBar()
         : renderUserTopBar()}
 
-      {/* MENÚ RESPONSIVE */}
+      {/* Menu lateral */}
       {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
@@ -376,7 +375,7 @@ export default function Condiciones({ navigation }) {
         </Animated.View>
       )}
 
-      {/* SCROLL PRINCIPAL */}
+      {/* Scroll principal */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -384,8 +383,6 @@ export default function Condiciones({ navigation }) {
           alignItems: "center",
           backgroundColor: "#f9f9f9",
           flexGrow: 1,
-
-          // 🔥 AJUSTE REAL PARA TABLET 🔥
           marginTop: isTablet ? -10 : isMobile ? 0 : 60,
           paddingBottom: isMobile ? 20 : isTablet ? 80 : 160,
         }}
@@ -396,17 +393,13 @@ export default function Condiciones({ navigation }) {
             fontWeight: "bold",
             color: "#014869",
             textAlign: "center",
-
-            // 🔥 AÑADIMOS ESTO PARA SUBIRLO EN TABLET 🔥
             marginTop: isTablet ? 1 : isMobile ? 10 : 0,
-
             marginBottom: isTablet ? 1 : isMobile ? 20 : 0,
           }}
         >
           Condiciones de Uso
         </Text>
-
-        {/* CONTENEDOR PRINCIPAL */}
+        {/* Contenedor principal */}
         <View
           style={{
             flexDirection: isMobile ? "column" : "row",
@@ -418,13 +411,11 @@ export default function Condiciones({ navigation }) {
             backgroundColor: "#f2f2f2",
             borderRadius: 12,
             padding: isMobile ? 12 : 20,
-
             height: isMobile ? height * 0.65 : "auto",
-
             overflow: "visible",
           }}
         >
-          {/* CARD 1 */}
+          {/* Card 1 */}
           <View
             style={{
               backgroundColor: "#fff",
@@ -467,24 +458,24 @@ export default function Condiciones({ navigation }) {
                 }}
               >
                 {`El uso de la aplicación Cuervo Activa implica la aceptación plena
-de los presentes términos y condiciones. Los usuarios se
-comprometen a utilizar la plataforma de manera responsable, sin
-realizar acciones que perjudiquen su funcionamiento o la
-experiencia de otros usuarios.
+                  de los presentes términos y condiciones. Los usuarios se
+                  comprometen a utilizar la plataforma de manera responsable, sin
+                  realizar acciones que perjudiquen su funcionamiento o la
+                  experiencia de otros usuarios.
 
-Queda prohibido publicar contenido ofensivo, fraudulento, violento
-o que infrinja derechos de autor o privacidad. Cuervo Activa se
-reserva el derecho de eliminar cualquier contenido inapropiado y
-suspender cuentas que vulneren estas normas.
+                  Queda prohibido publicar contenido ofensivo, fraudulento, violento
+                  o que infrinja derechos de autor o privacidad. Cuervo Activa se
+                  reserva el derecho de eliminar cualquier contenido inapropiado y
+                  suspender cuentas que vulneren estas normas.
 
-El acceso a ciertos servicios puede requerir registro previo y la
-veracidad de la información proporcionada es responsabilidad del
-usuario.`}
+                  El acceso a ciertos servicios puede requerir registro previo y la
+                  veracidad de la información proporcionada es responsabilidad del
+                  usuario.`}
               </Text>
             </ScrollView>
           </View>
 
-          {/* CARD 2 */}
+          {/* Card 2 */}
           <View
             style={{
               backgroundColor: "#fff",
@@ -527,17 +518,17 @@ usuario.`}
                 }}
               >
                 {`Cuervo Activa no se hace responsable del mal uso de la aplicación
-ni de los daños derivados del incumplimiento de las normas por
-parte del usuario. Las actividades y eventos publicados son
-responsabilidad de sus respectivos organizadores.
+                  ni de los daños derivados del incumplimiento de las normas por
+                  parte del usuario. Las actividades y eventos publicados son
+                  responsabilidad de sus respectivos organizadores.
 
-El usuario acepta que su participación en actividades es
-voluntaria y que deberá revisar los detalles, condiciones y
-requisitos de cada evento antes de asistir.
+                  El usuario acepta que su participación en actividades es
+                  voluntaria y que deberá revisar los detalles, condiciones y
+                  requisitos de cada evento antes de asistir.
 
-La plataforma podrá suspender temporalmente el servicio por
-mantenimiento o mejoras, notificando a los usuarios cuando sea
-posible.`}
+                  La plataforma podrá suspender temporalmente el servicio por
+                  mantenimiento o mejoras, notificando a los usuarios cuando sea
+                  posible.`}
               </Text>
             </ScrollView>
           </View>
@@ -555,6 +546,7 @@ posible.`}
             backgroundColor: "#fff",
           }}
         >
+          {/**Footer */}
           <Footer
             onAboutPress={goToAbout}
             onPrivacyPress={goToPrivacy}
@@ -566,6 +558,7 @@ posible.`}
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",

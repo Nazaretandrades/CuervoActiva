@@ -1,3 +1,4 @@
+// Banner principal (slider)
 import React, { useRef, useState, useEffect } from "react";
 import {
   View,
@@ -9,16 +10,21 @@ import {
   Platform,
   Animated,
 } from "react-native";
-
+// Declaro el componente
 export default function HeroBanner({ height }) {
+  // Dimensiones y estados
   const { width } = useWindowDimensions();
-  const [containerWidth, setContainerWidth] = useState(width);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(width); 
+  const [currentIndex, setCurrentIndex] = useState(0); // Índice actual del slide
+  const flatListRef = useRef(null); // Referencia para desplazar el slider programáticamente
 
+  // Animaciones 
+  // fadeAnim controla la opacidad
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  // translateAnim controla un deslizamiento vertical sutil del texto
   const translateAnim = useRef(new Animated.Value(20)).current;
 
+  // Array de las imágenes del slider
   const slides = [
     require("../assets/romeria.jpg"),
     require("../assets/patrona_feria.jpg"),
@@ -28,6 +34,7 @@ export default function HeroBanner({ height }) {
     require("../assets/ciclismo.jpg"),
   ];
 
+  // Función para activar animaciones (solo móvil)
   const triggerAnimation = () => {
     fadeAnim.setValue(0);
     translateAnim.setValue(20);
@@ -46,41 +53,49 @@ export default function HeroBanner({ height }) {
     ]).start();
   };
 
+  // Hace que vuelva al inicio cuando llega al final
   const handleNext = () => {
     const nextIndex = (currentIndex + 1) % slides.length;
+    // Desplaza el carrusel horizontalmente
     flatListRef.current?.scrollToOffset({
       offset: nextIndex * containerWidth,
       animated: true,
     });
+    // Actualiza el índice
     setCurrentIndex(nextIndex);
 
+    // La animación solo ocurre en móvil
     if (Platform.OS !== "web") triggerAnimation();
   };
 
+  // Ejecutar la animación solo una vez al montar
   useEffect(() => {
     if (Platform.OS !== "web") triggerAnimation();
   }, []);
 
+  // Slider automático, cada 4 segundos.
   useEffect(() => {
     const interval = setInterval(() => handleNext(), 4000);
     return () => clearInterval(interval);
   }, [currentIndex]);
 
+  // Función para renderizar cada slide
   const renderItem = ({ item }) => {
     if (Platform.OS === "web") {
-      // BREAKPOINTS
+      // Breakpoints
       const isMobile = containerWidth < 600;
       const isTablet = containerWidth >= 600 && containerWidth < 1024;
 
-      // ESPACIOS IGUALES ARRIBA/ABAJO (siempre simétricos)
+      // Cálculo dinámico del tamaño del slider
       const sliderHeight = isMobile
         ? height * 0.55
         : isTablet
         ? height * 0.60
         : height * 0.65;
-
+      // Espacio blanco arriba y abajo
       const whiteSpace = (height - sliderHeight) / 2;
 
+      // Versión web
       return (
         <View
           style={{
@@ -89,10 +104,10 @@ export default function HeroBanner({ height }) {
             backgroundColor: "#fff",
           }}
         >
-          {/* ZONA BLANCA SUPERIOR */}
+          {/* Zona blanca superior */}
           <View style={{ height: whiteSpace, backgroundColor: "#fff" }} />
 
-          {/* SLIDER */}
+          {/* Slider */}
           <View
             style={{
               width: containerWidth,
@@ -121,6 +136,7 @@ export default function HeroBanner({ height }) {
 
             <View style={styles.overlay} />
 
+            {/* Contenido de texto */}
             <View style={styles.content}>
               <View style={{ maxWidth: isMobile ? "90%" : "70%" }}>
                 <Text
@@ -147,13 +163,13 @@ export default function HeroBanner({ height }) {
             </View>
           </View>
 
-          {/* ZONA BLANCA INFERIOR */}
+          {/* Zona blanca inferior */}
           <View style={{ height: whiteSpace, backgroundColor: "#fff" }} />
         </View>
       );
     }
 
-    // MOBILE NATIVE (NO SE TOCA)
+    // Móvil nativo
     return (
       <View
         style={{
@@ -230,6 +246,7 @@ export default function HeroBanner({ height }) {
       style={{ width: "100%", overflow: "hidden" }}
       onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
     >
+      {/**FlatList configurada como carrusel */}
       <FlatList
         ref={flatListRef}
         data={slides}
@@ -247,6 +264,7 @@ export default function HeroBanner({ height }) {
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   blurredBackground: {
     position: "absolute",

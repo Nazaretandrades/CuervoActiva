@@ -1,3 +1,4 @@
+// Pantalla de detalle evento organizador
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -18,13 +19,17 @@ import { getSession } from "../services/sessionManager";
 import { useNavigation } from "@react-navigation/native";
 import OrganizerMenu from "./OrganizerMenu";
 
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
-
+// Api de los eventos
 const API_URL = `${API_BASE}/api/events`;
+// Api de los comentarios
 const COMMENTS_URL = `${API_BASE}/api/comments`;
 
+// Declaro el componente
 export default function OrganizerEventDetail({ route }) {
+  // Estados
   const { eventId } = route?.params || {};
   const [event, setEvent] = useState(null);
   const [comments, setComments] = useState([]);
@@ -34,27 +39,24 @@ export default function OrganizerEventDetail({ route }) {
   const [shareVisible, setShareVisible] = useState(false);
   const navigation = useNavigation();
 
-  /* =======================================================================
-     RESPONSIVE BREAKPOINTS — IGUAL QUE EN ADMIN
-  ======================================================================== */
+  // Responsive
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
-
+  // Función para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const resize = () => setWinWidth(window.innerWidth);
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
   }, []);
-
+  // Breakpoints
   const isWeb = Platform.OS === "web";
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isDesktopWeb = isWeb && winWidth >= 1440;
   const isLargeWeb = isLaptopWeb || isDesktopWeb;
-
   const pagePaddingHorizontal = isMobileWeb
     ? 20
     : isTabletWeb
@@ -62,9 +64,7 @@ export default function OrganizerEventDetail({ route }) {
     : isLaptopWeb
     ? 55
     : 80;
-
   const pagePaddingBottom = isLargeWeb ? 80 : 30;
-
   const eventContainerWidth = isMobileWeb
     ? "100%"
     : isTabletWeb
@@ -73,9 +73,7 @@ export default function OrganizerEventDetail({ route }) {
     ? "100%"
     : "100%";
 
-  /* =========================
-        Cargar organizador
-  ========================== */
+  // Cargar organizador
   useEffect(() => {
     const loadOrganizer = async () => {
       const session = await getSession();
@@ -84,9 +82,7 @@ export default function OrganizerEventDetail({ route }) {
     loadOrganizer();
   }, []);
 
-  /* =========================
-      Cargar evento + comentarios
-  ========================== */
+  // Cargar eventos + comentarios
   useEffect(() => {
     const loadEvent = async () => {
       try {
@@ -119,13 +115,9 @@ export default function OrganizerEventDetail({ route }) {
     if (eventId) loadEvent();
   }, [eventId]);
 
-  /* =========================
-         Navegación
-  ========================== */
-
+  // Navegación
   const goToProfile = () => navigation.navigate("OrganizerProfile");
-  const goToNotifications = () =>
-    navigation.navigate("OrganizerNotifications");
+  const goToNotifications = () => navigation.navigate("OrganizerNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
   const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
   const goToConditions = () => navigation.navigate("Condiciones");
@@ -134,10 +126,7 @@ export default function OrganizerEventDetail({ route }) {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToOrganizer = () => navigation.navigate("Organizer");
 
-  /* =========================
-          Menú responsive
-  ========================== */
-
+  // Menú
   const toggleMenu = () => {
     if (!isWeb) {
       setMenuVisible(!menuVisible);
@@ -160,9 +149,7 @@ export default function OrganizerEventDetail({ route }) {
     }
   };
 
-  /* =========================
-        Render estrellas
-  ========================== */
+  // Cargar las estrellas de las valoraciones
   const renderStars = (rating) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -182,28 +169,27 @@ export default function OrganizerEventDetail({ route }) {
     return <View style={{ flexDirection: "row" }}>{stars}</View>;
   };
 
-  /* =========================
-        Compartir
-  ========================== */
+  // Compartir por WhatsApp
   const shareWhatsApp = () => {
     if (!event) return;
 
     const msg = `¡Mira este evento!
-Título: ${event.title}
-Lugar: ${event.location}
-Fecha: ${event.date}
-Hora: ${event.hour}`;
+                  Título: ${event.title}
+                  Lugar: ${event.location}
+                  Fecha: ${event.date}
+                  Hora: ${event.hour}`;
 
     const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
     Linking.openURL(url);
   };
 
+  // Compartir por Twitter (X)
   const shareTwitter = () => {
     if (!event) return;
 
     const msg = `¡Mira este evento! 
-${event.title} - ${event.location} 
-📅 ${event.date} | ⏰ ${event.hour}`;
+                ${event.title} - ${event.location} 
+                📅 ${event.date} | ⏰ ${event.hour}`;
 
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       msg
@@ -211,14 +197,12 @@ ${event.title} - ${event.location}
     Linking.openURL(url);
   };
 
-  /* =====================================================================
-      RETURN — WEB RESPONSIVE + MÓVIL COMO EL CÓDIGO ORIGINAL
-  ===================================================================== */
+  // Return web responsive + móvil
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* CABECERA ORGANIZADOR (igual siempre) */}
+      {/* Cabecera organizador */}
       <View
         style={{
           flexDirection: "row",
@@ -262,9 +246,7 @@ ${event.title} - ${event.location}
           </View>
 
           <View>
-            <Text
-              style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}
-            >
+            <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
               Organiz.
             </Text>
             <Text style={{ color: "#6c757d", fontSize: 13 }}>
@@ -305,7 +287,10 @@ ${event.title} - ${event.location}
             />
           </Pressable>
 
-          <Pressable onPress={toggleMenu} style={isWeb ? { cursor: "pointer" } : {}}>
+          <Pressable
+            onPress={toggleMenu}
+            style={isWeb ? { cursor: "pointer" } : {}}
+          >
             <Image
               source={
                 menuVisible
@@ -318,7 +303,7 @@ ${event.title} - ${event.location}
         </View>
       </View>
 
-      {/* MENÚ LATERAL WEB */}
+      {/* Menú lateral web */}
       {isWeb && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -375,13 +360,13 @@ ${event.title} - ${event.location}
         </>
       )}
 
-      {/* MENÚ MÓVIL */}
+      {/* Menú móvil */}
       {!isWeb && menuVisible && <OrganizerMenu onClose={toggleMenu} />}
 
-      {/* ===================== EVENTO ===================== */}
+      {/* Evento */}
       {event &&
         (isWeb ? (
-          /* ===================== WEB (RESPONSIVE) ===================== */
+          /* Web responsive */
           <View
             style={{
               flex: 1,
@@ -401,7 +386,7 @@ ${event.title} - ${event.location}
                 paddingBottom: 40,
               }}
             >
-              {/* TÍTULO */}
+              {/* Título */}
               <View
                 style={{
                   backgroundColor: "#014869",
@@ -422,7 +407,7 @@ ${event.title} - ${event.location}
                 </Text>
               </View>
 
-              {/* 2 COLUMNAS RESPONSIVE */}
+              {/* 2 columnas */}
               <View
                 style={{
                   flexDirection: isLargeWeb ? "row" : "column",
@@ -431,7 +416,7 @@ ${event.title} - ${event.location}
                   gap: 20,
                 }}
               >
-                {/* IMAGEN */}
+                {/* Imagen */}
                 <Image
                   source={{
                     uri:
@@ -448,7 +433,7 @@ ${event.title} - ${event.location}
                   resizeMode="cover"
                 />
 
-                {/* DESCRIPCIÓN */}
+                {/* Descripción */}
                 <View style={{ width: isLargeWeb ? "48%" : "100%" }}>
                   <Text
                     style={{
@@ -474,7 +459,7 @@ ${event.title} - ${event.location}
                 </View>
               </View>
 
-              {/* ESTADO + COMPARTIR */}
+              {/* Estado + compartir */}
               <View
                 style={{
                   width: "100%",
@@ -488,9 +473,7 @@ ${event.title} - ${event.location}
                 <View
                   style={{
                     backgroundColor:
-                      new Date(event.date) > new Date()
-                        ? "#2ECC71"
-                        : "#E74C3C",
+                      new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
                     borderRadius: 25,
                     paddingVertical: 7,
                     paddingHorizontal: 18,
@@ -519,7 +502,7 @@ ${event.title} - ${event.location}
                 </Pressable>
               </View>
 
-              {/* VALORACIONES WEB (subidas en tablet) */}
+              {/* Valoraciones */}
               <View style={{ marginTop: isTabletWeb ? 5 : 25 }}>
                 <Text
                   style={{
@@ -597,7 +580,7 @@ ${event.title} - ${event.location}
             </ScrollView>
           </View>
         ) : (
-          /* ===================== MÓVIL NATIVO (ANDROID/iOS) — IGUAL QUE TU SEGUNDO CÓDIGO ===================== */
+          /* Móvil nativo */
           <ScrollView
             style={{
               flex: 1,
@@ -714,7 +697,7 @@ ${event.title} - ${event.location}
               </Pressable>
             </View>
 
-            {/* Valoraciones móvil (sin scroll interno) */}
+            {/* Valoraciones móvil */}
             <View style={{ marginTop: 25 }}>
               <Text
                 style={{
@@ -776,7 +759,7 @@ ${event.title} - ${event.location}
           </ScrollView>
         ))}
 
-      {/* ========= MODAL COMPARTIR ========= */}
+      {/* Modal compartir */}
       <Modal visible={shareVisible} transparent animationType="fade">
         <View
           style={{
@@ -851,7 +834,7 @@ ${event.title} - ${event.location}
         </View>
       </Modal>
 
-      {/* ========= FOOTER WEB (IGUAL QUE EN TU PRIMER CÓDIGO) ========= */}
+      {/* Footer web */}
       {isWeb && isLargeWeb && (
         <View
           style={{

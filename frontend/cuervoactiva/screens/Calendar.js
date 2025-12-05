@@ -1,3 +1,4 @@
+// Pantalla Calendario
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
@@ -17,11 +18,14 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { useNavigation } from "@react-navigation/native";
 
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
+// Api que carga los eventos
 const API_URL = `${API_BASE}/api/events`;
 
+// Asocio las categorías con un color (Mismo que en el del Home)
 const CATEGORY_COLORS = {
   all: "#014869",
   deporte: "#F3B23F",
@@ -32,6 +36,7 @@ const CATEGORY_COLORS = {
   default: "#014869",
 };
 
+// Defino los nombres de los meses
 const monthNamesEs = [
   "Enero",
   "Febrero",
@@ -46,13 +51,22 @@ const monthNamesEs = [
   "Noviembre",
   "Diciembre",
 ];
+
+// Defino las iniciales de los días de la semana
 const weekNamesShortEs = ["L", "M", "X", "J", "V", "S", "D"];
 
+// Normaliza una fecha al inicio del día (00:00), para que las comparaciones de fechas no se vean afectadas
 function atStartOfDay(d) {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
   return x;
 }
+
+/** Función que se encarga de reconocer la fecha en diferentes formatos,
+ * convertirlos en un objeto Date
+ * y devolverlos normalizados.
+ * Si la fecha no es válida devuelve null
+ * */
 
 function parseDDMMYYYY(str) {
   if (!str || typeof str !== "string") return null;
@@ -74,6 +88,7 @@ function parseDDMMYYYY(str) {
   return null;
 }
 
+/**Genero una clave de texto con formato yyyy-mm-dd para cada día. Esa clave me sirve como índice para agrupar eventos por día en un mapa */
 function ymdKey(date) {
   const y = date.getFullYear();
   const m = `${date.getMonth() + 1}`.padStart(2, "0");
@@ -81,26 +96,30 @@ function ymdKey(date) {
   return `${y}-${m}-${d}`;
 }
 
+// Función que  “dibuja” la estructura del calendario
 function getMonthMatrix(year, monthIndex) {
+  // Calcula el primer día del mes y el último día
   const first = new Date(year, monthIndex, 1);
   const last = new Date(year, monthIndex + 1, 0);
-
   const firstWeekday = (first.getDay() + 6) % 7;
   const daysInMonth = last.getDate();
 
   const matrix = [];
   let week = [];
 
+  // Va metiendo new Date(year, monthIndex, day) en un array week
   for (let i = 0; i < firstWeekday; i++) week.push(null);
 
   for (let day = 1; day <= daysInMonth; day++) {
     week.push(new Date(year, monthIndex, day));
+    // Cada 7 días, empuja una semana a matrix
     if (week.length === 7) {
       matrix.push(week);
       week = [];
     }
   }
 
+  // Si al final falta completar la última semana, rellena con null
   if (week.length > 0) {
     while (week.length < 7) week.push(null);
     matrix.push(week);
@@ -109,6 +128,7 @@ function getMonthMatrix(year, monthIndex) {
   return matrix;
 }
 
+// Pequeño componente reutilizable que pinta un círculo de color. Lo uso para indicar qué días tienen eventos y de qué tipo
 function ColorDot({ color }) {
   return (
     <View
@@ -123,7 +143,9 @@ function ColorDot({ color }) {
   );
 }
 
+// Declaro el componente
 export default function Calendar() {
+  // Estados
   const navigation = useNavigation();
   const [role, setRole] = useState(null);
   const [userName, setUserName] = useState("Usuario");
@@ -134,20 +156,19 @@ export default function Calendar() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  // ============================
-  // BREAKPOINTS WEB (NUEVOS)
-  // ============================
+  // Responsive
   const [windowWidth, setWindowWidth] = useState(
     Dimensions.get("window").width
   );
   const isWeb = Platform.OS === "web";
 
-  // SOLO SE APLICAN EN WEB
+  // Breakpoints
   const isMobileWeb = isWeb && windowWidth < 600;
   const isTabletWeb = isWeb && windowWidth >= 600 && windowWidth < 900;
   const isLaptopWeb = isWeb && windowWidth >= 900 && windowWidth < 1400;
   const isDesktopWeb = isWeb && windowWidth >= 1400;
 
+  // Función para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS === "web") {
       const onResize = () => setWindowWidth(window.innerWidth);
@@ -155,6 +176,8 @@ export default function Calendar() {
       return () => window.removeEventListener("resize", onResize);
     }
   }, []);
+
+  // Obtener la sesión
   useEffect(() => {
     const loadSession = async () => {
       try {
@@ -177,6 +200,7 @@ export default function Calendar() {
     loadSession();
   }, []);
 
+  // Cargar y normalizar eventos
   useEffect(() => {
     const load = async () => {
       try {
@@ -201,6 +225,8 @@ export default function Calendar() {
     load();
   }, []);
 
+  // Agrupar eventos por día
+  // Uso useMemo para construir un mapa donde cada clave es un día (yyyy-mm-dd)
   const eventsByDay = useMemo(() => {
     const map = {};
     for (const ev of events) {
@@ -211,16 +237,20 @@ export default function Calendar() {
     return map;
   }, [events]);
 
+  // Matriz del mes y navegación entre meses
   const year = currentDate.getFullYear();
   const monthIndex = currentDate.getMonth();
   const matrix = useMemo(
     () => getMonthMatrix(year, monthIndex),
     [year, monthIndex]
   );
-
   const goPrevMonth = () => setCurrentDate(new Date(year, monthIndex - 1, 1));
   const goNextMonth = () => setCurrentDate(new Date(year, monthIndex + 1, 1));
 
+  // Selección de día y eventos seleccionados
+  /**Cuando el usuario pulsa un día, guardo la clave de ese día en selectedKey y muestro el panel de detalle.
+   * A partir de esa clave recupero los eventos de ese día del mapa eventsByDay
+   */
   const handleSelectDay = (key) => {
     if (!key) return;
     setSelectedKey(key);
@@ -229,6 +259,7 @@ export default function Calendar() {
 
   const selectedEvents = selectedKey ? eventsByDay[selectedKey] || [] : [];
 
+  // Navegaciones
   const goToProfile = () =>
     role === "admin"
       ? navigation.navigate("AdminProfile")
@@ -278,6 +309,7 @@ export default function Calendar() {
     }
   };
 
+  // Cabecera según el rol
   const renderTopBar = () => {
     const tint =
       role === "organizer"
@@ -372,7 +404,7 @@ export default function Calendar() {
           </View>
         </View>
 
-        {/* ICONOS */}
+        {/* Iconos */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Pressable onPress={goToNotifications} style={{ marginRight: 18 }}>
             <Image
@@ -405,18 +437,21 @@ export default function Calendar() {
     );
   };
 
-  // ANCHO CONTROLADO PARA EL CALENDARIO EN WEB
+  // Ancho controlado para el calendario en web
   const gridMaxWidth = isWeb
     ? isMobileWeb
       ? Math.min(windowWidth * 0.92, 420)
       : Math.min(windowWidth - 80, 680)
     : Math.min(Dimensions.get("window").width - 24, 720);
+
+  // Return
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
+      {/* Cabecera */}
       {renderTopBar()}
 
-      {/* MENU LATERAL WEB */}
+      {/* Menú lateral web */}
       {Platform.OS === "web" && menuVisible && (
         <Animated.View
           style={{
@@ -475,7 +510,7 @@ export default function Calendar() {
         </Animated.View>
       )}
 
-      {/* MENU MÓVIL (ORGANIZER / USER) */}
+      {/* Menú móvil nativo */}
       {Platform.OS !== "web" &&
         menuVisible &&
         (role === "organizer" ? (
@@ -749,9 +784,9 @@ export default function Calendar() {
       <ScrollView
         style={{
           minHeight: isMobileWeb
-            ? "auto" 
+            ? "auto"
             : isLaptopWeb || isDesktopWeb
-            ? "calc(100vh - 220px)" 
+            ? "calc(100vh - 220px)"
             : "auto",
         }}
         contentContainerStyle={{
@@ -768,6 +803,7 @@ export default function Calendar() {
               : 40,
         }}
       >
+        {/**Cabecera del calendario */}
         <View style={[styles.headerRow, { width: gridMaxWidth }]}>
           <Pressable onPress={goPrevMonth} style={styles.navBtn}>
             <Text style={styles.navBtnText}>‹</Text>
@@ -780,6 +816,7 @@ export default function Calendar() {
           </Pressable>
         </View>
 
+        {/**Fila de los días de la semana, que recorre la lista */}
         <View style={[styles.weekHeader, { width: gridMaxWidth }]}>
           {weekNamesShortEs.map((d) => (
             <Text key={d} style={styles.weekHeaderText}>
@@ -788,9 +825,12 @@ export default function Calendar() {
           ))}
         </View>
 
+        {/** Cuerpo del calendario */}
         <View style={[styles.calendarGrid, { width: gridMaxWidth }]}>
+          {/**Recorrer las semanas */}
           {matrix.map((week, r) => (
             <View key={r} style={styles.weekRow}>
+              {/**Recorrer los días dentro de cada semana */}
               {week.map((date, c) => {
                 const key = date ? ymdKey(date) : null;
                 const day = date ? date.getDate() : "";
@@ -798,13 +838,14 @@ export default function Calendar() {
                 const isToday = key && key === todayKey;
                 const dayEvents = key ? eventsByDay[key] || [] : [];
                 return (
+                  // Renderizar cada celda del calendario
                   <Pressable
                     key={`${r}-${c}`}
                     onPress={() => handleSelectDay(key)}
                     disabled={!date}
                     style={[
                       styles.dayCell,
-                      isWeb && !isMobileWeb && styles.dayCellWeb, // solo web grande
+                      isWeb && !isMobileWeb && styles.dayCellWeb,
                       !date && styles.dayCellEmpty,
                       isToday && styles.todayCell,
                       selectedKey === key && styles.selectedCell,
@@ -819,7 +860,7 @@ export default function Calendar() {
                     >
                       {day}
                     </Text>
-
+                    {/**Mostrar puntos de colores según eventos */}
                     {!!dayEvents.length && (
                       <View style={styles.dotsRow}>
                         {dayEvents.slice(0, 3).map((ev, i) => (
@@ -839,7 +880,7 @@ export default function Calendar() {
           ))}
         </View>
 
-        {/* DETALLE DE DÍA COMO MODAL EN TODAS LAS PLATAFORMAS */}
+        {/* Detalle del día como modal */}
         {Platform.OS === "web" ? (
           <Modal
             animationType="fade"
@@ -940,7 +981,7 @@ export default function Calendar() {
         )}
       </ScrollView>
 
-      {/* 🔻 FOOTER SOLO EN WEB LAPTOP / DESKTOP */}
+      {/* Footer responsive */}
       {Platform.OS === "web" && (isLaptopWeb || isDesktopWeb) && (
         <View
           style={{
@@ -963,6 +1004,7 @@ export default function Calendar() {
   );
 }
 
+// Convertir el nombre interno de una categoría en un texto más amigable para el usuario.
 function labelFromCategory(cat) {
   const v = (cat || "").toLowerCase();
   switch (v) {
@@ -981,6 +1023,7 @@ function labelFromCategory(cat) {
   }
 }
 
+// Convierte la clave de fecha "2025-03-14" en un texto amigable
 function renderDateTitle(key) {
   if (!key) return "";
   const [y, m, d] = key.split("-").map(Number);
@@ -997,6 +1040,7 @@ function renderDateTitle(key) {
   return `${d}  ${weekNamesLong[date.getDay()]}`;
 }
 
+// Estilos
 const styles = StyleSheet.create({
   mobileMenu: {
     position: "absolute",

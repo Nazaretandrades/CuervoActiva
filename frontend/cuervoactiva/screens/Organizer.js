@@ -1,3 +1,4 @@
+// Pantalla Home del Organizador
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -20,12 +21,15 @@ import Footer from "../components/Footer";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 
+// APi según la plataforma
 const API_URL =
   Platform.OS === "android"
     ? "http://10.0.2.2:5000/api/events"
     : "http://localhost:5000/api/events";
 
+// Se declara el componente
 export default function Organizer() {
+  // Estados
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [search, setSearch] = useState("");
@@ -44,17 +48,16 @@ export default function Organizer() {
   const [loading, setLoading] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
-
   const [bannerMessage, setBannerMessage] = useState("");
   const [bannerColor, setBannerColor] = useState("#33ADB5");
   const bannerOpacity = useRef(new Animated.Value(0)).current;
   const navigation = useNavigation();
 
-  /* ---------- Responsive web (como Admin) ---------- */
+  /* Responsive web  */
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
-
+  // Función para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const handleResize = () => setWinWidth(window.innerWidth);
@@ -62,15 +65,13 @@ export default function Organizer() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Breakpoints
   const isWeb = Platform.OS === "web";
-
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isLargeWeb = isWeb && winWidth >= 1440;
-
   const showFooterFixed = isLaptopWeb || isLargeWeb;
-
   const searchBarWidth = isWeb
     ? isMobileWeb
       ? "100%"
@@ -78,14 +79,12 @@ export default function Organizer() {
       ? 420
       : 700
     : "45%";
-
   const listMaxHeight = isMobileWeb ? 260 : isTabletWeb ? 400 : 500;
-
   const showTwoColumns = !isWeb ? true : !isMobileWeb;
-
   // Modal del formulario SOLO en web móvil
   const [formModalVisible, setFormModalVisible] = useState(false);
 
+  // Mostrar el banner mensaje (Toast)
   const showBanner = (msg, color = "#33ADB5") => {
     setBannerMessage(msg);
     setBannerColor(color);
@@ -104,6 +103,7 @@ export default function Organizer() {
     });
   };
 
+  // Obtener la sesión
   const getSessionToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -119,6 +119,7 @@ export default function Organizer() {
     }
   };
 
+  // Obtener el nombre de usuario
   const getUserName = async () => {
     try {
       let session;
@@ -134,6 +135,7 @@ export default function Organizer() {
     }
   };
 
+  // Carga de eventos del organizador
   useEffect(() => {
     fetchOrganizerEvents();
     getUserName();
@@ -145,6 +147,7 @@ export default function Organizer() {
     }, [])
   );
 
+  // Al montar la pantalla y cada vez que se vuelve a enfocar -> carga los eventos del organizador
   const fetchOrganizerEvents = async () => {
     try {
       const token = await getSessionToken();
@@ -164,6 +167,7 @@ export default function Organizer() {
     }
   };
 
+  // Filtro de búsqueda
   useEffect(() => {
     if (search.trim() === "") setFilteredEvents(events);
     else {
@@ -177,6 +181,7 @@ export default function Organizer() {
     }
   }, [search, events]);
 
+  // Editar evento
   const handleEdit = (ev) => {
     setForm(ev);
     if (isWeb && isMobileWeb) {
@@ -184,6 +189,7 @@ export default function Organizer() {
     }
   };
 
+  // Crear nuevo evento modal en movil web
   const openCreateModal = () => {
     setForm({
       _id: null,
@@ -200,6 +206,7 @@ export default function Organizer() {
     }
   };
 
+  // Navegaciones
   const goToEventDetail = (eventId) =>
     navigation.navigate("OrganizerEventDetail", { eventId });
   const goToNotifications = () => navigation.navigate("OrganizerNotifications");
@@ -215,6 +222,7 @@ export default function Organizer() {
     navigation.navigate("EditEvent", { eventData: event });
   };
 
+  // Cabecera
   const renderTopBar = () => {
     const topBarStyle = {
       flexDirection: isMobileWeb ? "column" : "row",
@@ -228,7 +236,7 @@ export default function Organizer() {
 
     return (
       <View style={topBarStyle}>
-        {/* IZQUIERDA: avatar + nombre */}
+        {/* Izquierda: avatar + nombre */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View
             style={{
@@ -269,7 +277,7 @@ export default function Organizer() {
           </View>
         </View>
 
-        {/* CENTRO: BUSCADOR (se mueve en móvil) */}
+        {/* Centro: Buscador (se mueve en móvil) */}
         <View
           style={{
             flexDirection: "row",
@@ -301,7 +309,7 @@ export default function Organizer() {
           />
         </View>
 
-        {/* DERECHA: ICONOS (se bajan en móvil web) */}
+        {/* Derecha: Iconos (se bajan en móvil web) */}
         <View
           style={{
             flexDirection: "row",
@@ -341,6 +349,7 @@ export default function Organizer() {
     );
   };
 
+  // Menu
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible((prev) => !prev);
@@ -362,8 +371,10 @@ export default function Organizer() {
     }
   };
 
+  // Seleccionar imagenes
   const pickImage = async () => {
     try {
+      // Se pide el permiso
       const permission =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permission.status !== "granted") {
@@ -371,6 +382,7 @@ export default function Organizer() {
         return;
       }
 
+      // Se abre la galería
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -385,7 +397,7 @@ export default function Organizer() {
           showBanner("❌ Sesión no encontrada", "#e74c3c");
           return;
         }
-
+        // Se envía con el fetch
         const formData = new FormData();
         if (Platform.OS === "web") {
           const blob = await (await fetch(uri)).blob();
@@ -397,7 +409,7 @@ export default function Organizer() {
             name: "imagen.jpg",
           });
         }
-
+        // Se hace el fecth para la imagen
         const res = await fetch(`${API_URL}/upload`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -415,52 +427,47 @@ export default function Organizer() {
     }
   };
 
+  // Subir evento
   const handleSubmit = async () => {
+    // Se comprueba los campos
     if (!form.title.trim()) {
       showBanner("El título es obligatorio", "#e67e22");
       return;
     }
-
     if (!form.description.trim()) {
       showBanner("La descripción es obligatoria", "#e67e22");
       return;
     }
-
     if (!form.date.trim()) {
       showBanner("La fecha es obligatoria", "#e67e22");
       return;
     }
-
     if (!/^\d{2}\/\d{2}\/\d{4}$/.test(form.date)) {
       showBanner("La fecha debe tener formato DD/MM/YYYY", "#e67e22");
       return;
     }
-
     if (!form.hour.trim()) {
       showBanner("La hora es obligatoria", "#e67e22");
       return;
     }
-
     if (!/^\d{2}:\d{2}$/.test(form.hour)) {
       showBanner("La hora debe tener formato HH:MM", "#e67e22");
       return;
     }
-
     if (!form.location.trim()) {
       showBanner("La ubicación es obligatoria", "#e67e22");
       return;
     }
-
     if (!form.category.trim()) {
       showBanner("La categoría es obligatoria", "#e67e22");
       return;
     }
-
     if (!form.image_url.trim()) {
       showBanner("Debes añadir una imagen", "#e67e22");
       return;
     }
 
+    // Se busca la sesión
     setLoading(true);
     try {
       const token = await getSessionToken();
@@ -469,6 +476,7 @@ export default function Organizer() {
         return;
       }
 
+      // Según si es editar o crear se hace put o post
       const method = form._id ? "PUT" : "POST";
       const url = form._id ? `${API_URL}/${form._id}` : API_URL;
       const res = await fetch(url, {
@@ -479,19 +487,23 @@ export default function Organizer() {
         },
         body: JSON.stringify(form),
       });
+      // Se obtiene la respuesta
       if (!res.ok) throw new Error("Error al guardar evento");
       const data = await res.json();
+      // Se actualiza la lista de eventos
       setEvents((prev) =>
         form._id
           ? prev.map((e) => (e._id === data._id ? data : e))
           : [...prev, data]
       );
+      // Muestra el toast
       showBanner(
         form._id
           ? "✏️ Cambios guardados correctamente"
           : "🎉 Evento creado con éxito",
         "#2ecc71"
       );
+      // Se resetea el formulario
       setForm({
         _id: null,
         title: "",
@@ -512,7 +524,7 @@ export default function Organizer() {
     }
   };
 
-  // === FORMULARIO REUTILIZABLE (web) ===
+  // Formulario web
   const renderFormContent = () => (
     <>
       <Text
@@ -525,7 +537,7 @@ export default function Organizer() {
         }}
       ></Text>
 
-      {/* CAMPOS SUPERIORES */}
+      {/* Campos superiores */}
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
         <View style={{ flex: 1, minWidth: showTwoColumns ? "45%" : "100%" }}>
           <Text
@@ -598,7 +610,7 @@ export default function Organizer() {
           />
         </View>
 
-        {/* DESCRIPCIÓN + LUGAR */}
+        {/* Descripción + Lugar */}
         <View style={{ flex: 1, minWidth: showTwoColumns ? "45%" : "100%" }}>
           <Text
             style={{
@@ -650,7 +662,7 @@ export default function Organizer() {
         </View>
       </View>
 
-      {/* CATEGORÍA */}
+      {/* Categoría */}
       <Text
         style={{
           fontWeight: "600",
@@ -690,7 +702,7 @@ export default function Organizer() {
         />
       </View>
 
-      {/* IMAGEN */}
+      {/* Imagen */}
       <Text
         style={{
           fontWeight: "600",
@@ -733,7 +745,7 @@ export default function Organizer() {
         </Pressable>
       </View>
 
-      {/* BOTONES */}
+      {/* Botones */}
       <View
         style={{
           alignItems: "center",
@@ -822,13 +834,15 @@ export default function Organizer() {
     </>
   );
 
-  // === RENDER MÓVIL NATIVO (NO TOCADO) ===
+  // Render móvil nativo
   if (Platform.OS !== "web") {
     return (
       <View style={{ flex: 1, backgroundColor: "#fff" }}>
         <Header hideAuthButtons />
+        {/**Cabecera */}
         {renderTopBar()}
 
+        {/**Cuerpo */}
         <View
           style={{
             paddingHorizontal: 20,
@@ -906,6 +920,7 @@ export default function Organizer() {
           )}
         </View>
 
+        {/**Botón para crear eventos */}
         <Pressable
           onPress={goToAddEvent}
           style={{
@@ -927,6 +942,7 @@ export default function Organizer() {
           />
         </Pressable>
 
+        {/**Menu  */}
         {menuVisible && (
           <View
             style={{
@@ -1029,6 +1045,7 @@ export default function Organizer() {
               ))}
             </View>
 
+            {/**Parte inferior del menu */}
             <View
               style={{
                 flexDirection: "row",
@@ -1113,7 +1130,7 @@ export default function Organizer() {
     );
   }
 
-  // === RENDER WEB RESPONSIVE (como Admin) ===
+  // Render web
   return (
     <View
       style={{
@@ -1124,11 +1141,12 @@ export default function Organizer() {
       }}
     >
       <Header hideAuthButtons />
+      {/* Cabecera */}
       {renderTopBar()}
 
       {Platform.OS === "web" && menuVisible && (
         <>
-          {/* OVERLAY OSCURO PARA CERRAR AL HACER CLIC FUERA */}
+          {/* Tocar fuera para cerrar el menu */}
           <Pressable
             onPress={toggleMenu}
             style={{
@@ -1141,7 +1159,7 @@ export default function Organizer() {
             }}
           />
 
-          {/* MENÚ LATERAL */}
+          {/* Menu lateral */}
           <Animated.View
             style={{
               position: "fixed",
@@ -1185,7 +1203,7 @@ export default function Organizer() {
         </>
       )}
 
-      {/* CUERPO PRINCIPAL WEB RESPONSIVE */}
+      {/* Cuerpo principal */}
       <View
         style={{
           flex: 1,
@@ -1202,7 +1220,7 @@ export default function Organizer() {
             justifyContent: "space-between",
           }}
         >
-          {/* LISTADO IZQUIERDA */}
+          {/* Listado de eventos a la izquierda */}
           <View
             style={{
               width: showTwoColumns ? (isTabletWeb ? "35%" : "30%") : "100%",
@@ -1266,7 +1284,7 @@ export default function Organizer() {
               )}
             </ScrollView>
 
-            {/* BOTÓN CREAR EVENTO SOLO EN MÓVIL WEB */}
+            {/* Botón crear evento */}
             {isMobileWeb && (
               <View style={{ marginTop: 16, alignItems: "center" }}>
                 <Pressable
@@ -1296,7 +1314,7 @@ export default function Organizer() {
             )}
           </View>
 
-          {/* FORMULARIO DERECHA SOLO NO-MÓVIL WEB */}
+          {/* Formulario */}
           {!isMobileWeb && (
             <ScrollView
               style={{
@@ -1312,7 +1330,7 @@ export default function Organizer() {
         </View>
       </View>
 
-      {/* MODAL FORMULARIO SOLO MÓVIL WEB */}
+      {/* Modal formulario solo en móvil web */}
       {isWeb && isMobileWeb && (
         <Modal
           transparent
@@ -1377,7 +1395,7 @@ export default function Organizer() {
         </Modal>
       )}
 
-      {/* FOOTER SOLO EN WEB LAPTOP/DESKTOP (FIJO) */}
+      {/* Footer responsive */}
       {isWeb && showFooterFixed && (
         <View
           style={{
@@ -1396,7 +1414,7 @@ export default function Organizer() {
         </View>
       )}
 
-      {/* BANNER WEB */}
+      {/* Toast */}
       {bannerMessage !== "" && (
         <Animated.View
           style={{

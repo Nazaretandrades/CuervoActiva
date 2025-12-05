@@ -1,5 +1,4 @@
-// ===== ADMIN.JS — COMPLETO Y RESPONSIVE (con formulario en modal en móvil web) =====
-
+// Pantalla Home del Administrador
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -21,20 +20,22 @@ import DropDownPicker from "react-native-dropdown-picker";
 import { getSession } from "../services/sessionManager";
 import { useNavigation } from "@react-navigation/native";
 
+// API_URL dinámico según plataforma
 const API_URL =
   Platform.OS === "android"
     ? "http://10.0.2.2:5000/api/events"
     : "http://localhost:5000/api/events";
 
+// Se declara el componente
 export default function Admin() {
-  const [events, setEvents] = useState([]);
+  // Estados
+  const [events, setEvents] = useState([]); 
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
   const [adminName, setAdminName] = useState("Admin");
   const [editing, setEditing] = useState(false);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [form, setForm] = useState({
     _id: null,
     title: "",
@@ -45,7 +46,6 @@ export default function Admin() {
     category: "deporte",
     image_url: "",
   });
-
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [modalVisible, setModalVisible] = useState(false);
@@ -55,34 +55,30 @@ export default function Admin() {
     message: "",
     type: "info",
   });
-
   const navigation = useNavigation();
   const [hoveredId, setHoveredId] = useState(null);
   const bottomSafeArea = Platform.OS === "web" ? 110 : 0;
 
-  /* ---------- Responsive web ---------- */
+  // Responsive en web
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
 
+  // Se redimensiona en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const handleResize = () => setWinWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  const isWeb = Platform.OS === "web";
-
   // Breakpoints web
-  const isMobileWeb = isWeb && winWidth < 768; // ⭐ SOLO aquí modal
+  const isWeb = Platform.OS === "web";
+  const isMobileWeb = isWeb && winWidth < 768; 
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isLargeWeb = isWeb && winWidth >= 1440;
-
   // Footer fijo solo en laptop/desktop
   const showFooterFixed = isLaptopWeb || isLargeWeb;
-
   // Anchos / alturas responsive
   const searchBarWidth = isWeb
     ? isMobileWeb
@@ -91,11 +87,10 @@ export default function Admin() {
       ? 420
       : 700
     : "60%";
-
   const listMaxHeight = isMobileWeb ? 260 : isTabletWeb ? 400 : 500;
-
   const showTwoColumns = !isWeb ? true : !isMobileWeb;
 
+  // Mostrar el toast
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
     setTimeout(
@@ -107,20 +102,26 @@ export default function Admin() {
   // Cargar eventos
   useEffect(() => {
     const loadData = async () => {
+      // Obtiene la sesión del usuario (Admin)
       const session = await getSession();
       if (session?.name) setAdminName(session.name);
 
       try {
+        // Obtiene el token
         const token = session?.token;
+        // Hace el fetch
         const res = await fetch(API_URL, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
+        // Obtiene la respuesta (los eventos)
         if (!res.ok) throw new Error("Error al obtener eventos");
         const data = await res.json();
+        // Establece los eventos
         setEvents(data);
+        // Filtra los eventos
         setFiltered(data);
       } catch (err) {
         console.error(err);
@@ -130,7 +131,7 @@ export default function Admin() {
     loadData();
   }, []);
 
-  // Filtro por búsqueda
+  // Buscador con filtrado dinámico
   useEffect(() => {
     if (!search.trim()) setFiltered(events);
     else {
@@ -148,7 +149,7 @@ export default function Admin() {
 
   // Modal del formulario SOLO en móvil web
   const [formModalVisible, setFormModalVisible] = useState(false);
-
+  // Estado del formulario modal
   const resetForm = () => {
     setForm({
       _id: null,
@@ -161,13 +162,13 @@ export default function Admin() {
       image_url: "",
     });
   };
-
+  // Función para abrir el modal
   const openCreateModal = () => {
     setEditing(false);
     resetForm();
     if (isMobileWeb) setFormModalVisible(true);
   };
-
+  // Función para editar el formulario
   const handleEdit = (ev) => {
     setForm({
       _id: ev._id,
@@ -180,25 +181,27 @@ export default function Admin() {
       image_url: ev.image_url || "",
     });
     setEditing(true);
-    if (isMobileWeb) setFormModalVisible(true); // ⭐ En móvil se abre modal al editar
+    if (isMobileWeb) setFormModalVisible(true); // En móvil se abre modal al editar
   };
 
+  // Función para cancelar la edición
   const handleCancel = () => {
     setEditing(false);
     resetForm();
-    if (isMobileWeb) setFormModalVisible(false); // ⭐ En móvil cerramos modal
+    if (isMobileWeb) setFormModalVisible(false); //  En móvil cerramos modal
   };
 
   // Subir imagen
   const pickImage = async () => {
     try {
+      // Pide permisos
       const permission =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (permission.status !== "granted") {
         showToast("⚠️ Se necesita acceso a tus fotos", "warning");
         return;
       }
-
+      // Abre la galería
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -215,6 +218,7 @@ export default function Admin() {
           return;
         }
 
+        // La envía como FromData al backend
         const formData = new FormData();
         if (Platform.OS === "web") {
           const blob = await (await fetch(uri)).blob();
@@ -227,12 +231,14 @@ export default function Admin() {
           });
         }
 
+        // Hace el post
         const res = await fetch(`${API_URL}/upload`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
           body: formData,
         });
 
+        // Recibe la respuesta
         if (!res.ok) throw new Error("Error al subir la imagen");
         const data = await res.json();
         setForm((prev) => ({ ...prev, image_url: data.image_url }));
@@ -244,8 +250,9 @@ export default function Admin() {
     }
   };
 
-  // Crear / editar
+  // Crear / editar (Función para subir)
   const handleSubmit = async () => {
+    // Comprueba los campos
     if (!form.title.trim())
       return showToast("El título es obligatorio", "warning");
     if (!form.description.trim())
@@ -264,16 +271,18 @@ export default function Admin() {
       return showToast("La categoría es obligatoria", "warning");
     if (!form.image_url.trim())
       return showToast("Debes añadir una imagen", "warning");
-
     setLoading(true);
     try {
+      // Obtengo la sesión y el token
       const session = await getSession();
       const token = session?.token;
       if (!token) return showToast("❌ Sesión no encontrada", "error");
 
+      // Según el método es Actualizar o Postear
       const method = form._id ? "PUT" : "POST";
       const url = form._id ? `${API_URL}/${form._id}` : API_URL;
 
+      // Hago el fetch
       const res = await fetch(url, {
         method,
         headers: {
@@ -283,29 +292,30 @@ export default function Admin() {
         body: JSON.stringify(form),
       });
 
+      // Obtengo la respuesta
       if (!res.ok) throw new Error("Error al guardar evento");
       const data = await res.json();
 
+      // Actualizo los estados locales
       setEvents((prev) =>
         form._id
           ? prev.map((e) => (e._id === data._id ? data : e))
           : [...prev, data]
       );
-
       setFiltered((prev) =>
         form._id
           ? prev.map((e) => (e._id === data._id ? data : e))
           : [...prev, data]
       );
-
+      // Muestro el toast
       showToast(
         form._id ? "✏️ Cambios guardados" : "🎉 Evento creado",
         "success"
       );
-
+      // Reseteo el formulario
       resetForm();
       setEditing(false);
-      if (isMobileWeb) setFormModalVisible(false); // ⭐ cerrar modal en móvil
+      if (isMobileWeb) setFormModalVisible(false); //  cerrar modal en móvil
     } catch (err) {
       console.error(err);
       showToast("❌ No se pudo guardar", "error");
@@ -314,19 +324,23 @@ export default function Admin() {
     }
   };
 
+  // Función para confirmar el eliminar
   const confirmDelete = (id) => {
     setEventToDelete(id);
     setModalVisible(true);
   };
 
+  // Función para el botón de eliminar
   const handleDeleteConfirmed = async () => {
     setModalVisible(false);
     if (!eventToDelete) return;
 
     try {
+      // Obtengo la sesión y el token
       const session = await getSession();
       const token = session?.token;
 
+      // Hago el fetch
       const res = await fetch(`${API_URL}/${eventToDelete}`, {
         method: "DELETE",
         headers: {
@@ -335,11 +349,13 @@ export default function Admin() {
         },
       });
 
+      // Obtengo la respuesta
       if (!res.ok) throw new Error("Error al eliminar");
 
+      // Los elimino
       setEvents((prev) => prev.filter((e) => e._id !== eventToDelete));
       setFiltered((prev) => prev.filter((e) => e._id !== eventToDelete));
-
+      // Muestro el toast
       showToast("✅ Evento eliminado", "success");
     } catch (err) {
       console.error(err);
@@ -349,6 +365,7 @@ export default function Admin() {
     }
   };
 
+  // Navegaciones a las distintas pantallas
   const goToProfile = () => navigation.navigate("AdminProfile");
   const goToNotifications = () => navigation.navigate("AdminNotifications");
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
@@ -358,6 +375,7 @@ export default function Admin() {
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
   const goToCalendar = () => navigation.navigate("Calendar");
 
+  // Menú lateral animado (web)
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -375,7 +393,7 @@ export default function Admin() {
     }
   };
 
-  // === CONTENIDO DEL FORMULARIO REUTILIZABLE (desktop + modal móvil) ===
+  // Contenido del formulario (desktop + modal móvil)
   const renderFormContent = () => (
     <>
       <Text
@@ -388,7 +406,7 @@ export default function Admin() {
         }}
       ></Text>
 
-      {/* CAMPOS SUPERIORES */}
+      {/* Campos superiores */}
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
         <View style={{ flex: 1, minWidth: showTwoColumns ? "45%" : "100%" }}>
           <Text
@@ -398,6 +416,7 @@ export default function Admin() {
               color: "#014869",
             }}
           >
+            {/* Título */}
             Título:
           </Text>
           <TextInput
@@ -414,6 +433,7 @@ export default function Admin() {
             }}
           />
 
+          {/* Fecha */}
           <Text
             style={{
               fontWeight: "600",
@@ -436,7 +456,7 @@ export default function Admin() {
               marginBottom: 10,
             }}
           />
-
+          {/* Hora */}
           <Text
             style={{
               fontWeight: "600",
@@ -461,7 +481,7 @@ export default function Admin() {
           />
         </View>
 
-        {/* DESCRIPCIÓN + LUGAR */}
+        {/* Descripción + Lugar */}
         <View style={{ flex: 1, minWidth: showTwoColumns ? "45%" : "100%" }}>
           <Text
             style={{
@@ -513,7 +533,7 @@ export default function Admin() {
         </View>
       </View>
 
-      {/* CATEGORÍA */}
+      {/* Categoría */}
       <Text
         style={{
           fontWeight: "600",
@@ -553,7 +573,7 @@ export default function Admin() {
         />
       </View>
 
-      {/* IMAGEN */}
+      {/* Imagen */}
       <Text
         style={{
           fontWeight: "600",
@@ -596,7 +616,7 @@ export default function Admin() {
         </Pressable>
       </View>
 
-      {/* BOTONES */}
+      {/* Botones */}
       <View
         style={{
           alignItems: "center",
@@ -678,7 +698,7 @@ export default function Admin() {
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
 
-      {/* TOP BAR ADMIN */}
+      {/* Encabezado Admin */}
       <View
         style={{
           flexDirection: isMobileWeb ? "column" : "row",
@@ -728,7 +748,7 @@ export default function Admin() {
           </View>
         </View>
 
-        {/* BUSCADOR */}
+        {/* Buscador */}
         <View
           style={{
             flexDirection: "row",
@@ -762,7 +782,7 @@ export default function Admin() {
           />
         </View>
 
-        {/* ICONOS DERECHA */}
+        {/* Iconos derecha */}
         <View
           style={{
             flexDirection: "row",
@@ -812,7 +832,7 @@ export default function Admin() {
         </View>
       </View>
 
-      {/* MENÚ LATERAL WEB */}
+      {/* Menú lateral web */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <TouchableWithoutFeedback onPress={toggleMenu}>
@@ -871,7 +891,7 @@ export default function Admin() {
         </>
       )}
 
-      {/* CUERPO PRINCIPAL */}
+      {/* Cuerpo principal */}
       <View
         style={{
           flex: 1,
@@ -888,7 +908,7 @@ export default function Admin() {
             justifyContent: "space-between",
           }}
         >
-          {/* LISTADO IZQUIERDA */}
+          {/* Listado eventos izquierda */}
           <View
             style={{
               width: showTwoColumns ? (isTabletWeb ? "35%" : "30%") : "100%",
@@ -941,6 +961,7 @@ export default function Admin() {
                   };
 
                   return (
+                    // Cuando le pulsas a un evento, te lleva al detalle
                     <Pressable
                       key={ev._id}
                       onPress={() =>
@@ -1037,7 +1058,7 @@ export default function Admin() {
               )}
             </ScrollView>
 
-            {/* BOTÓN CREAR EVENTO SOLO EN MÓVIL WEB */}
+            {/* Botón Crear evento solo en móvil web */}
             {isMobileWeb && (
               <View style={{ marginTop: 16, alignItems: "center" }}>
                 <Pressable
@@ -1067,7 +1088,7 @@ export default function Admin() {
             )}
           </View>
 
-          {/* FORMULARIO DERECHA (EN LAYOUT NORMAL, SOLO NO-MÓVIL WEB) */}
+          {/* Formulario derecha*/}
           {!isMobileWeb && (
             <ScrollView
               style={{
@@ -1085,7 +1106,7 @@ export default function Admin() {
         </View>
       </View>
 
-      {/* MODAL FORMULARIO SOLO MÓVIL WEB */}
+      {/* Modal formulario solo en móvil web */}
       {isMobileWeb && (
         <Modal
           transparent
@@ -1154,7 +1175,7 @@ export default function Admin() {
         </Modal>
       )}
 
-      {/* MODAL ELIMINAR */}
+      {/* Modal eliminar */}
       <Modal transparent visible={modalVisible} animationType="fade">
         <View
           style={{
@@ -1238,7 +1259,7 @@ export default function Admin() {
         </View>
       </Modal>
 
-      {/* TOAST */}
+      {/* Toast */}
       {toast.visible && (
         <Animated.View
           style={{
@@ -1273,7 +1294,7 @@ export default function Admin() {
         </Animated.View>
       )}
 
-      {/* FOOTER */}
+      {/* Footer */}
       {isWeb && showFooterFixed && (
         <View style={{ position: "fixed", bottom: 0, left: 0, right: 0 }}>
           <Footer

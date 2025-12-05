@@ -1,3 +1,4 @@
+// Pantalla de los eventos favoritos de los usuarios
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -16,12 +17,16 @@ import { useNavigation } from "@react-navigation/native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
+// Api de los eventos favoritos
 const FAVORITES_URL = `${API_BASE}/api/favorites`;
 
+// Se declara el componente
 export default function UserFavorites() {
+  // Estados
   const navigation = useNavigation();
   const [favorites, setFavorites] = useState([]);
   const [filteredFavorites, setFilteredFavorites] = useState([]);
@@ -30,11 +35,12 @@ export default function UserFavorites() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
 
-  /* ================== RESPONSIVE BREAKPOINTS EXACTO COMO USERNOTIFICATIONS ================== */
+  /* Responsive */
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
 
+  // Función para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const resize = () => setWinWidth(window.innerWidth);
@@ -42,34 +48,32 @@ export default function UserFavorites() {
     return () => window.removeEventListener("resize", resize);
   }, []);
 
+  // Breakpoints
   const isWeb = Platform.OS === "web";
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isDesktopWeb = isWeb && winWidth >= 1440;
   const isLargeWeb = isLaptopWeb || isDesktopWeb;
-
   const pagePaddingHorizontal = isMobileWeb
     ? 20
     : isTabletWeb
-      ? 40
-      : isLaptopWeb
-        ? 55
-        : 80;
-
+    ? 40
+    : isLaptopWeb
+    ? 55
+    : 80;
   const pagePaddingBottom = isLargeWeb ? 80 : 20;
-
   const favoritesListWidth = isWeb
-    ? (isMobileWeb ? 300
-      : isTabletWeb ? 580
-        : isLaptopWeb ? 720
-          : 1000)
-    : 320; 
+    ? isMobileWeb
+      ? 300
+      : isTabletWeb
+      ? 580
+      : isLaptopWeb
+      ? 720
+      : 1000
+    : 320;
 
-
-
-
-  /* ================== SESSION + USERNAME ================== */
+  /* Obtener la sesión*/
   const getToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -85,6 +89,7 @@ export default function UserFavorites() {
     }
   };
 
+  // Obtener el nombre de usuario
   const getUserName = async () => {
     try {
       let session;
@@ -109,11 +114,12 @@ export default function UserFavorites() {
     }
   };
 
+  // Cuando la pantalla se abre, carga el nombre del usuario
   useEffect(() => {
     getUserName();
   }, []);
 
-  /* ================== LOAD FAVORITES ================== */
+  /* Carga los eventos favoritos de ese usuario */
   useEffect(() => {
     const loadFavorites = async () => {
       try {
@@ -137,7 +143,7 @@ export default function UserFavorites() {
     loadFavorites();
   }, []);
 
-  /* ================== SEARCH FILTER ================== */
+  /* Filtro de búsqueda */
   useEffect(() => {
     if (!search.trim()) {
       setFilteredFavorites(favorites);
@@ -153,7 +159,7 @@ export default function UserFavorites() {
     }
   }, [search, favorites]);
 
-  /* ================== NAVIGATION ================== */
+  // Navegaciones
   const goToEventDetail = (eventId) =>
     navigation.navigate("UserEventDetail", { eventId });
   const goToNotifications = () => navigation.navigate("UserNotifications");
@@ -163,11 +169,10 @@ export default function UserFavorites() {
   const goToAboutUs = () => navigation.navigate("SobreNosotros");
   const goToContact = () => navigation.navigate("Contacto");
   const goToHome = () => navigation.navigate("User");
-
   const goToPrivacy = () => navigation.navigate("PoliticaPrivacidad");
   const goToConditions = () => navigation.navigate("Condiciones");
 
-  /* ================== MENU ================== */
+  /* Menú */
   const toggleMenu = () => {
     if (!isWeb) {
       setMenuVisible(!menuVisible);
@@ -190,7 +195,7 @@ export default function UserFavorites() {
     }
   };
 
-  /* ================== TOP BAR ================== */
+  /* Cabecera */
   const renderTopBar = () => (
     <View style={styles.topBar}>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -238,7 +243,7 @@ export default function UserFavorites() {
     </View>
   );
 
-  /* ================== MOBILE MENU ================== */
+  /* Menu en móvil nativo */
   const renderMobileMenu = () =>
     menuVisible && (
       <View style={styles.mobileMenuContainer}>
@@ -321,13 +326,14 @@ export default function UserFavorites() {
       </View>
     );
 
-  /* ================== RENDER ================== */
+  /* Render */
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
+      {/* Cabecera */}
       {renderTopBar()}
 
-      {/* WEB SIDE MENU */}
+      {/* Menú desplegable */}
       {isWeb && menuVisible && (
         <Animated.View
           style={{
@@ -377,7 +383,7 @@ export default function UserFavorites() {
 
       {!isWeb && renderMobileMenu()}
 
-      {/* ================== CONTENT ================== */}
+      {/* Contenido */}
       <View
         style={{
           flex: 1,
@@ -405,7 +411,7 @@ export default function UserFavorites() {
           style={{
             flex: 1,
             maxHeight: isWeb ? "65vh" : 500,
-            width: favoritesListWidth
+            width: favoritesListWidth,
           }}
           contentContainerStyle={{
             alignItems: "center",
@@ -450,7 +456,7 @@ export default function UserFavorites() {
         </ScrollView>
       </View>
 
-      {/* FOOTER SOLO EN WEB GRANDE */}
+      {/* Footer responsive */}
       {isWeb && isLargeWeb && (
         <View
           style={{
@@ -473,6 +479,7 @@ export default function UserFavorites() {
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
@@ -496,7 +503,6 @@ const styles = StyleSheet.create({
   topUserName: { color: "#6c757d", fontSize: 13 },
   topIcon: { width: 22, height: 22, tintColor: "#014869" },
 
-  /* MOBILE MENU */
   mobileMenuContainer: {
     position: "absolute",
     top: 0,

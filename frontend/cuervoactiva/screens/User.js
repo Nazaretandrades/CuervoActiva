@@ -1,3 +1,4 @@
+// Pantalla Home del Usuario
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -17,13 +18,18 @@ import { useNavigation } from "@react-navigation/native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
+// Api de los eventos
 const API_URL = `${API_BASE}/api/events`;
+// Api de los eventos favoritos
 const FAVORITES_URL = `${API_BASE}/api/favorites`;
 
+// Declaración del componente
 export default function User() {
+  // Estados
   const navigation = useNavigation();
   const [userName, setUserName] = useState("Usuario");
   const [events, setEvents] = useState([]);
@@ -34,15 +40,14 @@ export default function User() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuAnim] = useState(new Animated.Value(-250));
   const [hoveredCategory, setHoveredCategory] = useState(null);
-
-  // NUEVO: estado para el desplegable de categorías en móvil web
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
 
-  /* ---------- Responsive web (como Admin / Organizer) ---------- */
+  /* Responsive */
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
 
+  // Función para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const handleResize = () => setWinWidth(window.innerWidth);
@@ -50,15 +55,13 @@ export default function User() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Breakpoints
   const isWeb = Platform.OS === "web";
-
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isLargeWeb = isWeb && winWidth >= 1440;
-
   const showFooterFixed = isLaptopWeb || isLargeWeb;
-
   const searchBarWidth = isWeb
     ? isMobileWeb
       ? "100%"
@@ -66,12 +69,10 @@ export default function User() {
       ? 420
       : 700
     : "60%";
-
-  // Altura máx. del scroll interno del listado
   const listMaxHeight = isMobileWeb ? 360 : isTabletWeb ? 400 : 500;
-
   const showTwoColumns = !isWeb ? true : !isMobileWeb;
 
+  // Obtener la sesión y el token
   const getSessionToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -87,6 +88,7 @@ export default function User() {
     }
   };
 
+  // Navegaciones
   const goToProfile = () => {
     if (Platform.OS !== "web") toggleMenu();
     navigation.navigate("UserProfile");
@@ -125,6 +127,7 @@ export default function User() {
   const goToNotifications = () => navigation.navigate("UserNotifications");
   const goToCalendar = () => navigation.navigate("Calendar");
 
+  // Obtener el nombre de usuario
   const getUserName = async () => {
     try {
       let session;
@@ -148,6 +151,7 @@ export default function User() {
     }
   };
 
+  // Obtener todos los eventos y si hay token los favoritos
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -178,6 +182,7 @@ export default function User() {
     loadData();
   }, []);
 
+  // Filtrar los eventos según la categoría seleccionada
   useEffect(() => {
     let data = events;
     if (selectedCategory !== "all") {
@@ -195,6 +200,7 @@ export default function User() {
     setFiltered(data);
   }, [search, selectedCategory, events]);
 
+  // Menú
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -212,6 +218,7 @@ export default function User() {
     }
   };
 
+  // Agregar o Quitar favoritos
   const toggleFavorite = async (eventId) => {
     try {
       const token = await getSessionToken();
@@ -237,7 +244,7 @@ export default function User() {
     }
   };
 
-  /* ---------- TOP BAR WEB RESPONSIVE (como Admin / Organizer) ---------- */
+  /* Cabecera web */
   const renderTopBarWeb = () => (
     <View
       style={{
@@ -277,7 +284,7 @@ export default function User() {
         </View>
       </View>
 
-      {/* Buscador responsive */}
+      {/* Buscador  */}
       <View
         style={{
           flexDirection: "row",
@@ -346,6 +353,8 @@ export default function User() {
       </View>
     </View>
   );
+
+  // Cabecera móvil
   const renderTopBarMobile = () => (
     <View
       style={{
@@ -407,7 +416,7 @@ export default function User() {
     </View>
   );
 
-  /* ---------- MENÚ WEB CON OVERLAY ---------- */
+  /* Menú web */
   const renderWebMenu = () =>
     Platform.OS === "web" &&
     menuVisible && (
@@ -469,7 +478,7 @@ export default function User() {
       </>
     );
 
-  /* ---------- MENÚ MÓVIL ---------- */
+  /* Menú móvil */
   const renderMobileMenu = () =>
     Platform.OS !== "web" &&
     menuVisible && (
@@ -575,7 +584,7 @@ export default function User() {
           ))}
         </View>
 
-        {/* Bottom nav móvil */}
+        {/* Bottom móvil */}
         <View
           style={{
             position: "absolute",
@@ -613,6 +622,7 @@ export default function User() {
       </View>
     );
 
+  // Seleccionar categorías
   const getSelectedCategoryLabel = () => {
     const cats = [
       { label: "Todos", value: "all" },
@@ -625,14 +635,17 @@ export default function User() {
     return found ? found.label : "Todos";
   };
 
+  // Return
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", position: "relative" }}>
       <Header hideAuthButtons />
+      {/* Header */}
       {Platform.OS === "web" ? renderTopBarWeb() : renderTopBarMobile()}
+      {/* Menu web y móvil */}
       {renderWebMenu()}
       {renderMobileMenu()}
 
-      {/* WEB RESPONSIVE */}
+      {/* Cuerpo */}
       {Platform.OS === "web" ? (
         <ScrollView
           style={{ flex: 1, backgroundColor: "#f4f6f7" }}
@@ -656,7 +669,7 @@ export default function User() {
               justifyContent: "space-between",
             }}
           >
-            {/* ---------- CATEGORÍAS IZQUIERDA ---------- */}
+            {/* Categorías izquierda */}
             <View
               style={{
                 width: showTwoColumns ? (isTabletWeb ? "35%" : "30%") : "100%",
@@ -678,7 +691,7 @@ export default function User() {
                 Categorías
               </Text>
 
-              {/* ---------- DESPLEGABLE SOLO EN MÓVIL WEB ---------- */}
+              {/* Desplegable categorías en móvil web */}
               {isMobileWeb && (
                 <View style={{ marginBottom: 16 }}>
                   <Pressable
@@ -771,7 +784,7 @@ export default function User() {
                   )}
                 </View>
               )}
-              {/* ---------- TARJETAS DE COLORES (SOLO SI NO ES MÓVIL WEB) ---------- */}
+              {/*Categorías en pantallas web menos en móvil web */}
               {!isMobileWeb &&
                 [
                   { label: "Todos", value: "all", color: "#b0bec5" },
@@ -854,7 +867,7 @@ export default function User() {
                 ))}
             </View>
 
-            {/* ---------- LISTADO DE EVENTOS (DERECHA) ---------- */}
+            {/* Listado eventos derecha */}
             <View
               style={{
                 flex: 1,
@@ -873,7 +886,7 @@ export default function User() {
                 Listado de eventos
               </Text>
 
-              {/* ---------- SCROLL PROPIO DEL LISTADO ---------- */}
+              {/* Scroll del listado */}
               <ScrollView
                 style={{
                   maxHeight: listMaxHeight,
@@ -965,7 +978,7 @@ export default function User() {
           </View>
         </ScrollView>
       ) : (
-        /* ---------- MÓVIL NATIVO (NO SE TOCA) ---------- */
+        /* Móvil nativo */
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
@@ -1147,7 +1160,7 @@ export default function User() {
         </ScrollView>
       )}
 
-      {/* ---------- FOOTER WEB FIJO EN LAPTOP/DESKTOP ---------- */}
+      {/* Footer responsive */}
       {Platform.OS === "web" && showFooterFixed && (
         <View
           style={{

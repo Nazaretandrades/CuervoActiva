@@ -1,8 +1,9 @@
+// Archivo principal de la app
 import React, { useEffect, useState } from "react";
-import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
+import { NavigationContainer } from "@react-navigation/native"; // maneja toda la navegación
+import { createStackNavigator } from "@react-navigation/stack"; // sistema de navegación tipo "pila"
 import { ActivityIndicator, View, Platform } from "react-native";
-
+// Imports de todas las pantallas
 import Intro from "./screens/Intro";
 import Login from "./screens/Login";
 import Register from "./screens/Register";
@@ -31,8 +32,10 @@ import UserMenu from "./screens/UserMenu";
 import AddEvent from "./screens/AddEvent";
 import EditEvent from "./screens/EditEvent";
 
+// Defino la "pila" de pantallas en la que se navega
 const Stack = createStackNavigator();
 
+// Permite que en web puedas entrar directamente a una pantalla vía URL
 const linking = {
   prefixes: [
     "http://localhost:19006",
@@ -72,10 +75,13 @@ const linking = {
   },
 };
 
+// Declaración del componente principal
 export default function App() {
+  // Estados
   const [initialRoute, setInitialRoute] = useState("Intro");
   const [loading, setLoading] = useState(Platform.OS === "web");
 
+  // useEffect para comprobar sesión en Web
   useEffect(() => {
     if (Platform.OS === "web") {
       const checkSession = async () => {
@@ -104,6 +110,7 @@ export default function App() {
     }
   }, []);
 
+  // Loader mientras carga
   if (loading && Platform.OS === "web") {
     return (
       <View
@@ -120,11 +127,18 @@ export default function App() {
   }
 
   return (
+    /**
+     * Aquí se monta:
+     * El sistema de navegación.
+     * Las rutas.
+     * Y la pantalla inicial.
+     */
     <NavigationContainer
       linking={linking}
       independent={true}
       fallback={<ActivityIndicator size="large" color="#014869" />}
     >
+      {/**Declaración de todas las pantallas */}
       <Stack.Navigator
         initialRouteName={initialRoute}
         screenOptions={{ headerShown: false }}

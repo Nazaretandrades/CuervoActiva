@@ -1,3 +1,4 @@
+// Pantalla de notificaciones del organizador
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -6,17 +7,20 @@ import {
   Pressable,
   Platform,
   Animated,
-  TouchableWithoutFeedback,
   Image,
   Dimensions,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
+
+// Api según la plataforma
 const API_BASE =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
+// Declaración de componente
 export default function OrganizerNotifications({ navigation }) {
+  // Estados
   const [userName, setUserName] = useState("Organizador");
   const [notifications, setNotifications] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -27,11 +31,11 @@ export default function OrganizerNotifications({ navigation }) {
     type: "info",
   });
 
-  /* ======== RESPONSIVE BREAKPOINTS ======== */
+  /*Responsive */
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
-
+  // Función para redimensionar en tiempo real
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const resize = () => setWinWidth(window.innerWidth);
@@ -39,34 +43,33 @@ export default function OrganizerNotifications({ navigation }) {
     return () => window.removeEventListener("resize", resize);
   }, []);
 
+  // Breakpoints
   const isWeb = Platform.OS === "web";
   const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isDesktopWeb = isWeb && winWidth >= 1440;
   const isLargeWeb = isLaptopWeb || isDesktopWeb;
-
-  /* Paddings laterales */
   const pagePaddingHorizontal = isMobileWeb
     ? 20
     : isTabletWeb
-      ? 40
-      : isLaptopWeb
-        ? 55
-        : 80;
-
-  /* Paddings verticales para dejar espacio para footer */
+    ? 40
+    : isLaptopWeb
+    ? 55
+    : 80;
   const pagePaddingBottom = isLargeWeb ? 80 : 20;
+  const notificationsContainerWidth =
+    Platform.OS === "web"
+      ? isMobileWeb
+        ? "100%"
+        : isTabletWeb
+        ? "95%"
+        : isLaptopWeb
+        ? "85%"
+        : "70%"
+      : "120%";
 
-  /* Ancho contenedor notificaciones */
-  const notificationsContainerWidth = Platform.OS === "web"
-    ? (isMobileWeb ? "100%"
-      : isTabletWeb ? "95%"
-        : isLaptopWeb ? "85%"
-          : "70%")
-    : "120%"; // ancho único para móvil nativo
-
-
+  // Mostrar toast
   const showToast = (message, type = "info") => {
     setToast({ visible: true, message, type });
     setTimeout(
@@ -75,6 +78,7 @@ export default function OrganizerNotifications({ navigation }) {
     );
   };
 
+  // Obtener la sesión
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -91,6 +95,7 @@ export default function OrganizerNotifications({ navigation }) {
     loadUser();
   }, []);
 
+  // Cargar las notificaciones
   useEffect(() => {
     const loadNotifications = async () => {
       try {
@@ -118,23 +123,26 @@ export default function OrganizerNotifications({ navigation }) {
     loadNotifications();
   }, []);
 
+  // Marcar como leída
   const markAsRead = async (id) => {
     try {
       const session =
         Platform.OS === "web"
           ? JSON.parse(localStorage.getItem("USER_SESSION"))
           : JSON.parse(await AsyncStorage.getItem("USER_SESSION"));
+      // Obtenemos el token
       const token = session?.token;
 
+      // Hacemos el fetch
       const res = await fetch(`${API_BASE}/api/notifications/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      // Obtenemos respuesta
       if (!res.ok) throw new Error("Error al eliminar notificación");
-
+      // Eliminamos la notificación
       setNotifications((prev) => prev.filter((n) => n._id !== id));
-
       showToast("✅ Notificación marcada como leída correctamente.", "success");
     } catch (err) {
       console.error("Error al marcar notificación como leída:", err);
@@ -142,6 +150,7 @@ export default function OrganizerNotifications({ navigation }) {
     }
   };
 
+  // Navefaciones
   const goToProfile = () => navigation.navigate("OrganizerProfile");
   const goToNotifications = () => navigation.navigate("OrganizerNotifications");
   const goToCulturaHistoria = () => navigation.navigate("CulturaHistoria");
@@ -152,6 +161,7 @@ export default function OrganizerNotifications({ navigation }) {
   const goToCalendar = () => navigation.navigate("Calendar");
   const goToHomeOrganizador = () => navigation.navigate("Organizer");
 
+  // Menu
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
       setMenuVisible((prev) => !prev);
@@ -173,6 +183,7 @@ export default function OrganizerNotifications({ navigation }) {
     }
   };
 
+  // Cabecera
   const renderTopBar = () => (
     <View
       style={{
@@ -253,11 +264,14 @@ export default function OrganizerNotifications({ navigation }) {
     </View>
   );
 
+  // REturn
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", position: "relative" }}>
       <Header hideAuthButtons />
+      {/**Cabecera */}
       {renderTopBar()}
 
+      {/**Menu */}
       {Platform.OS === "web" && menuVisible && (
         <>
           <Animated.View
@@ -303,7 +317,7 @@ export default function OrganizerNotifications({ navigation }) {
         </>
       )}
 
-      {/* CONTENIDO RESPONSIVE */}
+      {/* Contenido */}
       <View
         style={{
           flex: 1,
@@ -339,6 +353,7 @@ export default function OrganizerNotifications({ navigation }) {
             paddingBottom: 30,
           }}
         >
+          {/**Listado de notificaciones */}
           {notifications.length === 0 ? (
             <Text style={{ color: "#777" }}>No hay notificaciones aún.</Text>
           ) : (
@@ -375,6 +390,7 @@ export default function OrganizerNotifications({ navigation }) {
         </ScrollView>
       </View>
 
+      {/**Menu móvil nativo */}
       {menuVisible && Platform.OS !== "web" && (
         <View
           style={{
@@ -544,6 +560,7 @@ export default function OrganizerNotifications({ navigation }) {
         </View>
       )}
 
+      {/**Toast */}
       {toast.visible && (
         <Animated.View
           style={{
@@ -554,8 +571,8 @@ export default function OrganizerNotifications({ navigation }) {
               toast.type === "success"
                 ? "#4BB543"
                 : toast.type === "error"
-                  ? "#D9534F"
-                  : "#014869",
+                ? "#D9534F"
+                : "#014869",
             paddingVertical: 12,
             paddingHorizontal: 25,
             borderRadius: 25,

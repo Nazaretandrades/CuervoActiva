@@ -1,3 +1,4 @@
+// Componente Footer
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -14,6 +15,8 @@ export default function Footer({
   onPrivacyPress,
   onConditionsPress,
 }) {
+
+  //Función para abrir enlaces
   const openLink = async (url) => {
     try {
       await Linking.openURL(url);
@@ -22,15 +25,17 @@ export default function Footer({
     }
   };
 
+  // Estados de hover, para los links y para los iconos 
   const [hoveredLink, setHoveredLink] = useState(null);
   const [hoveredIcon, setHoveredIcon] = useState(null);
 
-  // --- ARREGLO RESPONSIVE EN WEB ---
+  // Obtiene automáticamente el ancho de pantalla
   const dims = useWindowDimensions();
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : dims.width
   );
 
+  // UseEffect para escuchar cambios de tamaño en web, que actualiza el width en tiempo real
   useEffect(() => {
     if (Platform.OS === "web") {
       const onResize = () => setWinWidth(window.innerWidth);
@@ -39,10 +44,14 @@ export default function Footer({
     }
   }, []);
 
+  // Comprueba si es navegador
   const isWeb = Platform.OS === "web";
+  // Comprueba si el ancho es menor de 768px (es un layout móvil)
   const isNarrowWeb = isWeb && winWidth < 768;
 
+  // Contenedor principal
   return (
+    // Fondo del footer
     <View
       style={{
         width: "100%",
@@ -53,7 +62,7 @@ export default function Footer({
         paddingHorizontal: 16,
       }}
     >
-      <View
+      <View // Contenedor interno del layout, se hace el estilo responsive
         style={{
           flexDirection: isNarrowWeb ? "column" : "row",
           justifyContent: isNarrowWeb ? "center" : "space-between",
@@ -62,7 +71,7 @@ export default function Footer({
           rowGap: isNarrowWeb ? 8 : 0,
         }}
       >
-        {/* LEFT SECTION */}
+        {/* Sección de la izquierda (Copyright + links) */}
         <View
           style={{
             flexDirection: "row",
@@ -72,6 +81,7 @@ export default function Footer({
             marginBottom: isNarrowWeb ? 6 : 0,
           }}
         >
+          {/**Texto copyright */}
           <Text
             style={{
               color: "#555",
@@ -83,6 +93,7 @@ export default function Footer({
             © 2025 CuervoActiva, Inc.
           </Text>
 
+          {/** Enlaces de la izquierda*/}
           <Pressable
             onPress={onPrivacyPress}
             onHoverIn={() => setHoveredLink("privacidad")}
@@ -147,7 +158,7 @@ export default function Footer({
           </Pressable>
         </View>
 
-        {/* RIGHT SECTION */}
+        {/* Sección de la derecha (idioma + redes sociales) */}
         <View
           style={{
             flexDirection: "row",
@@ -191,6 +202,7 @@ export default function Footer({
               icon: require("../assets/iconos/instagram.png"),
               url: "https://www.instagram.com/p/DRb_K0SiHDa",
             },
+            // Recorre una lista de iconos, muestra el icono clicable
           ].map((item) => (
             <Pressable
               key={item.id}
