@@ -30,16 +30,18 @@ setTimeout(() => {
 }, 500);
 
 // Ruta absoluta a "uploads"
-const uploadsPath = path.join(__dirname, "uploads");
+const uploadsPath = process.env.UPLOAD_PATH 
+  ? process.env.UPLOAD_PATH
+  : path.join(__dirname, "uploads");
 
-// Si no existe la carpeta 'uploads', la creamos
+// Crear carpeta si no existe
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });
   console.log("📂 Carpeta 'uploads' creada automáticamente en", uploadsPath);
 }
 
-// Hacemos la carpeta accesible públicamente
-app.use("/uploads", express.static(uploadsPath));
+// Servir imágenes públicamente
+app.use("/uploads", express.static(uploadsPath));;
 
 // Importamos las rutas (CommonJS)
 const userRoutes = require("./routes/userRoutes");

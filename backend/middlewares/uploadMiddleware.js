@@ -1,40 +1,34 @@
-// Librería estándar para manejar uploads en Express
 const multer = require("multer");
-// Manejar rutas y extensiones de archivo de manera segura
 const path = require("path");
-// Permite trabajar con el sistema de archivos
 const fs = require("fs");
 
-// Defino la ruta absoluta donde se guardarán los archivos subidos
-const uploadDir = path.resolve(__dirname, "../uploads");
+// ✅ Ruta de uploads dinámica según entorno
+// En producción (Render) usará /var/data/uploads
+// En local seguirá usando /uploads
+const uploadDir = process.env.UPLOAD_PATH 
+  ? path.resolve(process.env.UPLOAD_PATH)
+  : path.resolve(__dirname, "../uploads");
 
-// Verifico si la carpeta 'uploads' existe; si no, la creo automáticamente
+// Crear carpeta si no existe
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
   console.log("📂 Carpeta 'uploads' creada automáticamente en:", uploadDir);
 }
 
-// Configuración del almacenamiento de archivos con Multer
+// Configuración de Multer
 const storage = multer.diskStorage({
-  // Directorio de destino para los archivos
   destination: (req, file, cb) => {
     cb(null, uploadDir);
   },
-  // Nombre del archivo al guardarlo (uso un sufijo único para evitar colisiones)
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
   },
 });
 
-// Filtro para aceptar solo imágenes
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image/")) cb(null, true);
   else cb(new Error("Solo se permiten archivos de imagen"), false);
 };
 
-// Creo el middleware de carga con la configuración anterior
-const upload = multer({ storage, fileFilter });
-
-// Exporto el middleware para usarlo en las rutas (por ejemplo, al subir imágenes de eventos)
-module.exports = upload;
+module.exports = multer({ storage, fileFilter });
