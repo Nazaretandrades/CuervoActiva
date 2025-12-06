@@ -8,10 +8,12 @@ const { getDateKey } = require("../utils/dateKey");
 // Listar todos los eventos (para usuarios normales y administrador)
 exports.listEvents = async (req, res) => {
   try {
-    // Crea un objeto fecha con la fecha actual
-    const today = new Date();
-    // Se configuran las horas a 00:00:00 para que el filtro funcione correctamente
-    today.setHours(0, 0, 0, 0);
+    // Se crea la fecha mañana
+    const tomorrow = new Date();
+    // Se establece la hora
+    tomorrow.setHours(0, 0, 0, 0);
+    // Y se le añade un día mas a la fecha
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
     //Busca todos los eventos cuya fecha sea igual o mayor a hoy
     const events = await Event.find({
@@ -33,10 +35,13 @@ exports.listOrganizerEvents = async (req, res) => {
     if (!req.user || !req.user.id)
       return res.status(401).json({ error: "Usuario no autenticado" });
 
-    // Crea un objeto fecha con la fecha actual
-    const today = new Date();
-    // Se configuran las horas a 00:00:00 para que el filtro funcione correctamente
-    today.setHours(0, 0, 0, 0);
+    // Se crea la fecha mañana
+    const tomorrow = new Date();
+    // Se establece la hora
+    tomorrow.setHours(0, 0, 0, 0);
+    // Y se le añade un día mas a la fecha
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
 
     // Buscar solo eventos creados por el organizador y por date >= today
     const events = await Event.find({
