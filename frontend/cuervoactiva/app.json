@@ -28,7 +28,7 @@
       }
     },
     "web": {
-      "favicon": "./assets/Cuervo.png"
+      "favicon": "./assets/cuervo-icon.png"
     },
     "extra": {
       "EXPO_PUBLIC_API_URL": "https://cuervoactiva.onrender.com",

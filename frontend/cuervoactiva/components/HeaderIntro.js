@@ -171,7 +171,7 @@ export default function Header({
                 }}
               >
                 <Image
-                  source={require("../assets/logo.png")}
+                  source={require("../assets/logo_cuervo.png")}
                   style={{ width: "100%", height: "100%" }}
                 />
               </View>
@@ -228,7 +228,7 @@ export default function Header({
       >
         <Pressable onPress={handleLogoPress} style={{ flexDirection: "row", alignItems: "center" }}>
           <View style={styles.logoContainer}>
-            <Image source={require("../assets/logo.png")} style={styles.logo} />
+            <Image source={require("../assets/logo_cuervo.png")} style={styles.logo} />
           </View>
 
           {!isMobile && (

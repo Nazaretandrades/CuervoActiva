@@ -310,7 +310,7 @@ Cuervo Activa busca modernizar la comunicación entre la administración y la ci
 
       {/**Fondo */}
       <ImageBackground
-        source={require("../assets/logo.png")}
+        source={require("../assets/logo_cuervo.png")}
         resizeMode="contain"
         imageStyle={{
           opacity: 0.3,
