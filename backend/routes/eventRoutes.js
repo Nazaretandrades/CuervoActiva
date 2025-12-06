@@ -31,12 +31,15 @@ router.post(
   (req, res) => {
     if (!req.file) return res.status(400).json({ error: "No se subió imagen" });
 
-    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${
-      req.file.filename
-    }`;
+    const isProd = process.env.NODE_ENV === "production";
+    const protocol = isProd ? "https" : req.protocol;
+
+    const imageUrl = `${protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+
     res.json({ image_url: imageUrl });
   }
 );
+
 
 /**
  * RUTA: GET /api/events/organizer

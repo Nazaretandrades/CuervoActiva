@@ -11,6 +11,9 @@ dotenv.config();
 // Inicializamos la aplicación Express
 const app = express();
 
+// Importante para que detecte bien https detrás de Render
+app.set("trust proxy", 1);
+
 // Middlewares base
 app.use(cors());
 app.use(express.json());

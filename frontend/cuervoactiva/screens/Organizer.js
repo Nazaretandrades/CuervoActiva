@@ -25,9 +25,10 @@ const LOCAL_API =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
 const BASE_URL =
-  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
-  Constants.expoConfig?.extra?.apiUrl ||
-  LOCAL_API;
+  (Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
+    Constants.manifest?.extra?.EXPO_PUBLIC_API_URL ||
+    process.env.EXPO_PUBLIC_API_URL ||
+    LOCAL_API);
 
 const API_URL = `${BASE_URL}/api/events`;
 
