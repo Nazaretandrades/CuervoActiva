@@ -21,13 +21,13 @@ const LOCAL_API =
     ? "http://10.0.2.2:5000"
     : "http://localhost:5000";
 
-// API final: desarrollo usa LOCAL_API; producción usa EXPO_PUBLIC_API_URL
 const BACKEND_URL =
   Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
-  Constants.expoConfig?.extra?.apiUrl ||
+  process.env.EXPO_PUBLIC_API_URL ||
   LOCAL_API;
 
 const API_BASE = BACKEND_URL;
+
 
 
 // Se declara el componente

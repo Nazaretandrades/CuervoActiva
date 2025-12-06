@@ -21,7 +21,6 @@ const LOCAL_API =
 const API_BASE =
   Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL || LOCAL_API;
 
-
 // Declarar el componente
 export default function UserNotifications({ navigation }) {
   // Estados

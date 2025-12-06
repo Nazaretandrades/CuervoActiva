@@ -19,9 +19,7 @@ import Constants from "expo-constants";
 const LOCAL_API =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
-const API_BASE =
-  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL || LOCAL_API;
-
+const API_BASE = Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL || LOCAL_API;
 
 // Declaración de componente
 export default function OrganizerNotifications({ navigation }) {

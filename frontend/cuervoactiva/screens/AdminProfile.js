@@ -28,7 +28,7 @@ const LOCAL_API =
 // API final: en producción usa EXPO_PUBLIC_API_URL; en desarrollo usa LOCAL_API
 const API_BASE =
   Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
-  Constants.expoConfig?.extra?.apiUrl ||
+  process.env.EXPO_PUBLIC_API_URL ||
   LOCAL_API;
 
 

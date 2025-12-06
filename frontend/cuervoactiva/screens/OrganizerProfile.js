@@ -27,7 +27,6 @@ const API_BASE =
   process.env.EXPO_PUBLIC_API_URL ||
   LOCAL_API;
 
-
 // Se declara el componente
 export default function OrganizerProfile() {
   // Estados

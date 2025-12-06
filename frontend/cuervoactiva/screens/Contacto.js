@@ -23,10 +23,14 @@ import Constants from "expo-constants";
 
 const LOCAL_API =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
-
 const API_BASE =
-  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL || LOCAL_API;
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
+  Constants.manifest?.extra?.EXPO_PUBLIC_API_URL ||
+  process.env.EXPO_PUBLIC_API_URL ||
+  LOCAL_API;
+
 const API_URL = `${API_BASE}/api/contact`;
+
 // Claves de Email.js
 const EMAILJS_SERVICE_ID = "service_e2ogh6c"; // identifica el servicio de EmailJS
 const EMAILJS_TEMPLATE_ID = "template_uisdxgb"; // la plantilla del email que creé

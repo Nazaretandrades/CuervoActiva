@@ -18,22 +18,18 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import Constants from "expo-constants";
 
-
 // URL base según entorno local o producción
 const LOCAL_API =
-  Platform.OS === "android"
-    ? "http://10.0.2.2:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
 const API_BASE =
-  Constants.expoConfig?.extra?.apiUrl ||
-  process.env.EXPO_PUBLIC_API_URL ||
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
+  Constants.manifest?.extra?.EXPO_PUBLIC_API_URL ||
   LOCAL_API;
 
 
 // Endpoints
 const FAVORITES_URL = `${API_BASE}/api/favorites`;
-
 
 // Se declara el componente
 export default function UserFavorites() {

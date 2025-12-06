@@ -15,12 +15,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage"; // Guarda 
 import { Picker } from "@react-native-picker/picker"; // Selector de categorías
 import { useNavigation } from "@react-navigation/native"; // Permite navegar entre pantallas
 import Constants from "expo-constants"; // Permite importar constantes
+// URL base según entorno local o producción
+const LOCAL_API =
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
-
-// URL del backend: en producción usa Render, en desarrollo usa localhost/10.0.2.2
 const BACKEND_URL =
   Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
-  "https://cuervoactiva.onrender.com";
+  process.env.EXPO_PUBLIC_API_URL ||
+  LOCAL_API;
 
 const API_URL = `${BACKEND_URL}/api/events`;
 

@@ -22,7 +22,9 @@ import Constants from "expo-constants";
 
 const BASE_URL =
   Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000");
+  (Platform.OS === "android"
+    ? "http://10.0.2.2:5000"
+    : "http://localhost:5000");
 
 const API_URL = `${BASE_URL}/api/events`;
 const COMMENTS_URL = `${BASE_URL}/api/comments`;

@@ -21,19 +21,12 @@ import Constants from "expo-constants";
 
 // URL del backend según entorno y dispositivo
 const LOCAL_API =
-  Platform.OS === "android"
-    ? "http://10.0.2.2:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
-const API_BASE =
-  Constants.expoConfig?.extra?.apiUrl ||
-  process.env.EXPO_PUBLIC_API_URL ||
-  LOCAL_API;
-
+const API_BASE = Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL || LOCAL_API;
 
 const API_URL = `${API_BASE}/api/events`;
 const FAVORITES_URL = `${API_BASE}/api/favorites`;
-
 
 // Declaración del componente
 export default function User() {

@@ -21,18 +21,15 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import Constants from "expo-constants";
 
 const LOCAL_API =
-  Platform.OS === "android"
-    ? "http://10.0.2.2:5000"
-    : "http://localhost:5000";
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
 const API_BASE =
-  Constants.expoConfig?.extra?.apiUrl ||
-  process.env.EXPO_PUBLIC_API_URL ||
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
   LOCAL_API;
+
 
 const API_URL = `${API_BASE}/api/events`;
 const COMMENTS_URL = `${API_BASE}/api/comments`;
-
 
 // Declaro el componente
 export default function UserEventDetail() {

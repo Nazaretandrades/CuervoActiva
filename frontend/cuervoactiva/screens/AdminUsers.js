@@ -25,7 +25,7 @@ const LOCAL_API =
 
 const API_BASE =
   Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
-  Constants.expoConfig?.extra?.apiUrl ||
+  process.env.EXPO_PUBLIC_API_URL ||
   LOCAL_API;
 
 const API_URL = `${API_BASE}/api/users`;
