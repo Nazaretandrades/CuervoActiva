@@ -17,16 +17,19 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-
-// URL dinámica del backend (Render en producción / Local en desarrollo)
-const API_BASE =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === "android"
+import Constants from "expo-constants";
+const LOCAL_API =
+  Platform.OS === "android"
     ? "http://10.0.2.2:5000"
-    : Platform.OS === "web"
-    ? "http://localhost:5000"
-    : "http://192.168.18.19:5000");
+    : "http://localhost:5000";
+
+const API_BASE =
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
+  Constants.expoConfig?.extra?.apiUrl ||
+  LOCAL_API;
+
 const API_URL = `${API_BASE}/api/users`;
+
 
 // Se declara el componente
 export default function AdminUsers() {

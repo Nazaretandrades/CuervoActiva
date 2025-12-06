@@ -14,15 +14,13 @@ import * as ImagePicker from "expo-image-picker"; // Permite seleccionar imágen
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Guarda y recupera la sesión del usuario en móvil
 import { Picker } from "@react-native-picker/picker"; // Selector de categorías
 import { useNavigation } from "@react-navigation/native"; // Permite navegar entre pantallas
+import Constants from "expo-constants"; // Permite importar constantes
+
 
 // URL del backend: en producción usa Render, en desarrollo usa localhost/10.0.2.2
 const BACKEND_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === "android"
-    ? "http://10.0.2.2:5000"
-    : Platform.OS === "web"
-    ? "http://localhost:5000"
-    : "http://192.168.18.19:5000"); 
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
+  "https://cuervoactiva.onrender.com";
 
 const API_URL = `${BACKEND_URL}/api/events`;
 

@@ -18,17 +18,21 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoute, useNavigation } from "@react-navigation/native";
+import Constants from "expo-constants";
 
-// URL base según entorno
 const LOCAL_API =
   Platform.OS === "android"
     ? "http://10.0.2.2:5000"
     : "http://localhost:5000";
 
-const API_BASE = process.env.EXPO_PUBLIC_API_URL || LOCAL_API;
+const API_BASE =
+  Constants.expoConfig?.extra?.apiUrl ||
+  process.env.EXPO_PUBLIC_API_URL ||
+  LOCAL_API;
 
 const API_URL = `${API_BASE}/api/events`;
 const COMMENTS_URL = `${API_BASE}/api/comments`;
+
 
 // Declaro el componente
 export default function UserEventDetail() {

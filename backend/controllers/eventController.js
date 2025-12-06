@@ -17,7 +17,7 @@ exports.listEvents = async (req, res) => {
 
     //Busca todos los eventos cuya fecha sea igual o mayor a hoy
     const events = await Event.find({
-      date: { $gte: today },
+      date: { $gte: tomorrow },
     });
 
     // Responde con la lista de eventos
@@ -46,7 +46,7 @@ exports.listOrganizerEvents = async (req, res) => {
     // Buscar solo eventos creados por el organizador y por date >= today
     const events = await Event.find({
       createdBy: req.user.id,
-      date: { $gte: today },
+      date: { $gte: tomorrow },
     });
 
     // Responde con la lista de eventos

@@ -15,19 +15,20 @@ import {
 } from "react-native";
 
 import * as ImagePicker from "expo-image-picker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-
-// URL base según entorno
+import Constants from "expo-constants";
+import { getSession } from "../services/sessionManager";
 const LOCAL_API =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || LOCAL_API;
+const BASE_URL =
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
+  Constants.expoConfig?.extra?.apiUrl ||
+  LOCAL_API;
 
-// Endpoint de eventos
 const API_URL = `${BASE_URL}/api/events`;
 
 // Se declara el componente
@@ -108,34 +109,12 @@ export default function Organizer() {
 
   // Obtener la sesión
   const getSessionToken = async () => {
-    try {
-      if (Platform.OS === "web") {
-        const session = JSON.parse(localStorage.getItem("USER_SESSION"));
-        return session?.token || null;
-      } else {
-        const sessionString = await AsyncStorage.getItem("USER_SESSION");
-        const session = sessionString ? JSON.parse(sessionString) : null;
-        return session?.token || null;
-      }
-    } catch {
-      return null;
-    }
+    const session = await getSession();
+    return session?.token || null;
   };
-
-  // Obtener el nombre de usuario
   const getUserName = async () => {
-    try {
-      let session;
-      if (Platform.OS === "web") {
-        session = JSON.parse(localStorage.getItem("USER_SESSION"));
-      } else {
-        const sessionString = await AsyncStorage.getItem("USER_SESSION");
-        session = sessionString ? JSON.parse(sessionString) : null;
-      }
-      if (session?.name) setUserName(session.name);
-    } catch (err) {
-      console.error("Error obteniendo usuario:", err);
-    }
+    const session = await getSession();
+    if (session?.name) setUserName(session.name);
   };
 
   // Carga de eventos del organizador

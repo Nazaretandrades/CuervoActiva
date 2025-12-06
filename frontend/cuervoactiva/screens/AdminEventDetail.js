@@ -17,17 +17,20 @@ import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
 import { getSession } from "../services/sessionManager";
 import { useNavigation } from "@react-navigation/native";
+import Constants from "expo-constants";
 
-// URL del backend dinámica (Render en producción, local en desarrollo)
-const BACKEND_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === "android"
+// URL local según plataforma
+const LOCAL_API =
+  Platform.OS === "android"
     ? "http://10.0.2.2:5000"
-    : Platform.OS === "web"
-    ? "http://localhost:5000"
-    : "http://192.168.18.19:5000"); 
+    : "http://localhost:5000";
 
-// Endpoints finales
+// API final: primero usa variable de entorno, si no existe usa local
+const BACKEND_URL =
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
+  Constants.expoConfig?.extra?.apiUrl ||
+  LOCAL_API;
+
 const API_URL = `${BACKEND_URL}/api/events`;
 const COMMENTS_URL = `${BACKEND_URL}/api/comments`;
 

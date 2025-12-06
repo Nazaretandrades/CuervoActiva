@@ -19,17 +19,19 @@ import Footer from "../components/Footer";
 import DropDownPicker from "react-native-dropdown-picker";
 import { getSession } from "../services/sessionManager";
 import { useNavigation } from "@react-navigation/native";
-
-// URL dinámica del backend (local en desarrollo + Render en producción)
-const BACKEND_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === "android"
+import Constants from "expo-constants";
+// URL local según plataforma
+const LOCAL_API =
+  Platform.OS === "android"
     ? "http://10.0.2.2:5000"
-    : Platform.OS === "web"
-    ? "http://localhost:5000"
-    : "http://192.168.18.19:5000");
+    : "http://localhost:5000";
 
-// Endpoint final
+// API final: en desarrollo usa LOCAL_API, en producción EXPO_PUBLIC_API_URL
+const BACKEND_URL =
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
+  Constants.expoConfig?.extra?.apiUrl ||
+  LOCAL_API;
+
 const API_URL = `${BACKEND_URL}/api/events`;
 
 // Se declara el componente

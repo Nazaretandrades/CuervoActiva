@@ -1,10 +1,15 @@
 // Archivo para registrar e iniciar sesión
+import Constants from "expo-constants";
 //  URL del backend desplegado (Render)
 const PROD_URL = "https://cuervoactiva.onrender.com";
 
 // BASE_URL usará EXPO_PUBLIC_API_URL si existe (opcional),
 // si no, usará directamente Render
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || PROD_URL;
+const BASE_URL =
+  Constants.expoConfig.extra?.EXPO_PUBLIC_API_URL ||
+  Constants.manifest?.extra?.EXPO_PUBLIC_API_URL ||
+  PROD_URL;
+
 
 // FUNCIÓN: Registrar un nuevo usuario
 export async function registerUser({ name, email, password, role }) {

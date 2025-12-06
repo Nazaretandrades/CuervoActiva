@@ -13,17 +13,20 @@ import {
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
+import Constants from "expo-constants";
 
-// URL dinámica para backend (Render en producción, local en desarrollo)
-const BACKEND_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === "android"
+// URL local según plataforma
+const LOCAL_API =
+  Platform.OS === "android"
     ? "http://10.0.2.2:5000"
-    : Platform.OS === "web"
-    ? "http://localhost:5000"
-    : "http://192.168.18.19:5000"); 
+    : "http://localhost:5000";
 
-// Endpoint de notificaciones
+// API final: desarrollo usa LOCAL_API; producción usa EXPO_PUBLIC_API_URL
+const BACKEND_URL =
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
+  Constants.expoConfig?.extra?.apiUrl ||
+  LOCAL_API;
+
 const API_BASE = BACKEND_URL;
 
 

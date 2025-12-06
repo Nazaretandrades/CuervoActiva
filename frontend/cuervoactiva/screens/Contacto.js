@@ -19,9 +19,13 @@ import * as EmailJS from "@emailjs/browser";
 import { useNavigation } from "@react-navigation/native";
 import OrganizerMenu from "./OrganizerMenu";
 import UserMenu from "./UserMenu";
+import Constants from "expo-constants";
 
-// Api según la plataforma
-const API_BASE = "https://cuervoactiva.onrender.com";
+const LOCAL_API =
+  Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
+
+const API_BASE =
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL || LOCAL_API;
 const API_URL = `${API_BASE}/api/contact`;
 // Claves de Email.js
 const EMAILJS_SERVICE_ID = "service_e2ogh6c"; // identifica el servicio de EmailJS

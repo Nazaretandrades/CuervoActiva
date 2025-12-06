@@ -12,14 +12,16 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import Constants from "expo-constants";
 
-// URL base según entorno
 const LOCAL_API =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || LOCAL_API;
+const BASE_URL =
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
+  Constants.expoConfig?.extra?.apiUrl ||
+  LOCAL_API;
 
-// Endpoint de eventos
 const API_URL = `${BASE_URL}/api/events`;
 
 // Se declara el componente
