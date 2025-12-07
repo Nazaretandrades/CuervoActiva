@@ -13,6 +13,7 @@ import {
   Linking,
   TextInput,
   Dimensions,
+  TouchableWithoutFeedback,
 } from "react-native";
 import Header from "../components/HeaderIntro";
 import Footer from "../components/Footer";
@@ -20,18 +21,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import Constants from "expo-constants";
 
+// Url local
 const LOCAL_API =
   Platform.OS === "android" ? "http://10.0.2.2:5000" : "http://localhost:5000";
 
-const API_BASE =
-  Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL ||
-  LOCAL_API;
-
+// Backend
+const API_BASE = Constants.expoConfig?.extra?.EXPO_PUBLIC_API_URL || LOCAL_API;
 
 const API_URL = `${API_BASE}/api/events`;
 const COMMENTS_URL = `${API_BASE}/api/comments`;
 
-// Declaro el componente
 export default function UserEventDetail() {
   // Estados
   const route = useRoute();
@@ -47,12 +46,12 @@ export default function UserEventDetail() {
   const [commentText, setCommentText] = useState("");
   const [userComment, setUserComment] = useState(null);
 
-  // Responsive
+  // Responsive width
   const [winWidth, setWinWidth] = useState(
     Platform.OS === "web" ? window.innerWidth : Dimensions.get("window").width
   );
 
-  // Función para redimensionar en tiempo real
+  // Listener de resize
   useEffect(() => {
     if (Platform.OS !== "web") return;
     const resize = () => setWinWidth(window.innerWidth);
@@ -62,12 +61,31 @@ export default function UserEventDetail() {
 
   // Breakpoints
   const isWeb = Platform.OS === "web";
+  const isMobileWeb = isWeb && winWidth < 768;
   const isTabletWeb = isWeb && winWidth >= 768 && winWidth < 1024;
   const isLaptopWeb = isWeb && winWidth >= 1024 && winWidth < 1440;
   const isDesktopWeb = isWeb && winWidth >= 1440;
-  const showFooter = isLaptopWeb || isDesktopWeb;
+  const isLargeWeb = isLaptopWeb || isDesktopWeb;
 
-  // Obtener el token
+  const pagePaddingHorizontal = isMobileWeb
+    ? 20
+    : isTabletWeb
+    ? 40
+    : isLaptopWeb
+    ? 55
+    : 80;
+
+  const pagePaddingBottom = isLargeWeb ? 80 : 30;
+
+  const eventContainerWidth = isMobileWeb
+    ? "100%"
+    : isTabletWeb
+    ? "100%"
+    : isLaptopWeb
+    ? "100%"
+    : "100%";
+
+  // Obtener token
   const getToken = async () => {
     try {
       if (Platform.OS === "web") {
@@ -84,7 +102,7 @@ export default function UserEventDetail() {
     }
   };
 
-  // Obtener la info del usuario
+  // Obtener usuario
   const getUserInfo = async () => {
     try {
       let session;
@@ -111,22 +129,19 @@ export default function UserEventDetail() {
     }
   };
 
-  // Cargar los ratings
+  // Cargar valoración
   const loadRatings = async () => {
     try {
       const token = await getToken();
       if (!token) return;
 
       const res = await fetch(`${COMMENTS_URL}/user/${eventId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.ok) return;
 
       const data = await res.json();
-
       setRating(data.userRating);
       setHasRated(true);
     } catch (err) {
@@ -134,7 +149,7 @@ export default function UserEventDetail() {
     }
   };
 
-  // Cargar el evento según su ID
+  // Cargar evento
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -153,8 +168,7 @@ export default function UserEventDetail() {
 
     if (eventId) loadData();
   }, [eventId]);
-
-  // Valorar el evento
+  // Valorar evento
   const handleRate = async (value) => {
     try {
       const token = await getToken();
@@ -163,6 +177,7 @@ export default function UserEventDetail() {
         return;
       }
       setRating(value);
+
       const res = await fetch(`${COMMENTS_URL}/${eventId}`, {
         method: "POST",
         headers: {
@@ -171,23 +186,24 @@ export default function UserEventDetail() {
         },
         body: JSON.stringify({ rating: value }),
       });
+
       if (!res.ok) throw new Error("No se pudo enviar la valoración");
 
       setHasRated(true);
       await loadRatings();
-      Alert.alert("✅", "Tu valoración se ha registrado correctamente");
+      Alert.alert("✔️", "Tu valoración se ha registrado correctamente");
     } catch (err) {
       console.error("Error al valorar:", err);
       Alert.alert("Error", "No se pudo registrar la valoración");
     }
   };
 
-  // Mandar comentario
+  // Enviar comentario
   const handleSendComment = async () => {
     try {
       const token = await getToken();
       if (!token) {
-        Alert.alert("Error", "Debes iniciar sesión para comentar el evento");
+        Alert.alert("Error", "Debes iniciar sesión para comentar");
         return;
       }
 
@@ -213,19 +229,19 @@ export default function UserEventDetail() {
         }),
       });
 
-      if (!res.ok) throw new Error("No se pudo enviar");
+      if (!res.ok) throw new Error("No se pudo enviar comentario");
 
       const data = await res.json();
       setUserComment(data);
       setCommentText("");
-      Alert.alert("✅", "Comentario enviado.");
+      Alert.alert("✔️", "Comentario enviado.");
     } catch (err) {
       console.error("Error al enviar comentario:", err);
       Alert.alert("Error", "No se pudo enviar el comentario.");
     }
   };
 
-  // Render de las estrellas, con un for hasta 5 estrellas y se va sumando
+  // Renderizar estrellas
   const renderStars = (ratingValue, interactive = false) => {
     const stars = [];
     const displayRating = interactive ? rating : ratingValue;
@@ -257,22 +273,21 @@ export default function UserEventDetail() {
     if (!event) return;
 
     const msg = `¡Mira este evento!
-                Título: ${event.title}
-                Lugar: ${event.location}
-                Fecha: ${event.date}
-                Hora: ${event.hour}`;
+Título: ${event.title}
+Lugar: ${event.location}
+Fecha: ${event.date}
+Hora: ${event.hour}`;
 
     const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
     Linking.openURL(url);
   };
 
-  // Compartir por Twitter (X)
+  // Compartir en Twitter/X
   const shareTwitter = () => {
     if (!event) return;
 
-    const msg = `¡Mira este evento! 
-                ${event.title} - ${event.location} 
-                📅 ${event.date} | ⏰ ${event.hour}`;
+    const msg = `${event.title} - ${event.location}
+📅 ${event.date}  ⏰ ${event.hour}`;
 
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       msg
@@ -292,7 +307,7 @@ export default function UserEventDetail() {
   const goToContact = () => navigation.navigate("Contacto");
   const goToHome = () => navigation.navigate("User");
 
-  // Pulsar el menú
+  // Toggle menú
   const toggleMenu = () => {
     if (menuVisible) {
       Animated.timing(menuAnim, {
@@ -310,7 +325,7 @@ export default function UserEventDetail() {
     }
   };
 
-  // Cabecera
+  // Topbar web
   const renderTopBarWeb = () => (
     <View
       style={{
@@ -378,12 +393,11 @@ export default function UserEventDetail() {
     </View>
   );
 
-  // Cabecera móvil
+  // Topbar móvil
   const renderTopBarMobile = () => (
     <View
       style={{
         flexDirection: "row",
-        alignItems: "center",
         justifyContent: "space-between",
         paddingHorizontal: 20,
         paddingVertical: 14,
@@ -395,10 +409,9 @@ export default function UserEventDetail() {
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
-            position: "relative",
-            marginRight: 10,
             width: 44,
             height: 44,
+            marginRight: 10,
             borderRadius: 22,
             backgroundColor: "#014869",
             alignItems: "center",
@@ -410,6 +423,7 @@ export default function UserEventDetail() {
             style={{ width: 24, height: 24, tintColor: "#fff" }}
           />
         </View>
+
         <View>
           <Text style={{ color: "#014869", fontWeight: "700", fontSize: 14 }}>
             Usuario
@@ -418,7 +432,7 @@ export default function UserEventDetail() {
         </View>
       </View>
 
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <View style={{ flexDirection: "row" }}>
         <Pressable onPress={goToNotifications} style={{ marginRight: 16 }}>
           <Image
             source={require("../assets/iconos/bell.png")}
@@ -440,56 +454,69 @@ export default function UserEventDetail() {
     </View>
   );
 
-  // Menú Web
+  // Menú web
   const renderWebMenu = () =>
-    Platform.OS === "web" &&
+    isWeb &&
     menuVisible && (
-      <Animated.View
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: 250,
-          height: "100%",
-          backgroundColor: "#f8f8f8",
-          padding: 20,
-          zIndex: 10,
-          transform: [{ translateX: menuAnim }],
-          boxShadow: "2px 0 10px rgba(0,0,0,0.1)",
-        }}
-      >
-        {[
-          { label: "Perfil", action: goToProfile },
-          { label: "Cultura e Historia", action: goToCulturaHistoria },
-          { label: "Ver favoritos", action: goToFavorites },
-          { label: "Contacto", action: goToContact },
-        ].map((item, i) => (
-          <Pressable
-            key={i}
-            onPress={() => {
-              toggleMenu();
-              item.action();
+      <>
+        <TouchableWithoutFeedback onPress={toggleMenu}>
+          <View
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              zIndex: 9,
             }}
-            style={{ marginBottom: 25 }}
-          >
-            <Text
-              style={{
-                color: "#014869",
-                fontSize: 18,
-                fontWeight: "700",
-                cursor: "pointer",
+          />
+        </TouchableWithoutFeedback>
+
+        <Animated.View
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: 250,
+            height: "100%",
+            backgroundColor: "#f8f8f8",
+            padding: 20,
+            zIndex: 10,
+            transform: [{ translateX: menuAnim }],
+          }}
+        >
+          {[
+            { label: "Perfil", action: goToProfile },
+            { label: "Cultura e Historia", action: goToCulturaHistoria },
+            { label: "Ver favoritos", action: goToFavorites },
+            { label: "Contacto", action: goToContact },
+          ].map((item, index) => (
+            <Pressable
+              key={index}
+              onPress={() => {
+                toggleMenu();
+                item.action();
               }}
+              style={{ marginBottom: 25 }}
             >
-              {item.label}
-            </Text>
-          </Pressable>
-        ))}
-      </Animated.View>
+              <Text
+                style={{
+                  color: "#014869",
+                  fontSize: 18,
+                  fontWeight: "700",
+                }}
+              >
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+        </Animated.View>
+      </>
     );
 
-  // Menú móvil nativo
+  // Menú móvil
   const renderMobileMenu = () =>
-    Platform.OS !== "web" &&
+    !isWeb &&
     menuVisible && (
       <View
         style={{
@@ -504,94 +531,87 @@ export default function UserEventDetail() {
           paddingTop: 50,
         }}
       >
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            marginBottom: 30,
-          }}
-        >
+        <View style={{ flexDirection: "row", marginBottom: 30 }}>
           <Pressable onPress={toggleMenu} style={{ marginRight: 15 }}>
             <Image
               source={require("../assets/iconos/back-usuario.png")}
               style={{ width: 22, height: 22, tintColor: "#014869" }}
             />
           </Pressable>
+
           <Text
             style={{
               fontSize: 18,
               fontWeight: "bold",
               color: "#014869",
-              textAlign: "center",
               flex: 1,
-              marginRight: 37,
+              textAlign: "center",
             }}
           >
             Menú
           </Text>
         </View>
 
-        <View style={{ flex: 1 }}>
-          {[
-            {
-              label: "Cultura e Historia",
-              icon: require("../assets/iconos/museo-usuario.png"),
-              action: goToCulturaHistoria,
-            },
-            {
-              label: "Sobre nosotros",
-              icon: require("../assets/iconos/info-usuario.png"),
-              action: goToAbout,
-            },
-            {
-              label: "Ver favoritos",
-              icon: require("../assets/iconos/favs-usuario.png"),
-              action: goToFavorites,
-            },
-            {
-              label: "Contacto",
-              icon: require("../assets/iconos/phone-usuario.png"),
-              action: goToContact,
-            },
-          ].map((item, index) => (
-            <Pressable
-              key={index}
-              onPress={item.action}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 25,
-              }}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Image
-                  source={item.icon}
-                  style={{
-                    width: 22,
-                    height: 22,
-                    tintColor: "#014869",
-                    marginRight: 14,
-                  }}
-                />
-                <Text
-                  style={{
-                    color: "#014869",
-                    fontSize: 16,
-                    fontWeight: "600",
-                  }}
-                >
-                  {item.label}
-                </Text>
-              </View>
+        {[
+          {
+            label: "Cultura e Historia",
+            icon: require("../assets/iconos/museo-usuario.png"),
+            action: goToCulturaHistoria,
+          },
+          {
+            label: "Sobre nosotros",
+            icon: require("../assets/iconos/info-usuario.png"),
+            action: goToAbout,
+          },
+          {
+            label: "Ver favoritos",
+            icon: require("../assets/iconos/favs-usuario.png"),
+            action: goToFavorites,
+          },
+          {
+            label: "Contacto",
+            icon: require("../assets/iconos/phone-usuario.png"),
+            action: goToContact,
+          },
+        ].map((item, index) => (
+          <Pressable
+            key={index}
+            onPress={item.action}
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              marginBottom: 25,
+            }}
+          >
+            <View style={{ flexDirection: "row" }}>
               <Image
-                source={require("../assets/iconos/siguiente.png")}
-                style={{ width: 18, height: 18, tintColor: "#014869" }}
+                source={item.icon}
+                style={{
+                  width: 22,
+                  height: 22,
+                  tintColor: "#014869",
+                  marginRight: 14,
+                }}
               />
-            </Pressable>
-          ))}
-        </View>
+              <Text
+                style={{
+                  color: "#014869",
+                  fontSize: 16,
+                  fontWeight: "600",
+                }}
+              >
+                {item.label}
+              </Text>
+            </View>
 
+            <Image
+              source={require("../assets/iconos/siguiente.png")}
+              style={{ width: 18, height: 18, tintColor: "#014869" }}
+            />
+          </Pressable>
+        ))}
+
+        {/* Bottom nav móvil */}
         <View
           style={{
             position: "absolute",
@@ -600,10 +620,9 @@ export default function UserEventDetail() {
             right: 0,
             flexDirection: "row",
             justifyContent: "space-around",
-            alignItems: "center",
+            paddingVertical: 14,
             borderTopWidth: 2,
             borderTopColor: "#01486999",
-            paddingVertical: 14,
             backgroundColor: "#fff",
           }}
         >
@@ -613,12 +632,14 @@ export default function UserEventDetail() {
               style={{ width: 22, height: 22, tintColor: "#014869" }}
             />
           </Pressable>
+
           <Pressable onPress={goToCalendar}>
             <Image
               source={require("../assets/iconos/calendar.png")}
               style={{ width: 22, height: 22, tintColor: "#014869" }}
             />
           </Pressable>
+
           <Pressable onPress={goToProfile}>
             <Image
               source={require("../assets/iconos/user.png")}
@@ -628,244 +649,151 @@ export default function UserEventDetail() {
         </View>
       </View>
     );
-
-  // Return
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Header hideAuthButtons />
-      {/**Cabecera según la plataforma */}
-      {Platform.OS === "web" ? renderTopBarWeb() : renderTopBarMobile()}
-      {/**Menus */}
+
+      {/* TOPBAR según plataforma */}
+      {isWeb ? renderTopBarWeb() : renderTopBarMobile()}
+
+      {/* Menús */}
       {renderWebMenu()}
       {renderMobileMenu()}
 
-      {/**Contenido */}
+      {/* Contenido principal*/}
       {event && (
-        <ScrollView
+        <View
           style={{
             flex: 1,
             backgroundColor: "#f5f6f7",
-            padding: 15,
-            marginBottom: isLaptopWeb || isDesktopWeb ? 150 : 0,
-          }}
-          contentContainerStyle={{
-            paddingBottom: isLaptopWeb || isDesktopWeb ? 50 : 40,
+            paddingHorizontal: pagePaddingHorizontal,
+            paddingTop: 20,
+            paddingBottom: pagePaddingBottom,
+            alignItems: "center",
           }}
         >
-          <View
+          <ScrollView
             style={{
-              backgroundColor: "#014869",
-              paddingVertical: 10,
-              paddingHorizontal: 15,
-              marginBottom: 20,
-              borderRadius: 3,
+              flex: 1,
+              width: eventContainerWidth,
+            }}
+            contentContainerStyle={{
+              paddingBottom: 40,
             }}
           >
-            <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 15 }}>
-              {event.title}
-            </Text>
-          </View>
-
-          {Platform.OS === "web" ? (
-            <>
-              <View
+            {/* Título */}
+            <View
+              style={{
+                backgroundColor: "#014869",
+                paddingVertical: 10,
+                paddingHorizontal: 15,
+                marginBottom: 20,
+                borderRadius: 3,
+              }}
+            >
+              <Text
                 style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  gap: 20,
-                  alignItems: "flex-start",
+                  color: "#fff",
+                  fontWeight: "bold",
+                  fontSize: 15,
                 }}
               >
-                <Image
-                  source={{
-                    uri:
-                      Platform.OS === "android"
-                        ? event.image_url
-                            .replace("localhost", "10.0.2.2")
-                            .replace(/\\/g, "/")
-                        : event.image_url.replace(/\\/g, "/"),
-                  }}
-                  style={{
-                    width: "50%",
-                    height: 250,
-                    borderRadius: 8,
-                  }}
-                  resizeMode="cover"
-                />
+                {event.title}
+              </Text>
+            </View>
 
-                <View style={{ width: "48%" }}>
-                  <Text
-                    style={{
-                      color: "#014869",
-                      fontWeight: "bold",
-                      fontSize: 15,
-                      marginBottom: 8,
-                    }}
-                  >
-                    Descripción
-                  </Text>
-
-                  <Text
-                    style={{
-                      color: "#333",
-                      fontSize: 14,
-                      lineHeight: 20,
-                      textAlign: "justify",
-                    }}
-                  >
-                    {event.description}
-                  </Text>
-                </View>
-              </View>
-
-              <View
-                style={{
-                  marginTop: 30,
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <View
-                  style={{
-                    backgroundColor:
-                      new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
-                    borderRadius: 25,
-                    paddingVertical: 7,
-                    paddingHorizontal: 18,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#fff",
-                      fontWeight: "bold",
-                      fontSize: 13,
-                    }}
-                  >
-                    {new Date(event.date) > new Date()
-                      ? "Habilitado"
-                      : "Deshabilitado"}
-                  </Text>
-                </View>
-
-                <Pressable onPress={() => setShareVisible(true)}>
-                  <Image
-                    source={require("../assets/iconos/compartir.png")}
-                    style={{ width: 26, height: 26, tintColor: "#014869" }}
-                  />
-                </Pressable>
-              </View>
-
-              <View
-                style={{
-                  marginTop: isTabletWeb ? 10 : 5,
-                }}
-              >
-                <Text
-                  style={{
-                    color: "#014869",
-                    fontWeight: "bold",
-                    marginBottom: 1,
-                    fontSize: 15,
-                  }}
-                >
-                  Tu valoración
-                </Text>
-
-                {renderStars(rating, true)}
-
-                {/* Comentario en web */}
-                <View
-                  style={{
-                    marginTop: isTabletWeb ? 10 : 5,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#014869",
-                      fontWeight: "bold",
-                      marginBottom: 6,
-                      fontSize: 15,
-                    }}
-                  >
-                    Tu comentario
-                  </Text>
-
-                  <View
-                    style={{
-                      flexDirection: isLaptopWeb ? "row" : "column",
-                      alignItems: isLaptopWeb ? "flex-start" : "flex-end",
-                      width: "100%",
-                      gap: isLaptopWeb ? 10 : 0,
-                    }}
-                  >
-                    <TextInput
-                      value={commentText}
-                      onChangeText={setCommentText}
-                      placeholder="Escribe aquí tu opinión sobre el evento..."
-                      placeholderTextColor="#777"
-                      multiline
-                      style={{
-                        backgroundColor: "#fff",
-                        borderRadius: 8,
-                        borderWidth: 1,
-                        borderColor: "#ddd",
-                        paddingHorizontal: 10,
-                        paddingVertical: 8,
-                        minHeight: 70,
-                        textAlignVertical: "top",
-                        color: "#333",
-                        fontSize: 14,
-                        flex: isLaptopWeb ? 1 : 0,
-                        width: isLaptopWeb ? "88%" : "100%",
-                      }}
-                    />
-
-                    <Pressable
-                      onPress={handleSendComment}
-                      style={{
-                        backgroundColor: "#014869",
-                        borderRadius: 20,
-                        paddingVertical: 8,
-                        paddingHorizontal: 18,
-                        marginTop: isLaptopWeb ? 0 : 10,
-                        alignSelf: isLaptopWeb ? "center" : "flex-end",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "#fff",
-                          fontWeight: "600",
-                          fontSize: 13,
-                        }}
-                      >
-                        Enviar comentario
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
-              </View>
-            </>
-          ) : (
-            <>
+            <View
+              style={{
+                flexDirection: isLargeWeb ? "row" : "column",
+                justifyContent: isLargeWeb ? "space-between" : "center",
+                alignItems: isLargeWeb ? "flex-start" : "center",
+                gap: 20,
+              }}
+            >
               <Image
                 source={{
                   uri:
                     Platform.OS === "android"
-                      ? event.image_url
-                          .replace("localhost", "10.0.2.2")
-                          .replace(/\\/g, "/")
-                      : event.image_url.replace(/\\/g, "/"),
+                      ? event.image_url.replace("localhost", "10.0.2.2")
+                      : event.image_url,
                 }}
                 style={{
-                  width: "100%",
-                  height: 250,
+                  width: isLargeWeb ? "50%" : "100%",
+                  height: isLargeWeb ? 250 : 220,
                   borderRadius: 8,
-                  marginBottom: 20,
                 }}
                 resizeMode="cover"
               />
 
+              <View style={{ width: isLargeWeb ? "48%" : "100%" }}>
+                <Text
+                  style={{
+                    color: "#014869",
+                    fontWeight: "bold",
+                    fontSize: 15,
+                    marginBottom: 8,
+                  }}
+                >
+                  Descripción
+                </Text>
+
+                <Text
+                  style={{
+                    color: "#333",
+                    fontSize: 14,
+                    lineHeight: 20,
+                    textAlign: "justify",
+                  }}
+                >
+                  {event.description}
+                </Text>
+              </View>
+            </View>
+
+            {/* Estado + Compartir*/}
+            <View
+              style={{
+                width: "100%",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: 30,
+              }}
+            >
+              <View
+                style={{
+                  backgroundColor:
+                    new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
+                  borderRadius: 25,
+                  paddingVertical: 7,
+                  paddingHorizontal: 18,
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontWeight: "bold",
+                    fontSize: 13,
+                  }}
+                >
+                  {new Date(event.date) > new Date()
+                    ? "Habilitado"
+                    : "Deshabilitado"}
+                </Text>
+              </View>
+
+              <Pressable onPress={() => setShareVisible(true)}>
+                <Image
+                  source={require("../assets/iconos/compartir.png")}
+                  style={{ width: 26, height: 26, tintColor: "#014869" }}
+                />
+              </Pressable>
+            </View>
+
+            {/* Valoración y comentario */}
+            <View style={{ marginTop: 25 }}>
               <Text
                 style={{
                   color: "#014869",
@@ -874,88 +802,36 @@ export default function UserEventDetail() {
                   marginBottom: 6,
                 }}
               >
-                Descripción
+                Tu valoración
               </Text>
 
-              <Text
-                style={{
-                  color: "#333",
-                  fontSize: 14,
-                  lineHeight: 20,
-                  textAlign: "justify",
-                }}
-              >
-                {event.description}
-              </Text>
+              {renderStars(rating, true)}
 
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  marginTop: 20,
-                  alignItems: "center",
-                }}
-              >
-                <View
-                  style={{
-                    backgroundColor:
-                      new Date(event.date) > new Date() ? "#2ECC71" : "#E74C3C",
-                    borderRadius: 25,
-                    paddingVertical: 7,
-                    paddingHorizontal: 18,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#fff",
-                      fontWeight: "bold",
-                      fontSize: 13,
-                    }}
-                  >
-                    {new Date(event.date) > new Date()
-                      ? "Habilitado"
-                      : "Deshabilitado"}
-                  </Text>
-                </View>
-
-                <Pressable onPress={() => setShareVisible(true)}>
-                  <Image
-                    source={require("../assets/iconos/compartir.png")}
-                    style={{ width: 26, height: 26, tintColor: "#014869" }}
-                  />
-                </Pressable>
-              </View>
-
-              <View style={{ marginTop: 30 }}>
+              {/* Comentario */}
+              <View style={{ marginTop: 12 }}>
                 <Text
                   style={{
                     color: "#014869",
                     fontWeight: "bold",
-                    marginBottom: 10,
                     fontSize: 15,
+                    marginBottom: 6,
                   }}
                 >
-                  Tu valoración
+                  Tu comentario
                 </Text>
 
-                {renderStars(rating, true)}
-
-                {/* Comentario en móvil */}
-                <View style={{ marginTop: 18 }}>
-                  <Text
-                    style={{
-                      color: "#014869",
-                      fontWeight: "bold",
-                      marginBottom: 6,
-                      fontSize: 15,
-                    }}
-                  >
-                    Tu comentario
-                  </Text>
+                <View
+                  style={{
+                    flexDirection: isLargeWeb ? "row" : "column",
+                    alignItems: isLargeWeb ? "flex-start" : "flex-end",
+                    width: "100%",
+                    gap: isLargeWeb ? 10 : 0,
+                  }}
+                >
                   <TextInput
                     value={commentText}
                     onChangeText={setCommentText}
-                    placeholder="Escribe aquí tu opinión sobre el evento..."
+                    placeholder="Escribe tu opinión..."
                     placeholderTextColor="#777"
                     multiline
                     style={{
@@ -969,17 +845,19 @@ export default function UserEventDetail() {
                       textAlignVertical: "top",
                       color: "#333",
                       fontSize: 14,
+                      flex: isLargeWeb ? 1 : 0,
+                      width: isLargeWeb ? "88%" : "100%",
                     }}
                   />
+
                   <Pressable
                     onPress={handleSendComment}
                     style={{
-                      marginTop: 10,
-                      alignSelf: "flex-end",
                       backgroundColor: "#014869",
                       borderRadius: 20,
-                      paddingVertical: 6,
-                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      paddingHorizontal: 18,
+                      marginTop: isLargeWeb ? 0 : 5,
                     }}
                   >
                     <Text
@@ -994,12 +872,12 @@ export default function UserEventDetail() {
                   </Pressable>
                 </View>
               </View>
-            </>
-          )}
-        </ScrollView>
+            </View>
+          </ScrollView>
+        </View>
       )}
 
-      {/*Modal compartir  */}
+      {/* Modal Compartir*/}
       <Modal visible={shareVisible} transparent animationType="fade">
         <View
           style={{
@@ -1028,6 +906,7 @@ export default function UserEventDetail() {
             >
               Compartir evento
             </Text>
+
             <Pressable
               onPress={() => {
                 setShareVisible(false);
@@ -1046,6 +925,7 @@ export default function UserEventDetail() {
                 WhatsApp
               </Text>
             </Pressable>
+
             <Pressable
               onPress={() => {
                 setShareVisible(false);
@@ -1062,6 +942,7 @@ export default function UserEventDetail() {
             >
               <Text style={{ color: "#fff", fontWeight: "bold" }}>Twitter</Text>
             </Pressable>
+
             <Pressable onPress={() => setShareVisible(false)}>
               <Text style={{ color: "#014869", fontWeight: "bold" }}>
                 Cancelar
@@ -1071,9 +952,18 @@ export default function UserEventDetail() {
         </View>
       </Modal>
 
-      {/* Footer responsive */}
-      {isWeb && showFooter && (
-        <View style={{ position: "fixed", bottom: 0, left: 0, right: 0 }}>
+      {/*Footer responsive*/}
+      {isWeb && isLargeWeb && (
+        <View
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: "#fff",
+            zIndex: 100,
+          }}
+        >
           <Footer
             onAboutPress={goToAbout}
             onPrivacyPress={goToPrivacy}
