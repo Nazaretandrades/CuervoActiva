@@ -1,22 +1,23 @@
-// Archivo para registrar e iniciar sesión
 import Constants from "expo-constants";
-//  URL del backend desplegado (Render)
+
+// URL del backend desplegado (Render)
 const PROD_URL = "https://cuervoactiva-server.onrender.com";
 
-// BASE_URL usará EXPO_PUBLIC_API_URL si existe (opcional),
-// si no, usará directamente Render
+// BASE_URL usará EXPO_PUBLIC_API_URL si existe (opcional)
 const BASE_URL =
   Constants.expoConfig.extra?.EXPO_PUBLIC_API_URL ||
   Constants.manifest?.extra?.EXPO_PUBLIC_API_URL ||
   PROD_URL;
 
-
-// FUNCIÓN: Registrar un nuevo usuario
+// ----------------------------
+// FUNCIÓN: Registrar usuario
+// ----------------------------
 export async function registerUser({ name, email, password, role }) {
   try {
     const res = await fetch(`${BASE_URL}/api/users/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include", // necesario si backend usa cookies
       body: JSON.stringify({ name, email, password, role }),
     });
 
@@ -33,22 +34,30 @@ export async function registerUser({ name, email, password, role }) {
   }
 }
 
+// ----------------------------
 // FUNCIÓN: Iniciar sesión
+// ----------------------------
 export async function loginUser({ emailOrUsername, password }) {
-  const res = await fetch(`${BASE_URL}/api/users/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: emailOrUsername,
-      password,
-    }),
-  });
+  try {
+    const res = await fetch(`${BASE_URL}/api/users/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include", // necesario si backend usa cookies
+      body: JSON.stringify({
+        email: emailOrUsername,
+        password,
+      }),
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (!res.ok) {
-    throw new Error(data?.error || "Error iniciando sesión");
+    if (!res.ok) {
+      throw new Error(data?.error || "Error iniciando sesión");
+    }
+
+    return data;
+  } catch (err) {
+    console.error("❌ Error de red:", err);
+    throw new Error("Error de conexión con el servidor.");
   }
-
-  return data;
 }
