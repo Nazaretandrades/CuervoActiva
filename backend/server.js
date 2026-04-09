@@ -8,23 +8,45 @@ const fs = require("fs");
 // Cargamos las variables de entorno desde .env
 dotenv.config();
 
-// Inicializamos la aplicación Express
+// Inicializamos Express
 const app = express();
 
-// Importante para que detecte bien https detrás de Render
+// Detectar HTTPS detrás de Render
 app.set("trust proxy", 1);
 
-// Middlewares base
-app.use(cors());
+// ------------------------
+// Configuración CORS segura
+// ------------------------
+const allowedOrigins = [
+  "https://cuervo-activa.vercel.app", // frontend producción
+  "http://localhost:3000" // pruebas locales
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Permitir requests sin origin (Postman o scripts de backend)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = `CORS: El origen ${origin} no está permitido`;
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+    credentials: true, // necesario si usas cookies
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  })
+);
+
+// Middleware para parsear JSON
 app.use(express.json());
 
-// Conectamos con MongoDB
+// Conectamos a MongoDB
 connectDB();
 
-// Crear el administrador
+// Crear el administrador al inicio
 const createAdminOnStart = require("./config/createAdminOnStart");
-
-// Esperar a que MongoDB se conecte antes de crear el admin
 setTimeout(() => {
   createAdminOnStart();
 }, 500);
@@ -41,9 +63,9 @@ if (!fs.existsSync(uploadsPath)) {
 }
 
 // Servir imágenes públicamente
-app.use("/uploads", express.static(uploadsPath));;
+app.use("/uploads", express.static(uploadsPath));
 
-// Importamos las rutas (CommonJS)
+// Importar rutas
 const userRoutes = require("./routes/userRoutes");
 const eventRoutes = require("./routes/eventRoutes");
 const commentRoutes = require("./routes/commentRoutes");
@@ -52,7 +74,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const culturalRoutes = require("./routes/culturalRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 
-// Asociamos las rutas a sus endpoints
+// Asociar rutas a endpoints
 app.use("/api/users", userRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/comments", commentRoutes);
@@ -63,9 +85,7 @@ app.use("/api/contact", contactRoutes);
 
 // Middleware 404
 app.use((req, res) => {
-  res
-    .status(404)
-    .json({ error: "Ruta no encontrada", path: req.originalUrl });
+  res.status(404).json({ error: "Ruta no encontrada", path: req.originalUrl });
 });
 
 // Configuración del servidor
