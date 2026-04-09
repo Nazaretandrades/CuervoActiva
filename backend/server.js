@@ -5,7 +5,7 @@ const connectDB = require("./config/db");
 const path = require("path");
 const fs = require("fs");
 
-// Cargamos las variables de entorno desde .env
+// Cargamos variables de entorno
 dotenv.config();
 
 // Inicializamos Express
@@ -15,29 +15,28 @@ const app = express();
 app.set("trust proxy", 1);
 
 // ------------------------
-// Configuración CORS segura
+// CONFIGURACIÓN CORS
 // ------------------------
 const allowedOrigins = [
   "https://cuervo-activa.vercel.app", // frontend producción
   "http://localhost:3000" // pruebas locales
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Permitir requests sin origin (Postman o scripts de backend)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg = `CORS: El origen ${origin} no está permitido`;
-        return callback(new Error(msg), false);
-      }
-      return callback(null, true);
-    },
-    credentials: true, // necesario si usas cookies
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-  })
-);
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true); // permite Postman u otros scripts
+    if (!allowedOrigins.includes(origin)) {
+      return callback(new Error(`CORS: origen ${origin} no permitido`), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true, // necesario si se usan cookies
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+// Para preflight en todas las rutas
+app.options("*", cors());
 
 // Middleware para parsear JSON
 app.use(express.json());
