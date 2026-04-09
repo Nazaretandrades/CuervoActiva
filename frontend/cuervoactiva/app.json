@@ -31,7 +31,7 @@
       "favicon": "./assets/cuervo-icon.png"
     },
     "extra": {
-      "EXPO_PUBLIC_API_URL": "https://cuervoactiva.onrender.com",
+      "EXPO_PUBLIC_API_URL": "https://cuervoactiva-server.onrender.com",
       "eas": {
         "projectId": "25637879-e463-4a11-a568-8ab81e81e703"
       }
