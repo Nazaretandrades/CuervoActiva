@@ -1,7 +1,7 @@
 // Archivo para registrar e iniciar sesión
 import Constants from "expo-constants";
 //  URL del backend desplegado (Render)
-const PROD_URL = "https://cuervoactiva.onrender.com";
+const PROD_URL = "https://cuervoactiva-server.onrender.com";
 
 // BASE_URL usará EXPO_PUBLIC_API_URL si existe (opcional),
 // si no, usará directamente Render
